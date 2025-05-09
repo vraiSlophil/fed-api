@@ -1,0 +1,36 @@
+/vendor/
+/node_modules/
+.env
+.env.*.backup
+/public/storage
+/storage/*.key
+/storage/framework/*
+!/storage/framework/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# Fichiers générés par Composer
+composer.phar
+
+# Fichiers générés par Laravel
+.phpunit.result.cache
+.phpstorm.meta.php
+_ide_helper.php
+_ide_helper_models.php
+
+# Fichiers de débogage
+*.log
+*.cache
+*.tmp
+
+# Systèmes d'exploitation
+.DS_Store
+Thumbs.db
+
+# Autres
+.idea/
+.vscode/
+*.swp
+*.swo
