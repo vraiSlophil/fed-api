@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('tasks', function (Blueprint $table) {
             $table->binaryUuid();
             $table->binary('theme_id', 16);
-            $table->binary('creator_id', 16);
+            $table->binary('creator_id', 16)->nullable();
             $table->string('title');
             $table->enum('status', ['todo', 'doing', 'done'])->default('todo');
             $table->timestamp('validated_at')->nullable();

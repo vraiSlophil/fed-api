@@ -9,12 +9,12 @@ return new class extends Migration {
     {
         Schema::create('users', function (Blueprint $table) {
             $table->binaryUuid();            // id
-            $table->string('pseudo', 50)->unique();
+            $table->string('username', 50)->unique();
             $table->string('email')->unique();
             $table->string('password');
             $table->string('avatar_path')->nullable();
-            $table->string('nom')->nullable();
-            $table->string('prenom')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('first_name')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->string('last_login_ip', 45)->nullable();
             $table->json('settings')->nullable();

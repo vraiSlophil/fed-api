@@ -13,9 +13,14 @@ return new class extends Migration {
             $table->binary('auditable_id', 16);
             $table->dateTime('changed_at');
             $table->json('data');
+
+            // colonne virtuelle dérivée du JSON
+            $table->string('meta_action')
+                ->virtualAs("json_unquote(json_extract(`data`, '$.meta.action'))");
+
             $table->index(['auditable_type', 'auditable_id']);
-            // index virtuel MariaDB
-            $table->index(\DB::raw("((data->>'$.meta.action'))"), 'idx_action');
+            $table->index('meta_action', 'idx_action');
+
         });
     }
 
