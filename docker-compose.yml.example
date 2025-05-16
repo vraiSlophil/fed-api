@@ -23,7 +23,7 @@ services:
         ports:
             - "8000:8000"
         environment:
-            - DB_HOST=${DB_HOST}
+            - DB_HOST=mariadb
             - DB_PORT=${DB_PORT}
             - DB_USERNAME=${DB_USERNAME}
             - DB_DATABASE=${DB_DATABASE}
@@ -35,6 +35,21 @@ services:
             - mariadb
         networks:
             - app-network
+
+    phpmyadmin:
+        image: phpmyadmin:5.2.2
+        depends_on:
+            - mariadb
+        environment:
+            PMA_HOST: mariadb           # Se connecte au service MariaDB
+            PMA_USER: ${DB_USERNAME}
+            PMA_PASSWORD: ${DB_PASSWORD}
+            # Optionnel : PMA_ABSOLUTE_URI, UPLOAD_LIMIT, etc.
+        ports:
+            - "8080:80"                # http://localhost:8080
+        networks:
+            - app-network
+
 
 networks:
     app-network:
