@@ -11,7 +11,7 @@ INSERT INTO roles (power, name) VALUES (10, 'user'), (100, 'admin');
 -- USERS -------------------------------------------------------------------
 CREATE TABLE users (
                        id BINARY(16) PRIMARY KEY,            -- UUID v7
-                       nickname VARCHAR(50) NOT NULL UNIQUE,
+                       username VARCHAR(50) NOT NULL UNIQUE,
                        email  VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        avatar_path VARCHAR(255),
