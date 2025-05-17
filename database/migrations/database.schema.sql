@@ -11,12 +11,12 @@ INSERT INTO roles (power, name) VALUES (10, 'user'), (100, 'admin');
 -- USERS -------------------------------------------------------------------
 CREATE TABLE users (
                        id BINARY(16) PRIMARY KEY,            -- UUID v7
-                       pseudo VARCHAR(50) NOT NULL UNIQUE,
+                       nickname VARCHAR(50) NOT NULL UNIQUE,
                        email  VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        avatar_path VARCHAR(255),
-                       nom  VARCHAR(100),
-                       prenom VARCHAR(100),
+                       last_name  VARCHAR(100),
+                       first_name VARCHAR(100),
                        last_login_at DATETIME,
                        last_login_ip VARCHAR(45),
                        settings JSON,
@@ -69,7 +69,7 @@ CREATE TABLE theme_user_permissions (
 CREATE TABLE tasks (
                        id BINARY(16) PRIMARY KEY,
                        theme_id   BINARY(16) NOT NULL,
-                       creator_id BINARY(16) NOT NULL,
+                       creator_id BINARY(16) NULL,
                        title  VARCHAR(255) NOT NULL,
                        status ENUM('todo','doing','done') DEFAULT 'todo',
                        validated_at DATETIME,
