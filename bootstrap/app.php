@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,14 +32,16 @@ return Application::configure(basePath: dirname(__DIR__))
             );
         });
 
-        $exceptions->renderable(function (Throwable $e, Request $request) {
-            // Réponse générique pour toute autre exception
+        $exceptions->renderable(function (Throwable $e, $request) {
+            $status = $e instanceof HttpExceptionInterface
+                ? $e->getStatusCode()
+                : 500;
+
             return ApiResponse::error(
-                'Une erreur interne est survenue',
-                500,
-                app()->hasDebugModeEnabled()
-                    ? ['message' => $e->getMessage()]
-                    : null
+                $status >= 500 ? 'Une erreur interne est survenue'
+                    : $e->getMessage(),
+                $status,
+                app()->hasDebugModeEnabled() ? ['trace' => $e->getTrace()] : null
             );
         });
     })
