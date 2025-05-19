@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Responses\ApiResponse;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,11 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        /*
-        |------------------------------------------------------------------
-        | Rendu JSON personnalisé
-        |------------------------------------------------------------------
-        */
         $exceptions->renderable(function (ValidationException $e, Request $request) {
             return ApiResponse::error(
                 'Les données fournies ne sont pas valides',
@@ -44,5 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 app()->hasDebugModeEnabled() ? ['trace' => $e->getTrace()] : null
             );
         });
+
+        $exceptions->renderable(function (AuthenticationException $e, $r) {
+            return ApiResponse::error('Non authentifié', 401);
+        });
+        $exceptions->renderable(function (AuthorizationException $e, $r) {
+            return ApiResponse::error('Accès refusé', 403);
+        });
+
     })
     ->create();
