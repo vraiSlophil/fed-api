@@ -23,8 +23,10 @@ class LoginController extends Controller
 
         $credentials = $request->only('email', 'password');
         if (auth()->attempt($credentials)) {
-            // Authentication passed...
+            $request->session()->regenerate();
+
             $user = auth()->user();
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Login successful',

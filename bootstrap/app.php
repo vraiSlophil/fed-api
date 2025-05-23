@@ -29,25 +29,31 @@ return Application::configure(basePath: dirname(__DIR__))
             );
         });
 
+        $exceptions->renderable(function (AuthenticationException $e, $r) {
+//            return ApiResponse::error($e->getMessage(), 401);
+            return ApiResponse::error($r, 401);
+        });
+
         $exceptions->renderable(function (Throwable $e, $request) {
-            $status = $e instanceof HttpExceptionInterface
-                ? $e->getStatusCode()
-                : 500;
+            $status = match (true) {
+                $e instanceof HttpExceptionInterface => $e->getStatusCode(),
+                $e instanceof ValidationException => 422,
+                $e instanceof AuthorizationException => 403,
+                default => 500
+            };
 
             return ApiResponse::error(
-                $status >= 500 ? 'Une erreur interne est survenue'
-                    : $e->getMessage(),
+                $status >= 500 ? 'Une erreur interne est survenue' : $e->getMessage(),
                 $status,
-                app()->hasDebugModeEnabled() ? ['trace' => $e->getTrace()] : null
+                app()->hasDebugModeEnabled()
+                    ? [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTrace()
+                ]
+                    : null
             );
         });
-
-        $exceptions->renderable(function (AuthenticationException $e, $r) {
-            return ApiResponse::error('Non authentifié', 401);
-        });
-        $exceptions->renderable(function (AuthorizationException $e, $r) {
-            return ApiResponse::error('Accès refusé', 403);
-        });
-
     })
     ->create();

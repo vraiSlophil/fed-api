@@ -9,3 +9,35 @@ get {
   body: none
   auth: inherit
 }
+
+script:post-response {
+  // Bruno - Test script
+  let raw = res.headers['set-cookie'];      // peut être string ou tableau
+  
+  // 1. Normaliser en string
+  raw = Array.isArray(raw) ? raw.join(',') : String(raw);
+  
+  // 2. Extraire la partie après "XSRF-TOKEN=" jusqu’au premier ";"
+  const match = raw.match(/XSRF-TOKEN=([^;]+)/);
+  if (!match) throw new Error('XSRF-TOKEN introuvable dans Set-Cookie');
+  
+  // 3. Décoder la valeur URL-encodée puis stocker
+  const token = match[1];
+  bru.setEnvVar('xsrf_token', token);
+  
+  // 1. Normaliser en une seule chaîne.
+  raw = Array.isArray(raw) ? raw.join(',') : String(raw);
+  
+  // 2. Extraire la valeur située après "fed_api_session=" et avant le premier ";"
+  const match2 = raw.match(/fed_api_session=([^;]+)/);
+  
+  if (!match) {
+    throw new Error('fed_api_session introuvable dans Set-Cookie');
+  }
+  
+  // 3. La valeur est URL-encodée : on la décode puis on la stocke.
+  const session = match2[1];
+  
+  bru.setEnvVar('fed_api_session', session);
+  
+}

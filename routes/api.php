@@ -12,11 +12,18 @@ use Illuminate\Support\Facades\Route;
 Route::get('/ping', function () {
     return ApiResponse::success(null, 'Pong', 200);
 });
+Route::get('/token', function (Request $request) {
+
+//    $token = $request->session()->token();
+//
+    $token = csrf_token();
+    return ApiResponse::success([$token, $request], 'Token retrieved successfully', 200);
+});
 
 // -------------------------------------------------
 // Authentication Routes
 // -------------------------------------------------
-Route::middleware('guest')->group(function () {
+Route::middleware(['web', 'guest'])->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
     Route::post('/register', [RegisterController::class, 'register']);
 });
@@ -24,9 +31,9 @@ Route::middleware('guest')->group(function () {
 // -------------------------------------------------
 // Protected Routes
 // -------------------------------------------------
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['web', 'auth:sanctum'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/user', function (Request $request) {
-        return response()->json($request->user());
+        return ApiResponse::success([], 'User retrieved successfully', 200);
     });
 });
