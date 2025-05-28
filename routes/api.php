@@ -12,13 +12,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/ping', function () {
     return ApiResponse::success(null, 'Pong', 200);
 });
-Route::get('/token', function (Request $request) {
-
-//    $token = $request->session()->token();
-//
-    $token = csrf_token();
-    return ApiResponse::success([$token, $request], 'Token retrieved successfully', 200);
-});
 
 // -------------------------------------------------
 // Authentication Routes

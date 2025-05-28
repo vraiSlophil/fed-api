@@ -11,12 +11,14 @@ post {
 }
 
 headers {
-  X-XSRF-TOKEN: {{xsrf_token}}
+ Accept: application/json
+ X-XSRF-TOKEN: {{xsrf_token}}
+ Cookie: XSRF-TOKEN={{xsrf_token}}; fed_api_session={{fed_api_session}}
 }
 
 body:json {
-  {
-    "email": "test@example.com",
-    "password": "password"
-  }
+ {
+   "email": "test@example.com",
+   "password": "password"
+ }
 }

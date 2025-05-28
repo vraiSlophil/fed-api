@@ -9,3 +9,8 @@ get {
   body: none
   auth: none
 }
+
+headers {
+  Accept: application/json
+  Cookie: XSRF-TOKEN={{xsrf_token}}; fed_api_session={{fed_api_session}}
+}

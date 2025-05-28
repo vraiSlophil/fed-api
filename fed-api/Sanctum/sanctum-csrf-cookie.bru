@@ -11,33 +11,40 @@ get {
 }
 
 script:post-response {
-  // Bruno - Test script
-  let raw = res.headers['set-cookie'];      // peut être string ou tableau
+  // Récupérer les cookies reçus (peut être une chaîne ou un tableau)
+  const cookies = res.headers['set-cookie'];
   
-  // 1. Normaliser en string
-  raw = Array.isArray(raw) ? raw.join(',') : String(raw);
+  // Stocker tous les cookies pour les utiliser dans les requêtes suivantes
+  bru.setEnvVar('cookies', cookies);
   
-  // 2. Extraire la partie après "XSRF-TOKEN=" jusqu’au premier ";"
-  const match = raw.match(/XSRF-TOKEN=([^;]+)/);
-  if (!match) throw new Error('XSRF-TOKEN introuvable dans Set-Cookie');
+  // Extraire XSRF-TOKEN
+  let xsrfToken = null;
+  let fedApiSession = null;
   
-  // 3. Décoder la valeur URL-encodée puis stocker
-  const token = match[1];
-  bru.setEnvVar('xsrf_token', token);
+  // Traiter chaque cookie individuellement
+  (Array.isArray(cookies) ? cookies : [cookies]).forEach(cookie => {
+    if (cookie.includes('XSRF-TOKEN=')) {
+      const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
+      if (match) xsrfToken = decodeURIComponent(match[1]);
+    }
   
-  // 1. Normaliser en une seule chaîne.
-  raw = Array.isArray(raw) ? raw.join(',') : String(raw);
+    if (cookie.includes('fed_api_session=')) {
+      const match = cookie.match(/fed_api_session=([^;]+)/);
+      if (match) fedApiSession = decodeURIComponent(match[1]);
+    }
+  });
   
-  // 2. Extraire la valeur située après "fed_api_session=" et avant le premier ";"
-  const match2 = raw.match(/fed_api_session=([^;]+)/);
-  
-  if (!match) {
-    throw new Error('fed_api_session introuvable dans Set-Cookie');
+  if (xsrfToken) {
+    bru.setEnvVar('xsrf_token', xsrfToken);
+    console.log('XSRF Token récupéré avec succès:', xsrfToken);
+  } else {
+    console.error('Erreur: XSRF-TOKEN introuvable dans les cookies');
   }
   
-  // 3. La valeur est URL-encodée : on la décode puis on la stocke.
-  const session = match2[1];
-  
-  bru.setEnvVar('fed_api_session', session);
-  
+  if (fedApiSession) {
+    bru.setEnvVar('fed_api_session', fedApiSession);
+    console.log('Session ID récupéré avec succès');
+  } else {
+    console.error('Erreur: fed_api_session introuvable dans les cookies');
+  }
 }
