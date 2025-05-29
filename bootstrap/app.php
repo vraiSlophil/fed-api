@@ -30,8 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->renderable(function (AuthenticationException $e, $r) {
-//            return ApiResponse::error($e->getMessage(), 401);
-            return ApiResponse::error($r, 401);
+            return ApiResponse::error($e->getMessage(), 401);
+//            return ApiResponse::error($r, 401);
         });
 
         $exceptions->renderable(function (Throwable $e, $request) {

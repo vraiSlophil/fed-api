@@ -25,19 +25,20 @@ class LoginController extends Controller
         if (auth()->attempt($credentials)) {
             $request->session()->regenerate();
 
-            $user = auth()->user();
+            // Force la sauvegarde de la session
+            $request->session()->save();
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Login successful',
-                'data' => $user,
+                'data' => auth()->user(),
             ], 200);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid credentials',
-            ], 401);
         }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid credentials',
+        ], 401);
     }
 
     /**
