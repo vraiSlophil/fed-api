@@ -8,6 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
+            $table->id(); // Auto-incrementing ID
             $table->binaryUuid();            // id
             $table->string('username', 50)->unique();
             $table->string('email')->unique();

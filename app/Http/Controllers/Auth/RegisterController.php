@@ -33,9 +33,13 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        Auth::login($user);
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-        return ApiResponse::success($user, 'User registered successfully', 201);
+        return ApiResponse::success([
+            'user' => auth()->user(),
+            'token' => auth()->user()->createToken('auth_token')->plainTextToken,
+            'token_type' => 'Bearer',
+        ], 'Register successful', 200);
 
 
     }

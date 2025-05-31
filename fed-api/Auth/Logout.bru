@@ -9,3 +9,10 @@ post {
   body: none
   auth: inherit
 }
+
+headers {
+  Accept: application/json
+  X-XSRF-TOKEN: {{xsrf_token}}
+  Cookie: XSRF-TOKEN={{xsrf_token}}; fed_api_session={{fed_api_session}}
+  Referer: {{baseUrl}}
+}

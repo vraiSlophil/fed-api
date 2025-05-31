@@ -10,37 +10,42 @@ get {
   auth: inherit
 }
 
+headers {
+  Accept: application/json
+  Referer: {{baseUrl}}
+}
+
 script:post-response {
   // Récupérer les cookies reçus (peut être une chaîne ou un tableau)
   const cookies = res.headers['set-cookie'];
-  
+
   // Stocker tous les cookies pour les utiliser dans les requêtes suivantes
   bru.setEnvVar('cookies', cookies);
-  
+
   // Extraire XSRF-TOKEN
   let xsrfToken = null;
   let fedApiSession = null;
-  
+
   // Traiter chaque cookie individuellement
   (Array.isArray(cookies) ? cookies : [cookies]).forEach(cookie => {
     if (cookie.includes('XSRF-TOKEN=')) {
       const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
       if (match) xsrfToken = decodeURIComponent(match[1]);
     }
-  
+
     if (cookie.includes('fed_api_session=')) {
       const match = cookie.match(/fed_api_session=([^;]+)/);
       if (match) fedApiSession = decodeURIComponent(match[1]);
     }
   });
-  
+
   if (xsrfToken) {
     bru.setEnvVar('xsrf_token', xsrfToken);
     console.log('XSRF Token récupéré avec succès:', xsrfToken);
   } else {
     console.error('Erreur: XSRF-TOKEN introuvable dans les cookies');
   }
-  
+
   if (fedApiSession) {
     bru.setEnvVar('fed_api_session', fedApiSession);
     console.log('Session ID récupéré avec succès');

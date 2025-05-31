@@ -17,7 +17,7 @@ Route::get('/ping', function () {
 // -------------------------------------------------
 // Authentication Routes
 // -------------------------------------------------
-Route::middleware(['web', 'guest'])->group(function () {
+Route::middleware(['guest'])->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
     Route::post('/register', [RegisterController::class, 'register']);
 });
@@ -25,7 +25,7 @@ Route::middleware(['web', 'guest'])->group(function () {
 // -------------------------------------------------
 // Protected Routes
 // -------------------------------------------------
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/user', [UserController::class, 'current']);
 });

@@ -16,8 +16,12 @@ class User extends Authenticatable
     /* -----------------------------------------------------------------
      |  Configuration générale
      |-----------------------------------------------------------------*/
-    public $incrementing = false;        // l’id n’est pas auto-incrémenté
-    protected $keyType   = 'string';     // stocké en binaire mais présenté en string
+    protected $primaryKey = 'id'; // Clé primaire standard
+    public $incrementing = true; // ID auto-incrémenté
+    protected $keyType = 'int'; // Type de clé int
+
+    // Attribut supplémentaire pour l'UUID
+    protected $uuidKey = 'uuid';
 
     protected $fillable = [
         'username',
@@ -92,12 +96,12 @@ class User extends Authenticatable
     /* -----------------------------------------------------------------
      |  Helpers UUID ⇄ binaire
      |-----------------------------------------------------------------*/
-    private static function uuidToBinary(string $uuid): string
+    public static function uuidToBinary(string $uuid): string
     {
         return pack('H*', str_replace('-', '', $uuid));
     }
 
-    private static function binaryToUuid(string $binary): string
+    public static function binaryToUuid(string $binary): string
     {
         $hex = unpack('H*', $binary)[1];
         return vsprintf(

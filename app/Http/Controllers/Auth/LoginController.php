@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,22 +24,15 @@ class LoginController extends Controller
 
         $credentials = $request->only('email', 'password');
         if (auth()->attempt($credentials)) {
-            $request->session()->regenerate();
 
-            // Force la sauvegarde de la session
-            $request->session()->save();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Login successful',
-                'data' => auth()->user(),
-            ], 200);
+            return ApiResponse::success([
+                'user' => auth()->user(),
+                'token' => auth()->user()->createToken('auth_token')->plainTextToken,
+                'token_type' => 'Bearer',
+            ], 'Login successful', 200);
         }
 
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Invalid credentials',
-        ], 401);
+        return ApiResponse::error('Invalid credentials', 401);
     }
 
     /**
