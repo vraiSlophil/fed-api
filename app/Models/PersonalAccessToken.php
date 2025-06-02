@@ -2,23 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
-use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
+use Laravel\Sanctum\PersonalAccessToken as SanctumToken;
 
-class PersonalAccessToken extends SanctumPersonalAccessToken
+class PersonalAccessToken extends SanctumToken
 {
-    protected $table = 'personal_access_tokens';
-
-    public static function boot()
+    /*  Mutateur : avant INSERT */
+    public function setTokenableIdAttribute($value): void
     {
-        parent::boot();
+        // Si on reçoit un UUID lisible, on le compacte
+        $this->attributes['tokenable_id'] =
+            is_string($value) && strlen($value) === 36
+                ? User::uuidToBinary($value)
+                : $value;
+    }
 
-        // Intercepter le processus de création pour convertir l'UUID en binaire
-        static::creating(function ($model) {
-            if (isset($model->tokenable_id) && is_string($model->tokenable_id) && strlen($model->tokenable_id) === 36) {
-                // Convertir l'UUID en binaire avant l'enregistrement
-                $model->attributes['tokenable_id'] = User::uuidToBinary($model->tokenable_id);
-            }
-        });
+    /*  Accessor : après SELECT (facultatif, pratique pour les tests) */
+    public function getTokenableIdAttribute($value): string
+    {
+        return User::binaryToUuid($value);
     }
 }

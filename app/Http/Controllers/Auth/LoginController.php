@@ -45,9 +45,6 @@ class LoginController extends Controller
     {
         auth()->logout();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logout successful',
-        ], 200);
+        return ApiResponse::success(null, 'Logout successful', 200);
     }
 }

@@ -15,7 +15,7 @@ class RegisterController extends Controller
     /**
      * Handle a registration request to the application.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function register(Request $request): JsonResponse
@@ -33,11 +33,13 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
+        Auth::login($user);
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return ApiResponse::success([
-            'user' => auth()->user(),
-            'token' => auth()->user()->createToken('auth_token')->plainTextToken,
+            'user' => $user,
+            'token' => $token,
             'token_type' => 'Bearer',
         ], 'Register successful', 200);
 

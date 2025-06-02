@@ -17,8 +17,8 @@ class User extends Authenticatable
      |  Configuration générale
      |-----------------------------------------------------------------*/
     protected $primaryKey = 'id'; // Clé primaire standard
-    public $incrementing = true; // ID auto-incrémenté
-    protected $keyType = 'int'; // Type de clé int
+    protected $keyType = 'string'; // car Laravel encode le binaire comme string en PHP
+    public $incrementing = false;
 
     // Attribut supplémentaire pour l'UUID
     protected $uuidKey = 'uuid';
@@ -109,4 +109,22 @@ class User extends Authenticatable
             str_split($hex, 4)
         );
     }
+
+    /**
+     * Get the value of the model's primary key for polymorphic relations.
+     */
+    public function getKey(): mixed
+    {
+        return $this->attributes[$this->primaryKey] ?? null;
+    }
+
+    /**
+     * Get the value of the model's route key.
+     */
+    public function getRouteKey(): mixed
+    {
+        // Retourne l'ID binaire brut pour les relations polymorphiques
+        return $this->attributes[$this->primaryKey] ?? null;
+    }
+
 }

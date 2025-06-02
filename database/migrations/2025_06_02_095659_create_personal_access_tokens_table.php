@@ -13,13 +13,16 @@ return new class extends Migration
     {
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
-            $table->morphs('tokenable');
+            $table->binary('tokenable_id', 16); // BINARY(16) comme dans users
+            $table->string('tokenable_type');   // morph class name
             $table->string('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();
             $table->timestamp('last_used_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
+
+            $table->index(['tokenable_type', 'tokenable_id']);
         });
     }
 
