@@ -9,19 +9,21 @@ use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
-    }
+//    /**
+//     * Register any application services.
+//     */
+//    public function register(): void
+//    {
+//        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+//    }
 
     /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
         // Colonne BINARY(16) + clé primaire
         Blueprint::macro('binaryUuid', function (string $column = 'id') {
             /** @var Blueprint $this */

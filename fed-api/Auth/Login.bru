@@ -23,3 +23,12 @@ body:json {
     "password": "password"
   }
 }
+
+script:post-response {
+  if (res.getBody().data.token_type === "Bearer") {
+    const token = res.getBody().data.token;
+
+    // Enregistre le token en variable d'environnement
+    bru.setEnvVar('auth_token', token);
+  }
+}

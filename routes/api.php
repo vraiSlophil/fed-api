@@ -25,7 +25,19 @@ Route::middleware(['guest'])->group(function () {
 // -------------------------------------------------
 // Protected Routes
 // -------------------------------------------------
-Route::middleware(['auth:sanctum'])->group(function () {
+//Route::middleware(['auth:sanctum'])->group(function () {
+//    Route::post('/logout', [LoginController::class, 'logout']);
+//    Route::get('/user', [UserController::class, 'current']);
+//});
+
+Route::group((array)'', function () {
+//    Route::get('/users', function () {
+//        return ApiResponse::success(auth()->user(), 'User data retrieved successfully');
+//    });
+
     Route::post('/logout', [LoginController::class, 'logout']);
-    Route::get('/user', [UserController::class, 'current']);
-});
+//    Route::get('/user', [UserController::class, 'current']);
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+})->middleware(['auth:sanctum']);
