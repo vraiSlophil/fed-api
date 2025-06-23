@@ -8,9 +8,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('audit_logs', function (Blueprint $table) {
-            $table->id();
+            $table->uuid()->primary();
             $table->string('auditable_type', 100);
-            $table->binary('auditable_id', 16);
+            $table->uuid('auditable_id');
             $table->dateTime('changed_at');
             $table->json('data');
 

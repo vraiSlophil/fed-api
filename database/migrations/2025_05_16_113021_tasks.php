@@ -8,21 +8,17 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('tasks', function (Blueprint $table) {
-            $table->binaryUuid();
-            $table->binary('theme_id', 16);
-            $table->binary('creator_id', 16)->nullable();
+            $table->uuid('task_id')->primary();
+            $table->uuid('theme_id');
+            $table->uuid('user_id');
             $table->string('title');
             $table->enum('status', ['todo', 'doing', 'done'])->default('todo');
             $table->timestamp('validated_at')->nullable();
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
 
-            $table->foreign('theme_id')->references('id')->on('themes')->cascadeOnDelete();
-            $table->foreign('creator_id')->references('id')->on('users')->nullOnDelete();
-
-            $table->index(['theme_id', 'status', 'created_at']);
-            $table->index('archived_at');
-            $table->fullText('title');
+            $table->foreign('theme_id')->references('theme_id')->on('themes')->cascadeOnDelete();
+            $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
         });
     }
 

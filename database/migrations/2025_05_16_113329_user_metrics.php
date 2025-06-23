@@ -8,13 +8,13 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('user_metrics', function (Blueprint $table) {
-            $table->binary('user_id', 16)->primary();
+            $table->uuid('user_id')->primary();
             $table->unsignedInteger('tasks_created')->default(0);
             $table->unsignedInteger('tasks_done')->default(0);
             $table->unsignedInteger('streak')->default(0);
             $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();
 
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
         });
     }
 

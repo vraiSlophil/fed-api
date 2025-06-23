@@ -13,11 +13,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Création d'un utilisateur
+        $user = User::factory()->create([
+            'username' => 'owner',
+            'email' => 'owner@example.com',
         ]);
+
+        // Création de 2 thèmes dont il est propriétaire
+        $themes = Theme::factory(2)->create([
+            'owner_id' => $user->user_id,
+        ]);
+
+        // Pour chaque thème, création de 3 tâches
+        foreach ($themes as $theme) {
+            Task::factory(3)->create([
+                'theme_id' => $theme->theme_id,
+                'user_id' => $user->user_id,
+            ]);
+        }
     }
 }

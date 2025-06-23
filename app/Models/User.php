@@ -2,31 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids;
 
-    /* -----------------------------------------------------------------
-     |  Configuration générale
-     |-----------------------------------------------------------------*/
-    public $incrementing = false;        // l’id n’est pas auto-incrémenté
-    protected $keyType   = 'string';     // stocké en binaire mais présenté en string
+    protected $primaryKey = 'user_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'username',
         'email',
         'password',
-        'avatar_path',
         'last_name',
         'first_name',
-        'settings',
+        'avatar_path',
         'role_power',
     ];
 
@@ -35,74 +31,22 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'settings'      => 'array',
-        'last_login_at' => 'datetime',
-    ];
-
-    /* -----------------------------------------------------------------
-     |  Boot : génération automatique d’un UUID v4 (binaire 16 o)
-     |-----------------------------------------------------------------*/
-    public static function create(array $array)
+    protected function casts(): array
     {
-
-        $user = new static($array);
-
-        // On génère un UUID v4 binaire
-        $user->{$user->getKeyName()} = self::uuidToBinary(Str::uuid()->toString());
-
-        // On hash le mot de passe
-        $user->setPasswordAttribute($array['password']);
-
-        // On sauvegarde l’utilisateur
-        $user->save();
-
-        return $user;
+        return [
+            'email_verified_at' => 'datetime',
+            'settings' => 'array',
+            'password' => 'hashed',
+        ];
     }
 
-    protected static function boot(): void
+    public function role()
     {
-        parent::boot();
-
-        static::creating(function (self $user) {
-            if (! $user->getKey()) {
-                $user->{$user->getKeyName()} = self::uuidToBinary(Str::uuid()->toString());
-            }
-        });
+        return $this->belongsTo(Role::class, 'role_power', 'power');
     }
 
-    /* -----------------------------------------------------------------
-     |  Mutateurs & accesseurs
-     |-----------------------------------------------------------------*/
-
-    // Hashage automatique du mot de passe
-    public function setPasswordAttribute(string $value): void
+    public function themes()
     {
-        $this->attributes['password'] = Hash::needsRehash($value)
-            ? Hash::make($value)
-            : $value;
-    }
-
-    // Convertit l’id binaire stocké ⇒ UUID lisible côté API
-    public function getIdAttribute(string $value): string
-    {
-        return self::binaryToUuid($value);
-    }
-
-    /* -----------------------------------------------------------------
-     |  Helpers UUID ⇄ binaire
-     |-----------------------------------------------------------------*/
-    private static function uuidToBinary(string $uuid): string
-    {
-        return pack('H*', str_replace('-', '', $uuid));
-    }
-
-    private static function binaryToUuid(string $binary): string
-    {
-        $hex = unpack('H*', $binary)[1];
-        return vsprintf(
-            '%s%s-%s-%s-%s-%s%s%s',
-            str_split($hex, 4)
-        );
+        return $this->hasMany(Theme::class, 'owner_id', 'user_id');
     }
 }
