@@ -20,9 +20,13 @@ class LoginController extends Controller
             throw new AuthenticationException('Les identifiants fournis sont incorrects');
         }
 
-        return ApiResponse::success(
-            auth()->user(),
-            'Connexion réussie'
-        );
+        $user = auth()->user();
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return ApiResponse::success([
+            'user' => $user,
+            'token' => $token
+        ], 'Connexion réussie');
     }
+
 }

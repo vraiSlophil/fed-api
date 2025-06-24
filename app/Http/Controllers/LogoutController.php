@@ -10,11 +10,14 @@ class LogoutController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        auth()->logout();
+        $request->user()->tokens()->delete();
+
+//        auth()->logout();
 
         return ApiResponse::success(
             message: 'Déconnexion réussie'
         );
+
     }
 
 }

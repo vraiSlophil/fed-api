@@ -24,10 +24,12 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return ApiResponse::success(
-            $user,
-            'Utilisateur créé avec succès',
-            201
-        );
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return ApiResponse::success([
+            'user' => $user,
+            'token' => $token
+        ], 'Utilisateur créé avec succès', 201);
     }
+
 }
