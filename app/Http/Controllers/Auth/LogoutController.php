@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,11 +13,7 @@ class LogoutController extends Controller
     {
         $request->user()->tokens()->delete();
 
-//        auth()->logout();
-
-        return ApiResponse::success(
-            message: 'Déconnexion réussie'
-        );
+        return ApiResponse::success();
 
     }
 
