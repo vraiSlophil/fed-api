@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
@@ -34,6 +35,10 @@ class RegisterController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
         ]);
+
+        Log::info('Mail config: ' . json_encode(config('mail')));
+        Log::info('Resend API Key: ' . config('mail.mailers.resend.api_key'));
+        Log::info('User registered: ' . $user->email);
 
         event(new Registered($user));
 
