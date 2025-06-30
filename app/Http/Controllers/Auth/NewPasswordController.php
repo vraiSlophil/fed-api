@@ -43,15 +43,15 @@ class NewPasswordController extends Controller
             }
         );
 
-        $isResetLinkSent = $status === Password::RESET_LINK_SENT;
+        $isPasswordReset = $status === Password::PASSWORD_RESET;
 
-        if ($status != $isResetLinkSent) {
+        if (!$isPasswordReset) {
             throw ValidationException::withMessages([
                 'email' => [__($status)],
             ]);
         }
 
-        return $isResetLinkSent
+        return $isPasswordReset
             ? ApiResponse::success(null, __($status))
             : ApiResponse::error(__($status));
     }

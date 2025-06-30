@@ -47,9 +47,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', LogoutController::class)
         ->name('logout');
-
-    Route::get('/ping', function () {return ApiResponse::success(message: 'pong');})
-        ->name('ping');
 });
 
 /*
@@ -57,7 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
 | Routes protégées par jeton Sanctum et vérification d’e-mail
 |----------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    Route::get('/ping', function () {return ApiResponse::success(message: 'pong');})
+        ->name('ping');
 
     // Envoi d’un nouveau mail de vérification
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
