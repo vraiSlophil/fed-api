@@ -20,6 +20,10 @@ class LoginController extends Controller
         $request->authenticate();
 
         $user = $request->user();
+        $user->last_login_at = now();
+        $user->last_login_ip = $request->ip();
+        $user->save();
+
         $token = $user->createToken('sanctum-token')->plainTextToken;
 
         return ApiResponse::success([

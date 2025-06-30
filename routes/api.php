@@ -9,8 +9,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserController;
-use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -69,6 +69,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::post('/update', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
         Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    });
+    Route::prefix('themes')->group(function () {
+        Route::get('/', [ThemeController::class, 'index'])->name('themes.index');
+        Route::post('/', [ThemeController::class, 'store'])->name('themes.store');
+        Route::get('/{id}', [ThemeController::class, 'show'])->name('themes.show');
+        Route::put('/{id}', [ThemeController::class, 'update'])->name('themes.update');
+        Route::delete('/{id}', [ThemeController::class, 'destroy'])->name('themes.destroy');
     });
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
         ->middleware('throttle:6,1')

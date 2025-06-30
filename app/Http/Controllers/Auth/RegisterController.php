@@ -34,6 +34,8 @@ class RegisterController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
         ]);
 
         Log::info('Mail config: ' . json_encode(config('mail')));
