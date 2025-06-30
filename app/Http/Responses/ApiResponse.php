@@ -3,6 +3,8 @@
 namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class ApiResponse
 {
@@ -22,7 +24,7 @@ final class ApiResponse
     }
 
     /**
-     * Réponse standard en cas d’erreur.
+     * Réponse standard en cas d'erreur.
      */
     public static function error(
         string $message = 'Une erreur est survenue',
@@ -34,5 +36,29 @@ final class ApiResponse
             'message' => $message,
             'errors'  => $errors,
         ], $status);
+    }
+    
+    /**
+     * Réponse pour les fichiers médias.
+     */
+    public static function media(
+        string $path,
+        string $mimeType = null,
+        string $filename = null,
+        array $headers = []
+    ): BinaryFileResponse|Response {
+        if (!file_exists($path)) {
+            return response('', 404);
+        }
+        
+        $response = response()->file($path, array_merge([
+            'Content-Type' => $mimeType ?: mime_content_type($path),
+        ], $headers));
+        
+        if ($filename) {
+            $response->setContentDisposition('inline', $filename);
+        }
+        
+        return $response;
     }
 }

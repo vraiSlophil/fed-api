@@ -7,6 +7,8 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Http\Responses\ApiResponse;
@@ -38,6 +40,10 @@ use Illuminate\Support\Facades\Route;
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
+    Route::get('/media/{path}', [MediaController::class, 'show'])
+        ->where('path', '.*')
+        ->name('media.show');
+
 /*
 |----------------------------------------------------------------------
 | Routes protégées par jeton Sanctum uniquement
@@ -58,12 +64,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/ping', function () {return ApiResponse::success(message: 'pong');})
         ->name('ping');
 
-    // Envoi d’un nouveau mail de vérification
+    Route::prefix('profile')->group(function () {
+        Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
+        Route::post('/update', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+        Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    });
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
         ->middleware('throttle:6,1')
         ->name('verification.send');
-
-    // Exemple de route protégée retournant l’utilisateur
     Route::get('/user', UserController::class)
         ->name('user');
 });
