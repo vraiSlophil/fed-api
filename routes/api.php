@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserController;
 use App\Http\Responses\ApiResponse;
@@ -76,6 +77,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/{id}', [ThemeController::class, 'show'])->name('themes.show');
         Route::put('/{id}', [ThemeController::class, 'update'])->name('themes.update');
         Route::delete('/{id}', [ThemeController::class, 'destroy'])->name('themes.destroy');
+    });
+    Route::prefix('tasks')->group(function () {
+        Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
+        Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
+        Route::get('/{id}', [TaskController::class, 'show'])->name('tasks.show');
+        Route::put('/{id}', [TaskController::class, 'update'])->name('tasks.update');
+        Route::post('/{id}/archive', [TaskController::class, 'archive'])->name('tasks.archive');
+        Route::post('/{id}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
+        Route::post('/tasks/{id}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
+        Route::post('/tasks/{id}/uncomplete', [TaskController::class, 'uncomplete'])->name('tasks.uncomplete');
+        Route::delete('/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     });
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
         ->middleware('throttle:6,1')
