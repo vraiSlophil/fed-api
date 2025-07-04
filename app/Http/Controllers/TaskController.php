@@ -350,6 +350,6 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return ApiResponse::success(null, 204);
+        return ApiResponse::success(status: 204);
     }
 }
