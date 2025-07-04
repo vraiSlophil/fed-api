@@ -215,14 +215,27 @@ class TaskController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
-            ->firstOrFail();
+        $task = Task::where('task_id', $id)->firstOrFail();
+
+        // Vérifier si l'utilisateur peut modifier cette tâche
+        $userId = Auth::id();
+        $theme = $task->theme;
+
+        if (!$theme->canEditTaskBy($userId)) {
+            return ApiResponse::error('Vous n\'avez pas la permission de modifier cette tâche.', 403);
+        }
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'status' => 'sometimes|required|in:todo,doing,done',
         ]);
+
+        // Vérifier spécifiquement la permission de validation si le statut est modifié en "done"
+        if (isset($validated['status']) && $validated['status'] === 'done' && $task->status !== 'done') {
+            if (!$theme->canValidateTaskBy($userId)) {
+                return ApiResponse::error('Vous n\'avez pas la permission de valider cette tâche.', 403);
+            }
+        }
 
         // Mise à jour - le mutateur setStatusAttribute gère automatiquement validated_at
         $task->update($validated);
@@ -273,12 +286,19 @@ class TaskController extends Controller
      */
     public function complete(string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
-            ->firstOrFail();
+        $task = Task::where('task_id', $id)->firstOrFail();
 
-        // Utiliser la méthode validate du modèle
-        $task->validate()->save();
+        // Vérifier si l'utilisateur peut valider cette tâche
+        $userId = Auth::id();
+        $theme = $task->theme;
+
+        if (!$theme->canValidateTaskBy($userId)) {
+            return ApiResponse::error('Vous n\'avez pas la permission de valider cette tâche.', 403);
+        }
+
+        // Si l'utilisateur est autorisé, mettre à jour la tâche
+        $task->status = 'done';
+        $task->save();
 
         return ApiResponse::success([
             'task' => $task
@@ -290,12 +310,17 @@ class TaskController extends Controller
      */
     public function uncomplete(string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
-            ->firstOrFail();
+        $task = Task::where('task_id', $id)->firstOrFail();
 
-        // Utiliser la méthode invalidate du modèle et changer le statut
-        $task->invalidate();
+        // Vérifier si l'utilisateur peut valider cette tâche
+        $userId = Auth::id();
+        $theme = $task->theme;
+
+        if (!$theme->canValidateTaskBy($userId)) {
+            return ApiResponse::error('Vous n\'avez pas la permission de modifier la validation de cette tâche.', 403);
+        }
+
+        // Si l'utilisateur est autorisé, mettre à jour la tâche
         $task->status = 'doing';
         $task->save();
 

@@ -85,8 +85,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::put('/{id}', [TaskController::class, 'update'])->name('tasks.update');
         Route::post('/{id}/archive', [TaskController::class, 'archive'])->name('tasks.archive');
         Route::post('/{id}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
-        Route::post('/tasks/{id}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
-        Route::post('/tasks/{id}/uncomplete', [TaskController::class, 'uncomplete'])->name('tasks.uncomplete');
+        Route::post('/{id}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
+        Route::post('/{id}/uncomplete', [TaskController::class, 'uncomplete'])->name('tasks.uncomplete');
         Route::delete('/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     });
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
