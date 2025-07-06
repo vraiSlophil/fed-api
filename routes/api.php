@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserController;
@@ -65,6 +66,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/ping', function () {return ApiResponse::success(message: 'pong');})
         ->name('ping');
 
+    Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
+
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
         Route::post('/update', [ProfileController::class, 'update'])->name('profile.update');
@@ -77,6 +80,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/{id}', [ThemeController::class, 'show'])->name('themes.show');
         Route::put('/{id}', [ThemeController::class, 'update'])->name('themes.update');
         Route::delete('/{id}', [ThemeController::class, 'destroy'])->name('themes.destroy');
+        Route::get('/{id}/stats', [StatsController::class, 'themeStats'])->name('stats.theme');
+
     });
     Route::prefix('tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
