@@ -11,21 +11,16 @@ class ThemeUserPermission extends Model
 
     /**
      * Indique si le modèle doit être horodaté
-     *
-     * @var bool
      */
     public $timestamps = false;
 
     /**
      * La clé primaire est composite (theme_id, user_id)
-     * On désactive l'incrémentation automatique
      */
     public $incrementing = false;
 
     /**
-     * Les attributs qui sont assignables en masse
-     *
-     * @var array
+     * Les attributs assignables en masse
      */
     protected $fillable = [
         'theme_id',
@@ -42,8 +37,6 @@ class ThemeUserPermission extends Model
 
     /**
      * Les attributs qui doivent être convertis
-     *
-     * @var array
      */
     protected $casts = [
         'can_view' => 'boolean',
@@ -56,11 +49,27 @@ class ThemeUserPermission extends Model
     ];
 
     /**
+     * Vérifie si l'utilisateur est invité (pas encore actif)
+     */
+    public function isInvited(): bool
+    {
+        return $this->status === 'invited';
+    }
+
+    /**
      * Vérifie si le statut est actif
      */
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Vérifie si le statut est inactif (révoqué)
+     */
+    public function isInactive(): bool
+    {
+        return $this->status === 'revoked';
     }
 
     /**
