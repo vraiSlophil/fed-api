@@ -12,6 +12,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ThemeController;
+use App\Http\Controllers\ThemeInvitationController;
+use App\Http\Controllers\ThemeMemberController;
 use App\Http\Controllers\UserController;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +44,11 @@ use Illuminate\Support\Facades\Route;
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
+    // Gestion des invitations aux thèmes via URL signée
+    Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
+        ->name('theme.accept-invitation');
+
+
     Route::get('/media/{path}', [MediaController::class, 'show'])
         ->where('path', '.*')
         ->name('media.show');
@@ -67,6 +74,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         ->name('ping');
 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
+    Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
@@ -81,6 +89,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::put('/{id}', [ThemeController::class, 'update'])->name('themes.update');
         Route::delete('/{id}', [ThemeController::class, 'destroy'])->name('themes.destroy');
         Route::get('/{id}/stats', [StatsController::class, 'themeStats'])->name('stats.theme');
+
+        Route::get('/{id}/members', [ThemeMemberController::class, 'listMembers'])->name('theme.members.list');
+        Route::post('/{id}/members', [ThemeMemberController::class, 'inviteUser'])->name('theme.members.invite');
+        Route::put('/{id}/members/{userId}', [ThemeMemberController::class, 'updateMemberPermissions'])->name('theme.members.update');
+        Route::post('/{id}/members/{userId}/deactivate', [ThemeMemberController::class, 'deactivateMember'])->name('theme.members.deactivate');
+        Route::post('/{id}/members/{userId}/reactivate', [ThemeMemberController::class, 'reactivateMember'])->name('theme.members.reactivate');
+        Route::delete('/{id}/members/{userId}', [ThemeMemberController::class, 'removeMember'])->name('theme.members.remove');
+        Route::post('/{id}/leave', [ThemeMemberController::class, 'leaveTheme'])->name('theme.leave');
 
     });
     Route::prefix('tasks')->group(function () {

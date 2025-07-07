@@ -321,7 +321,7 @@ class TaskController extends Controller
         }
 
         // Si l'utilisateur est autorisé, mettre à jour la tâche
-        $task->status = 'doing';
+        $task->status = 'todo';
         $task->save();
 
         return ApiResponse::success([
