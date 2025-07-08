@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ThemeUserPermission extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     /**
      * Indique si le modèle doit être horodaté
@@ -15,9 +16,19 @@ class ThemeUserPermission extends Model
     public $timestamps = false;
 
     /**
+     * La clé primaire du modèle
+     */
+    protected $primaryKey = 'permission_id';
+
+    /**
      * La clé primaire est composite (theme_id, user_id)
      */
     public $incrementing = false;
+
+    /**
+     * Le type de la clé primaire
+     */
+    protected $keyType = 'string';
 
     /**
      * Les attributs assignables en masse

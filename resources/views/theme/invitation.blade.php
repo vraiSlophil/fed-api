@@ -68,22 +68,22 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="icon">
-            📧
-        </div>
-        
-        <h1>Invitation à un thème</h1>
-        
-        <div class="message">
-            <p>Vous avez été invité à rejoindre un thème. Veuillez accepter ou refuser cette invitation.</p>
-        </div>
-        
-        <div class="buttons">
-            <a href="{{ url()->current() }}?theme_id={{ $theme_id }}&user_id={{ $user_id }}&action=accept&signature={{ $signature }}&expires={{ $expires }}" class="button button-accept">Accepter l'invitation</a>
-            
-            <a href="{{ url()->current() }}?theme_id={{ $theme_id }}&user_id={{ $user_id }}&action=decline&signature={{ $signature }}&expires={{ $expires }}" class="button button-decline">Refuser l'invitation</a>
-        </div>
+<div class="container">
+    <div class="icon">
+        📧
     </div>
+
+    <h1>Invitation à un thème</h1>
+
+    <div class="message">
+        <p>Vous avez été invité à rejoindre un thème. Veuillez accepter ou refuser cette invitation.</p>
+    </div>
+
+    <div class="buttons">
+        <a href="{{ url()->current() }}?theme_id={{ $theme_id }}&user_id={{ $user_id }}&action=accept&signature={{ $signature }}&expires={{ $expires }}" class="button button-accept">Accepter l'invitation</a>
+
+        <a href="{{ url()->current() }}?theme_id={{ $theme_id }}&user_id={{ $user_id }}&action=decline&signature={{ $signature }}&expires={{ $expires }}" class="button button-decline">Refuser l'invitation</a>
+    </div>
+</div>
 </body>
 </html>

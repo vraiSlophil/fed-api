@@ -7,6 +7,7 @@ use App\Mail\ThemeInvitation;
 use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -171,16 +172,28 @@ class ThemeMemberController extends Controller
         // Récupérer l'utilisateur invité
         $invitedUser = User::findOrFail($validated['user_id']);
 
-        // Générer un lien d'invitation signé
-        $invitationLink = URL::temporarySignedRoute(
+        $acceptLink = URL::temporarySignedRoute(
             'theme.accept-invitation',
             now()->addDays(7),
             [
                 'theme_id' => $themeId,
                 'user_id' => $invitedUser->user_id,
                 'token' => Str::random(40),
+                'action' => 'accept'
             ]
         );
+
+        $declineLink = URL::temporarySignedRoute(
+            'theme.accept-invitation',
+            now()->addDays(7),
+            [
+                'theme_id' => $themeId,
+                'user_id' => $invitedUser->user_id,
+                'token' => Str::random(40),
+                'action' => 'decline'
+            ]
+        );
+
 
         // Envoyer l'e-mail d'invitation
         try {
@@ -189,9 +202,10 @@ class ThemeMemberController extends Controller
                     $theme,
                     Auth::user(),
                     $invitedUser,
-                    $invitationLink
+                    $acceptLink,
+                    $declineLink
                 ));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Erreur lors de l\'envoi de l\'email d\'invitation', [
                 'error' => $e->getMessage(),
                 'theme_id' => $themeId,

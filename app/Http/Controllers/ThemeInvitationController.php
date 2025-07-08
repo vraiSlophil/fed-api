@@ -18,30 +18,13 @@ class ThemeInvitationController extends Controller
         if (!$request->hasValidSignature()) {
             return view('theme.invitation-result', [
                 'status' => 'error',
-                'message' => 'Le lien d\'invitation est invalide ou a expiré.',
+                'message' => 'Le lien d\'invitation est invalide ou a expiré.1',
             ]);
         }
 
         $themeId = $request->theme_id;
         $userId = $request->user_id;
         $action = $request->action;
-
-        // Si l'utilisateur n'est pas connecté, le rediriger vers la page de connexion
-        if (!Auth::check()) {
-            // Sauvegarder l'URL actuelle dans la session pour y revenir après la connexion
-            session(['url.intended' => url()->full()]);
-            
-            return redirect()->route('login');
-        }
-
-        // Vérifier que l'utilisateur connecté est bien celui invité
-        if (Auth::id() !== $userId) {
-            return view('theme.invitation-result', [
-                'status' => 'error',
-                'message' => 'Vous n\'êtes pas autorisé à utiliser cette invitation. Veuillez vous connecter avec le compte auquel l\'invitation a été envoyée.',
-                'frontendUrl' => config('app.frontend_url', 'http://localhost:3000'),
-            ]);
-        }
 
         // Récupérer la permission
         $permission = ThemeUserPermission::where('theme_id', $themeId)
