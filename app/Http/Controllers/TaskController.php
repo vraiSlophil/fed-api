@@ -131,9 +131,7 @@ class TaskController extends Controller
         $string = mb_strtolower($string, 'UTF-8');
 
         // Supprimer les accents (décomposer les caractères accentués puis supprimer les marques diacritiques)
-        $string = transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
-
-        return $string;
+        return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
     }
 
     /**

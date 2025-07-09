@@ -25,9 +25,14 @@ class ThemeMemberController extends Controller
     {
         $request->validate([
             'search' => 'required|string|min:3',
+            'theme_id' => 'required|uuid|exists:themes,theme_id',
         ]);
 
         $search = $request->search;
+        $themeId = $request->theme_id;
+
+        $theme = Theme::findOrFail($themeId);
+        $ownerId = $theme->owner_id;
 
         // Normaliser la recherche pour ignorer les accents et la casse
         $normalizedSearch = $this->normalizeString($search);
@@ -35,6 +40,7 @@ class ThemeMemberController extends Controller
         // Rechercher les utilisateurs par nom d'utilisateur ou email
         // N'inclure que les utilisateurs dont l'email est vérifié
         $users = User::whereNotNull('email_verified_at')
+            ->where('user_id', '!=', $ownerId)
             ->where(function ($query) use ($normalizedSearch) {
                 $query->where('username', 'like', "%{$normalizedSearch}%")
                     ->orWhere('email', 'like', "%{$normalizedSearch}%")
@@ -143,12 +149,19 @@ class ThemeMemberController extends Controller
             'can_validate_task' => 'required|boolean',
         ]);
 
-        // Vérifier que l'utilisateur n'est pas déjà membre du thème
-        $existingPermission = ThemeUserPermission::where('theme_id', $themeId)
-            ->where('user_id', $validated['user_id'])
-            ->first();
+        // Vérifier que l'utilisateur n'est pas le propriétaire du thème
 
-        if ($existingPermission) {
+        if ($theme->owner_id === $validated['user_id']) {
+            return ApiResponse::error(
+                'Vous ne pouvez pas inviter le propriétaire du thème.',
+                403
+            );
+        }
+
+        // Vérifier que l'utilisateur n'est pas déjà membre du thème
+        if (ThemeUserPermission::where('theme_id', $themeId)
+            ->where('user_id', $validated['user_id'])
+            ->first()) {
             return ApiResponse::error(
                 'Cet utilisateur est déjà membre de ce thème.',
                 409
@@ -222,7 +235,6 @@ class ThemeMemberController extends Controller
         }
 
         return ApiResponse::success([
-            'message' => "Invitation envoyée à {$invitedUser->email}",
             'invitation' => [
                 'user_id' => $invitedUser->user_id,
                 'username' => $invitedUser->username,
@@ -231,81 +243,82 @@ class ThemeMemberController extends Controller
                 'last_name' => $invitedUser->last_name,
                 'status' => 'invited',
                 'invited_at' => $permission->invited_at,
-            ],
-        ], 201);
+                ],],
+            "Invitation envoyée à {$invitedUser->email}",
+            201);
     }
 
-    /**
-     * Accepter une invitation à rejoindre un thème
-     */
-    public function acceptInvitation(Request $request): JsonResponse
-    {
-        // Vérifier que la requête a un lien signé valide
-        if (!$request->hasValidSignature()) {
-            return ApiResponse::error('Lien d\'invitation invalide ou expiré.', 403);
-        }
-
-        $themeId = $request->theme_id;
-        $userId = $request->user_id;
-
-        // Vérifier que l'utilisateur connecté est bien celui invité
-        if (Auth::id() !== $userId) {
-            return ApiResponse::error(
-                'Vous n\'êtes pas autorisé à accepter cette invitation.',
-                403
-            );
-        }
-
-        // Récupérer la permission
-        $permission = ThemeUserPermission::where('theme_id', $themeId)
-            ->where('user_id', $userId)
-            ->where('status', 'invited')
-            ->firstOrFail();
-
-        // Mettre à jour le statut
-        $permission->status = 'active';
-        $permission->save();
-
-        return ApiResponse::success([
-            'message' => 'Invitation acceptée avec succès.',
-            'theme_id' => $themeId,
-        ]);
-    }
-
-    /**
-     * Refuser une invitation à rejoindre un thème
-     */
-    public function declineInvitation(Request $request): JsonResponse
-    {
-        // Vérifier que la requête a un lien signé valide
-        if (!$request->hasValidSignature()) {
-            return ApiResponse::error('Lien d\'invitation invalide ou expiré.', 403);
-        }
-
-        $themeId = $request->theme_id;
-        $userId = $request->user_id;
-
-        // Vérifier que l'utilisateur connecté est bien celui invité
-        if (Auth::id() !== $userId) {
-            return ApiResponse::error(
-                'Vous n\'êtes pas autorisé à refuser cette invitation.',
-                403
-            );
-        }
-
-        // Récupérer la permission
-        $permission = ThemeUserPermission::where('theme_id', $themeId)
-            ->where('user_id', $userId)
-            ->where('status', 'invited')
-            ->firstOrFail();
-
-        // Supprimer la permission
-        $permission->delete();
-
-        return ApiResponse::success([
-            'message' => 'Invitation refusée avec succès.',
-        ]);
-    }
+//    /**
+//     * Accepter une invitation à rejoindre un thème
+//     */
+//    public function acceptInvitation(Request $request): JsonResponse
+//    {
+//        // Vérifier que la requête a un lien signé valide
+//        if (!$request->hasValidSignature()) {
+//            return ApiResponse::error('Lien d\'invitation invalide ou expiré.', 403);
+//        }
+//
+//        $themeId = $request->theme_id;
+//        $userId = $request->user_id;
+//
+//        // Vérifier que l'utilisateur connecté est bien celui invité
+//        if (Auth::id() !== $userId) {
+//            return ApiResponse::error(
+//                'Vous n\'êtes pas autorisé à accepter cette invitation.',
+//                403
+//            );
+//        }
+//
+//        // Récupérer la permission
+//        $permission = ThemeUserPermission::where('theme_id', $themeId)
+//            ->where('user_id', $userId)
+//            ->where('status', 'invited')
+//            ->firstOrFail();
+//
+//        // Mettre à jour le statut
+//        $permission->status = 'active';
+//        $permission->save();
+//
+//        return ApiResponse::success([
+//            'message' => 'Invitation acceptée avec succès.',
+//            'theme_id' => $themeId,
+//        ]);
+//    }
+//
+//    /**
+//     * Refuser une invitation à rejoindre un thème
+//     */
+//    public function declineInvitation(Request $request): JsonResponse
+//    {
+//        // Vérifier que la requête a un lien signé valide
+//        if (!$request->hasValidSignature()) {
+//            return ApiResponse::error('Lien d\'invitation invalide ou expiré.', 403);
+//        }
+//
+//        $themeId = $request->theme_id;
+//        $userId = $request->user_id;
+//
+//        // Vérifier que l'utilisateur connecté est bien celui invité
+//        if (Auth::id() !== $userId) {
+//            return ApiResponse::error(
+//                'Vous n\'êtes pas autorisé à refuser cette invitation.',
+//                403
+//            );
+//        }
+//
+//        // Récupérer la permission
+//        $permission = ThemeUserPermission::where('theme_id', $themeId)
+//            ->where('user_id', $userId)
+//            ->where('status', 'invited')
+//            ->firstOrFail();
+//
+//        // Supprimer la permission
+//        $permission->delete();
+//
+//        return ApiResponse::success([
+//            'message' => 'Invitation refusée avec succès.',
+//        ]);
+//    }
 
     /**
      * Mettre à jour les permissions d'un membre
@@ -339,7 +352,6 @@ class ThemeMemberController extends Controller
         ]);
 
         return ApiResponse::success([
-            'message' => 'Permissions mises à jour avec succès.',
             'permissions' => [
                 'can_view' => $permission->can_view,
                 'can_update_theme' => $permission->can_update_theme,
@@ -347,8 +359,9 @@ class ThemeMemberController extends Controller
                 'can_edit_task' => $permission->can_edit_task,
                 'can_delete_task' => $permission->can_delete_task,
                 'can_validate_task' => $permission->can_validate_task,
-            ],
-        ]);
+            ],],
+            'Permissions mises à jour avec succès.'
+        );
     }
 
     /**
@@ -361,8 +374,7 @@ class ThemeMemberController extends Controller
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
             return ApiResponse::error(
-                'Vous ne pouvez pas désactiver le propriétaire du thème.',
-                400
+                'Vous ne pouvez pas désactiver le propriétaire du thème.'
             );
         }
 
@@ -375,9 +387,7 @@ class ThemeMemberController extends Controller
         $permission->status = 'revoked';
         $permission->save();
 
-        return ApiResponse::success([
-            'message' => 'Membre désactivé avec succès.',
-        ]);
+        return ApiResponse::success(null, 'Membre désactivé avec succès.');
     }
 
     /**
@@ -397,9 +407,7 @@ class ThemeMemberController extends Controller
         $permission->status = 'active';
         $permission->save();
 
-        return ApiResponse::success([
-            'message' => 'Membre réactivé avec succès.',
-        ]);
+        return ApiResponse::success(null, 'Membre réactivé avec succès.');
     }
 
     /**
@@ -411,10 +419,7 @@ class ThemeMemberController extends Controller
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
-            return ApiResponse::error(
-                'Vous ne pouvez pas supprimer le propriétaire du thème.',
-                400
-            );
+            return ApiResponse::error('Vous ne pouvez pas supprimer le propriétaire du thème.');
         }
 
         // Récupérer la permission
@@ -425,9 +430,7 @@ class ThemeMemberController extends Controller
         // Supprimer la permission
         $permission->delete();
 
-        return ApiResponse::success([
-            'message' => 'Membre supprimé avec succès.',
-        ]);
+        return ApiResponse::success(null, 'Membre supprimé avec succès.');
     }
 
     /**
@@ -440,10 +443,7 @@ class ThemeMemberController extends Controller
         // Vérifier que l'utilisateur n'est pas le propriétaire
         $theme = Theme::findOrFail($themeId);
         if ($theme->owner_id === $userId) {
-            return ApiResponse::error(
-                'En tant que propriétaire, vous ne pouvez pas quitter ce thème. Vous devez le supprimer ou transférer la propriété.',
-                400
-            );
+            return ApiResponse::error('En tant que propriétaire, vous ne pouvez pas quitter ce thème. Vous devez le supprimer ou transférer la propriété.');
         }
 
         // Récupérer la permission
@@ -454,9 +454,7 @@ class ThemeMemberController extends Controller
         // Supprimer la permission
         $permission->delete();
 
-        return ApiResponse::success([
-            'message' => 'Vous avez quitté le thème avec succès.',
-        ]);
+        return ApiResponse::success(null, 'Vous avez quitté le thème avec succès.');
     }
 
     /**
@@ -480,8 +478,6 @@ class ThemeMemberController extends Controller
         $string = mb_strtolower($string, 'UTF-8');
 
         // Supprimer les accents
-        $string = transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
-
-        return $string;
+        return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
     }
 }
