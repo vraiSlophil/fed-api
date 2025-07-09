@@ -8,6 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('theme_user_permissions', function (Blueprint $table) {
+            $table->uuid('permission_id')->primary();
             $table->uuid('theme_id');
             $table->uuid('user_id');
             $table->boolean('can_view')->default(true);
@@ -19,7 +20,7 @@ return new class extends Migration {
             $table->enum('status', ['invited', 'active', 'revoked'])->default('invited');
             $table->timestamp('invited_at')->nullable();
 
-            $table->primary(['theme_id', 'user_id']);
+            $table->unique(['theme_id', 'user_id']);
             $table->foreign('theme_id')->references('theme_id')->on('themes')->cascadeOnDelete();
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
         });

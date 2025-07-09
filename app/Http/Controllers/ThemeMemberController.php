@@ -7,6 +7,7 @@ use App\Mail\ThemeInvitation;
 use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,11 +35,11 @@ class ThemeMemberController extends Controller
         // Rechercher les utilisateurs par nom d'utilisateur ou email
         // N'inclure que les utilisateurs dont l'email est vérifié
         $users = User::whereNotNull('email_verified_at')
-            ->where(function ($query) use ($search) {
-                $query->where('username', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%");
+            ->where(function ($query) use ($normalizedSearch) {
+                $query->where('username', 'like', "%{$normalizedSearch}%")
+                    ->orWhere('email', 'like', "%{$normalizedSearch}%")
+                    ->orWhere('first_name', 'like', "%{$normalizedSearch}%")
+                    ->orWhere('last_name', 'like', "%{$normalizedSearch}%");
             })
             ->limit(10)
             ->get(['user_id', 'username', 'email', 'first_name', 'last_name', 'avatar_path']);
@@ -51,7 +52,7 @@ class ThemeMemberController extends Controller
                 'email' => $user->email,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
-                'avatar_url' => $user->avatar_path ? url($user->avatar_path) : null,
+                'avatar_url' => $user->avatar_path,
             ];
         });
 
@@ -83,9 +84,7 @@ class ThemeMemberController extends Controller
                 'email' => $permission->user->email,
                 'first_name' => $permission->user->first_name,
                 'last_name' => $permission->user->last_name,
-                'avatar_url' => $permission->user->avatar_path
-                    ? url($permission->user->avatar_path)
-                    : null,
+                'avatar_url' => $permission->user->avatar_path,
                 'status' => $permission->status,
                 'invited_at' => $permission->invited_at,
                 'permissions' => [
@@ -106,7 +105,7 @@ class ThemeMemberController extends Controller
             'email' => $owner->email,
             'first_name' => $owner->first_name,
             'last_name' => $owner->last_name,
-            'avatar_url' => $owner->avatar_path ? url($owner->avatar_path) : null,
+            'avatar_url' => $owner->avatar_path,
             'status' => 'owner', // Statut spécial pour le propriétaire
             'invited_at' => null,
             'permissions' => [
@@ -173,16 +172,28 @@ class ThemeMemberController extends Controller
         // Récupérer l'utilisateur invité
         $invitedUser = User::findOrFail($validated['user_id']);
 
-        // Générer un lien d'invitation signé
-        $invitationLink = URL::temporarySignedRoute(
+        $acceptLink = URL::temporarySignedRoute(
             'theme.accept-invitation',
             now()->addDays(7),
             [
                 'theme_id' => $themeId,
                 'user_id' => $invitedUser->user_id,
                 'token' => Str::random(40),
+                'action' => 'accept'
             ]
         );
+
+        $declineLink = URL::temporarySignedRoute(
+            'theme.accept-invitation',
+            now()->addDays(7),
+            [
+                'theme_id' => $themeId,
+                'user_id' => $invitedUser->user_id,
+                'token' => Str::random(40),
+                'action' => 'decline'
+            ]
+        );
+
 
         // Envoyer l'e-mail d'invitation
         try {
@@ -191,9 +202,10 @@ class ThemeMemberController extends Controller
                     $theme,
                     Auth::user(),
                     $invitedUser,
-                    $invitationLink
+                    $acceptLink,
+                    $declineLink
                 ));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Erreur lors de l\'envoi de l\'email d\'invitation', [
                 'error' => $e->getMessage(),
                 'theme_id' => $themeId,
