@@ -38,7 +38,7 @@ class ThemeController extends Controller
             $permission = $theme->themeUserPermissions->first();
 
             // Ajouter les permissions comme attribut au thème et supprimer la relation complète
-            $theme->permission = $permission;
+            $theme->permissions = $permission;
             unset($theme->themeUserPermissions);
         });
 
