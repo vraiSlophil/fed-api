@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 
 class TaskController extends Controller
 {
@@ -22,13 +23,79 @@ class TaskController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Task::where('user_id', Auth::id());
+        $userId = $request->user()->user_id;
+
+        // Construire la requête de base pour toutes les tâches accessibles à l'utilisateur
+        $query = $this->buildTasksQueryForUser($userId, $request);
+
+        // Appliquer les filtres et les tris
+        $query = $this->applyFiltersAndSorting($query, $request);
+
+        // Recherche par titre (insensible aux accents et à la casse)
+        if ($request->has('search') && !empty($request->search)) {
+            return $this->handleSearchRequest($query, $request);
+        }
+
+        // Pagination des résultats
+        $perPage = $request->has('per_page') ? intval($request->per_page) : 15;
+        $tasks = $query->paginate($perPage);
+
+        return ApiResponse::success([
+            'tasks' => $tasks->items(),
+            'pagination' => [
+                'total' => $tasks->total(),
+                'per_page' => $tasks->perPage(),
+                'current_page' => $tasks->currentPage(),
+                'last_page' => $tasks->lastPage(),
+                'from' => $tasks->firstItem(),
+                'to' => $tasks->lastItem(),
+            ]
+        ]);
+    }
+
+    /**
+     * Construit la requête de base pour récupérer les tâches accessibles à l'utilisateur
+     */
+    private function buildTasksQueryForUser(string $userId, Request $request): Builder
+    {
+        // Récupérer les tâches dont l'utilisateur est le propriétaire
+        $query = Task::where(function ($query) use ($userId) {
+            // Tâches créées par l'utilisateur
+            $query->where('user_id', $userId);
+
+            // OU tâches des thèmes où l'utilisateur est invité avec permission de voir
+            $query->orWhereHas('theme.themeUserPermissions', function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                    ->where('can_view', true)
+                    ->where('status', 'active');
+            });
+        });
 
         // Filtrer par thème si spécifié
         if ($request->has('theme_id')) {
             $query->where('theme_id', $request->theme_id);
+
+            // Vérifier que l'utilisateur a accès à ce thème
+            $theme = Theme::where('theme_id', $request->theme_id)
+                ->where(function ($q) use ($userId) {
+                    $q->where('owner_id', $userId)
+                        ->orWhereHas('themeUserPermissions', function ($subq) use ($userId) {
+                            $subq->where('user_id', $userId)
+                                ->where('can_view', true)
+                                ->where('status', 'active');
+                        });
+                })
+                ->firstOrFail();
         }
 
+        return $query;
+    }
+
+    /**
+     * Applique les filtres et le tri à la requête
+     */
+    private function applyFiltersAndSorting(Builder $query, Request $request): Builder
+    {
         // Filtrer par statut si spécifié
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -74,50 +141,39 @@ class TaskController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        // Recherche par titre (insensible aux accents et à la casse)
-        if ($request->has('search') && !empty($request->search)) {
-            $searchTerm = $this->normalizeString($request->search);
+        return $query;
+    }
 
-            // Version alternative: utiliser une méthode basée sur le php pour la recherche
-            $tasks = $query->get();
+    /**
+     * Gère la recherche par titre
+     */
+    private function handleSearchRequest(Builder $query, Request $request): JsonResponse
+    {
+        $searchTerm = $this->normalizeString($request->search);
 
-            // Filtrer les résultats en PHP
-            $filteredTasks = $tasks->filter(function($task) use ($searchTerm) {
-                $normalizedTitle = $this->normalizeString($task->title);
-                return strpos($normalizedTitle, $searchTerm) !== false;
-            });
+        // Version alternative: utiliser une méthode basée sur le php pour la recherche
+        $tasks = $query->get();
 
-            // Paginer manuellement les résultats
-            $page = $request->input('page', 1);
-            $perPage = $request->input('per_page', 15);
-            $paginatedTasks = $this->paginateCollection($filteredTasks, $perPage, $page);
+        // Filtrer les résultats en PHP
+        $filteredTasks = $tasks->filter(function($task) use ($searchTerm) {
+            $normalizedTitle = $this->normalizeString($task->title);
+            return strpos($normalizedTitle, $searchTerm) !== false;
+        });
 
-            return ApiResponse::success([
-                'tasks' => $paginatedTasks['items'],
-                'pagination' => [
-                    'total' => $paginatedTasks['total'],
-                    'per_page' => $paginatedTasks['per_page'],
-                    'current_page' => $paginatedTasks['current_page'],
-                    'last_page' => $paginatedTasks['last_page'],
-                    'from' => $paginatedTasks['from'],
-                    'to' => $paginatedTasks['to'],
-                ]
-            ]);
-        }
-
-        // Pagination des résultats
-        $perPage = $request->has('per_page') ? intval($request->per_page) : 15;
-        $tasks = $query->paginate($perPage);
+        // Paginer manuellement les résultats
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 15);
+        $paginatedTasks = $this->paginateCollection($filteredTasks, $perPage, $page);
 
         return ApiResponse::success([
-            'tasks' => $tasks->items(),
+            'tasks' => $paginatedTasks['items'],
             'pagination' => [
-                'total' => $tasks->total(),
-                'per_page' => $tasks->perPage(),
-                'current_page' => $tasks->currentPage(),
-                'last_page' => $tasks->lastPage(),
-                'from' => $tasks->firstItem(),
-                'to' => $tasks->lastItem(),
+                'total' => $paginatedTasks['total'],
+                'per_page' => $paginatedTasks['per_page'],
+                'current_page' => $paginatedTasks['current_page'],
+                'last_page' => $paginatedTasks['last_page'],
+                'from' => $paginatedTasks['from'],
+                'to' => $paginatedTasks['to'],
             ]
         ]);
     }
@@ -197,10 +253,22 @@ class TaskController extends Controller
     /**
      * Afficher une tâche spécifique.
      */
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
+        $userId = $request->user()->user_id;
+
+        $task = Task::where('task_id', $id)
+            ->where(function ($query) use ($userId) {
+                // Tâche créée par l'utilisateur
+                $query->where('user_id', $userId);
+
+                // OU tâche d'un thème où l'utilisateur est invité avec permission de voir
+                $query->orWhereHas('theme.themeUserPermissions', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->where('can_view', true)
+                        ->where('status', 'active');
+                });
+            })
             ->firstOrFail();
 
         return ApiResponse::success([
@@ -216,7 +284,7 @@ class TaskController extends Controller
         $task = Task::where('task_id', $id)->firstOrFail();
 
         // Vérifier si l'utilisateur peut modifier cette tâche
-        $userId = Auth::id();
+        $userId = $request->user()->user_id;
         $theme = $task->theme;
 
         if (!$theme->canEditTaskBy($userId)) {
@@ -246,12 +314,18 @@ class TaskController extends Controller
     /**
      * Archiver une tâche.
      */
-    public function archive(string $id): JsonResponse
+    public function archive(Request $request, string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
+        $userId = $request->user()->user_id;
+        $task = Task::where('task_id', $id)
             ->whereNull('archived_at')
             ->firstOrFail();
+
+        // Vérifier que l'utilisateur a le droit de modifier cette tâche
+        $theme = $task->theme;
+        if (!$theme->canEditTaskBy($userId)) {
+            return ApiResponse::error('Vous n\'avez pas la permission de modifier cette tâche.', 403);
+        }
 
         $task->archived_at = now();
         $task->save();
@@ -264,12 +338,18 @@ class TaskController extends Controller
     /**
      * Restaurer une tâche archivée.
      */
-    public function restore(string $id): JsonResponse
+    public function restore(Request $request, string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
+        $userId = $request->user()->user_id;
+        $task = Task::where('task_id', $id)
             ->whereNotNull('archived_at')
             ->firstOrFail();
+
+        // Vérifier que l'utilisateur a le droit de modifier cette tâche
+        $theme = $task->theme;
+        if (!$theme->canEditTaskBy($userId)) {
+            return ApiResponse::error('Vous n\'avez pas la permission de modifier cette tâche.', 403);
+        }
 
         $task->archived_at = null;
         $task->save();
@@ -282,12 +362,12 @@ class TaskController extends Controller
     /**
      * Marquer une tâche comme terminée.
      */
-    public function complete(string $id): JsonResponse
+    public function complete(Request $request, string $id): JsonResponse
     {
         $task = Task::where('task_id', $id)->firstOrFail();
 
         // Vérifier si l'utilisateur peut valider cette tâche
-        $userId = Auth::id();
+        $userId = $request->user()->user_id;
         $theme = $task->theme;
 
         if (!$theme->canValidateTaskBy($userId)) {
@@ -306,12 +386,12 @@ class TaskController extends Controller
     /**
      * Marquer une tâche comme non terminée.
      */
-    public function uncomplete(string $id): JsonResponse
+    public function uncomplete(Request $request, string $id): JsonResponse
     {
         $task = Task::where('task_id', $id)->firstOrFail();
 
         // Vérifier si l'utilisateur peut valider cette tâche
-        $userId = Auth::id();
+        $userId = $request->user()->user_id;
         $theme = $task->theme;
 
         if (!$theme->canValidateTaskBy($userId)) {
@@ -330,20 +410,15 @@ class TaskController extends Controller
     /**
      * Supprimer une tâche.
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $task = Task::where('user_id', Auth::id())
-            ->where('task_id', $id)
-            ->firstOrFail();
+        $userId = $request->user()->user_id;
+        $task = Task::where('task_id', $id)->firstOrFail();
+        $theme = $task->theme;
 
         // Vérifier si l'utilisateur a le droit de supprimer cette tâche
-        // Si ce n'est pas le créateur, vérifier les permissions
-        if ($task->theme->owner_id !== Auth::id()) {
-            $permission = $task->theme->themeUserPermissions()
-                ->where('user_id', Auth::id())
-                ->where('can_delete_task', true)
-                ->where('status', 'active')
-                ->firstOrFail();
+        if (!$theme->canDeleteTaskBy($userId)) {
+            return ApiResponse::error('Vous n\'avez pas la permission de supprimer cette tâche.', 403);
         }
 
         $task->delete();

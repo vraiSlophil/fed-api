@@ -48,7 +48,6 @@ class ThemeController extends Controller
         return ApiResponse::success([
             'themes' => $allThemes
         ]);
-
     }
 
     /**
@@ -81,9 +80,23 @@ class ThemeController extends Controller
     {
         $userId = $request->user()->user_id;
 
-        $theme = Theme::where('owner_id', $userId)
-            ->where('theme_id', $id)
+        // Récupérer le thème s'il appartient à l'utilisateur ou s'il a les permissions nécessaires
+        $theme = Theme::where('theme_id', $id)
+            ->where(function($query) use ($userId) {
+                $query->where('owner_id', $userId)
+                    ->orWhereHas('themeUserPermissions', function($q) use ($userId) {
+                        $q->where('user_id', $userId)
+                            ->where('can_view', true)
+                            ->where('status', 'active');
+                    });
+            })
             ->firstOrFail();
+
+        // Ajouter les permissions si l'utilisateur n'est pas le propriétaire
+        if (!$theme->isOwnedBy($userId)) {
+            $permissions = $theme->getPermissionsFor($userId);
+            $theme->permissions = $permissions;
+        }
 
         return ApiResponse::success([
             'theme' => $theme
@@ -97,8 +110,16 @@ class ThemeController extends Controller
     {
         $userId = $request->user()->user_id;
 
-        $theme = Theme::where('owner_id', $userId)
-            ->where('theme_id', $id)
+        // Récupérer le thème s'il appartient à l'utilisateur ou s'il a les permissions nécessaires
+        $theme = Theme::where('theme_id', $id)
+            ->where(function($query) use ($userId) {
+                $query->where('owner_id', $userId)
+                    ->orWhereHas('themeUserPermissions', function($q) use ($userId) {
+                        $q->where('user_id', $userId)
+                            ->where('can_update_theme', true)
+                            ->where('status', 'active');
+                    });
+            })
             ->firstOrFail();
 
         $validated = $request->validate([
@@ -107,6 +128,12 @@ class ThemeController extends Controller
         ]);
 
         $theme->update($validated);
+
+        // Ajouter les permissions si l'utilisateur n'est pas le propriétaire
+        if (!$theme->isOwnedBy($userId)) {
+            $permissions = $theme->getPermissionsFor($userId);
+            $theme->permissions = $permissions;
+        }
 
         return ApiResponse::success([
             'theme' => $theme

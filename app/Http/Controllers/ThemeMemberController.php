@@ -70,9 +70,9 @@ class ThemeMemberController extends Controller
     /**
      * Liste des membres d'un thème
      */
-    public function listMembers(string $themeId): JsonResponse
+    public function listMembers(Request $request, string $themeId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($themeId);
+        $theme = $this->getThemeOrFail($request, $themeId);
 
         // Récupérer le propriétaire du thème
         $owner = $theme->owner;
@@ -137,7 +137,7 @@ class ThemeMemberController extends Controller
      */
     public function inviteUser(Request $request, string $themeId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($themeId);
+        $theme = $this->getThemeOrFail($request, $themeId);
 
         $validated = $request->validate([
             'user_id' => 'required|uuid|exists:users,user_id',
@@ -213,7 +213,7 @@ class ThemeMemberController extends Controller
             Mail::to($invitedUser->email)
                 ->send(new ThemeInvitation(
                     $theme,
-                    Auth::user(),
+                    $request->user(),
                     $invitedUser,
                     $acceptLink,
                     $declineLink
@@ -325,7 +325,7 @@ class ThemeMemberController extends Controller
      */
     public function updateMemberPermissions(Request $request, string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($themeId);
+        $theme = $this->getThemeOrFail($request, $themeId);
 
         $validated = $request->validate([
             'can_view' => 'required|boolean',
@@ -367,9 +367,9 @@ class ThemeMemberController extends Controller
     /**
      * Désactiver un membre
      */
-    public function deactivateMember(string $themeId, string $userId): JsonResponse
+    public function deactivateMember(Request $request, string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($themeId);
+        $theme = $this->getThemeOrFail($request, $themeId);
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
@@ -393,9 +393,9 @@ class ThemeMemberController extends Controller
     /**
      * Réactiver un membre
      */
-    public function reactivateMember(string $themeId, string $userId): JsonResponse
+    public function reactivateMember(Request $request, string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($themeId);
+        $theme = $this->getThemeOrFail($request, $themeId);
 
         // Récupérer la permission
         $permission = ThemeUserPermission::where('theme_id', $themeId)
@@ -413,9 +413,9 @@ class ThemeMemberController extends Controller
     /**
      * Supprimer un membre
      */
-    public function removeMember(string $themeId, string $userId): JsonResponse
+    public function removeMember(Request $request, string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($themeId);
+        $theme = $this->getThemeOrFail($request, $themeId);
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
@@ -436,9 +436,9 @@ class ThemeMemberController extends Controller
     /**
      * Quitter un thème (pour l'utilisateur connecté)
      */
-    public function leaveTheme(string $themeId): JsonResponse
+    public function leaveTheme(Request $request, string $themeId): JsonResponse
     {
-        $userId = Auth::id();
+        $userId = $request->user()->user_id;
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         $theme = Theme::findOrFail($themeId);
@@ -460,10 +460,12 @@ class ThemeMemberController extends Controller
     /**
      * Récupérer un thème et vérifier que l'utilisateur actuel en est le propriétaire
      */
-    private function getThemeOrFail(string $themeId): Theme
+    private function getThemeOrFail(Request $request, string $themeId): Theme
     {
+        $userId = $request->user()->user_id;
+
         $theme = Theme::where('theme_id', $themeId)
-            ->where('owner_id', Auth::id())
+            ->where('owner_id', $userId)
             ->firstOrFail();
 
         return $theme;
