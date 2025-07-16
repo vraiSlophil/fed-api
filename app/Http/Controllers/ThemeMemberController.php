@@ -18,6 +18,22 @@ use Illuminate\Support\Str;
 
 class ThemeMemberController extends Controller
 {
+
+    /**
+     * @var User|mixed Utilisateur authentifié présent dans la requête
+     */
+    protected User $user;
+
+    /**
+     * Constructeur pour initialiser l'utilisateur authentifié
+     *
+     * @param Request $request Requête HTTP contenant l'utilisateur authentifié et d'autres données
+     */
+    public function __construct(Request $request)
+    {
+        $this->user = $request->user();
+    }
+
     /**
      * Rechercher des utilisateurs pour les inviter à un thème
      */
@@ -70,9 +86,9 @@ class ThemeMemberController extends Controller
     /**
      * Liste des membres d'un thème
      */
-    public function listMembers(Request $request, string $themeId): JsonResponse
+    public function listMembers(string $themeId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($request, $themeId);
+        $theme = $this->getThemeOrFail($themeId);
 
         // Récupérer le propriétaire du thème
         $owner = $theme->owner;
@@ -137,7 +153,7 @@ class ThemeMemberController extends Controller
      */
     public function inviteUser(Request $request, string $themeId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($request, $themeId);
+        $theme = $this->getThemeOrFail($themeId);
 
         $validated = $request->validate([
             'user_id' => 'required|uuid|exists:users,user_id',
@@ -213,7 +229,7 @@ class ThemeMemberController extends Controller
             Mail::to($invitedUser->email)
                 ->send(new ThemeInvitation(
                     $theme,
-                    $request->user(),
+                    $this->user,
                     $invitedUser,
                     $acceptLink,
                     $declineLink
@@ -248,84 +264,12 @@ class ThemeMemberController extends Controller
             201);
     }
 
-//    /**
-//     * Accepter une invitation à rejoindre un thème
-//     */
-//    public function acceptInvitation(Request $request): JsonResponse
-//    {
-//        // Vérifier que la requête a un lien signé valide
-//        if (!$request->hasValidSignature()) {
-//            return ApiResponse::error('Lien d\'invitation invalide ou expiré.', 403);
-//        }
-//
-//        $themeId = $request->theme_id;
-//        $userId = $request->user_id;
-//
-//        // Vérifier que l'utilisateur connecté est bien celui invité
-//        if (Auth::id() !== $userId) {
-//            return ApiResponse::error(
-//                'Vous n\'êtes pas autorisé à accepter cette invitation.',
-//                403
-//            );
-//        }
-//
-//        // Récupérer la permission
-//        $permission = ThemeUserPermission::where('theme_id', $themeId)
-//            ->where('user_id', $userId)
-//            ->where('status', 'invited')
-//            ->firstOrFail();
-//
-//        // Mettre à jour le statut
-//        $permission->status = 'active';
-//        $permission->save();
-//
-//        return ApiResponse::success([
-//            'message' => 'Invitation acceptée avec succès.',
-//            'theme_id' => $themeId,
-//        ]);
-//    }
-//
-//    /**
-//     * Refuser une invitation à rejoindre un thème
-//     */
-//    public function declineInvitation(Request $request): JsonResponse
-//    {
-//        // Vérifier que la requête a un lien signé valide
-//        if (!$request->hasValidSignature()) {
-//            return ApiResponse::error('Lien d\'invitation invalide ou expiré.', 403);
-//        }
-//
-//        $themeId = $request->theme_id;
-//        $userId = $request->user_id;
-//
-//        // Vérifier que l'utilisateur connecté est bien celui invité
-//        if (Auth::id() !== $userId) {
-//            return ApiResponse::error(
-//                'Vous n\'êtes pas autorisé à refuser cette invitation.',
-//                403
-//            );
-//        }
-//
-//        // Récupérer la permission
-//        $permission = ThemeUserPermission::where('theme_id', $themeId)
-//            ->where('user_id', $userId)
-//            ->where('status', 'invited')
-//            ->firstOrFail();
-//
-//        // Supprimer la permission
-//        $permission->delete();
-//
-//        return ApiResponse::success([
-//            'message' => 'Invitation refusée avec succès.',
-//        ]);
-//    }
-
     /**
      * Mettre à jour les permissions d'un membre
      */
     public function updateMemberPermissions(Request $request, string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($request, $themeId);
+        $theme = $this->getThemeOrFail($themeId);
 
         $validated = $request->validate([
             'can_view' => 'required|boolean',
@@ -367,9 +311,9 @@ class ThemeMemberController extends Controller
     /**
      * Désactiver un membre
      */
-    public function deactivateMember(Request $request, string $themeId, string $userId): JsonResponse
+    public function deactivateMember(string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($request, $themeId);
+        $theme = $this->getThemeOrFail($themeId);
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
@@ -393,10 +337,8 @@ class ThemeMemberController extends Controller
     /**
      * Réactiver un membre
      */
-    public function reactivateMember(Request $request, string $themeId, string $userId): JsonResponse
+    public function reactivateMember(string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($request, $themeId);
-
         // Récupérer la permission
         $permission = ThemeUserPermission::where('theme_id', $themeId)
             ->where('user_id', $userId)
@@ -413,9 +355,9 @@ class ThemeMemberController extends Controller
     /**
      * Supprimer un membre
      */
-    public function removeMember(Request $request, string $themeId, string $userId): JsonResponse
+    public function removeMember(string $themeId, string $userId): JsonResponse
     {
-        $theme = $this->getThemeOrFail($request, $themeId);
+        $theme = $this->getThemeOrFail($themeId);
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
@@ -436,9 +378,9 @@ class ThemeMemberController extends Controller
     /**
      * Quitter un thème (pour l'utilisateur connecté)
      */
-    public function leaveTheme(Request $request, string $themeId): JsonResponse
+    public function leaveTheme(string $themeId): JsonResponse
     {
-        $userId = $request->user()->user_id;
+        $userId = $this->user->user_id;
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         $theme = Theme::findOrFail($themeId);
@@ -460,15 +402,13 @@ class ThemeMemberController extends Controller
     /**
      * Récupérer un thème et vérifier que l'utilisateur actuel en est le propriétaire
      */
-    private function getThemeOrFail(Request $request, string $themeId): Theme
+    private function getThemeOrFail(string $themeId): Theme
     {
-        $userId = $request->user()->user_id;
+        $userId = $this->user->user_id;
 
-        $theme = Theme::where('theme_id', $themeId)
+        return Theme::where('theme_id', $themeId)
             ->where('owner_id', $userId)
             ->firstOrFail();
-
-        return $theme;
     }
 
     /**
