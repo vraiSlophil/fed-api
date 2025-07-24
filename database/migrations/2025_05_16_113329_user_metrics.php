@@ -9,12 +9,21 @@ return new class extends Migration {
     {
         Schema::create('user_metrics', function (Blueprint $table) {
             $table->uuid('user_id')->primary();
-            $table->unsignedInteger('tasks_created')->default(0);
-            $table->unsignedInteger('tasks_done')->default(0);
-            $table->unsignedInteger('streak')->default(0);
-            $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();
+            $table->unsignedInteger('total_themes_created')->default(0);
+            $table->unsignedInteger('total_tasks_created')->default(0);
+            $table->unsignedInteger('total_tasks_completed')->default(0);
+            $table->unsignedInteger('current_streak_days')->default(0);
+            $table->unsignedInteger('longest_streak_days')->default(0);
+            $table->date('last_activity_date')->nullable();
+            $table->unsignedInteger('themes_created_this_week')->default(0);
+            $table->unsignedInteger('themes_created_last_week')->default(0);
+            $table->unsignedInteger('tasks_created_this_week')->default(0);
+            $table->unsignedInteger('tasks_created_last_week')->default(0);
+            $table->unsignedInteger('tasks_completed_this_week')->default(0);
+            $table->unsignedInteger('tasks_completed_last_week')->default(0);
+            $table->timestamps();
 
-            $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ThemeInvitationController;
 use App\Http\Controllers\ThemeMemberController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserMetricsController;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -76,12 +78,36 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 
+    Route::prefix('user')->group(function () {
+        // Données de l'utilisateur connecté
+        Route::get('/', UserController::class)->name('user.show');
+
+        // Métriques de l'utilisateur connecté
+        Route::get('/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
+    });
+
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
         Route::post('/update', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
         Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     });
+
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::prefix('users')->group(function () {
+            Route::get('/', [AdminUserController::class, 'index'])->name('admin.users.index');
+            Route::post('/', [AdminUserController::class, 'store'])->name('admin.users.store');
+            Route::prefix('/{user}')->group(function () {
+                Route::get('', [AdminUserController::class, 'show'])->name('admin.users.show');
+                Route::put('', [AdminUserController::class, 'update'])->name('admin.users.update');
+                Route::delete('', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
+                Route::post('/block', [AdminUserController::class, 'block'])->name('admin.users.block');
+                Route::post('/unblock', [AdminUserController::class, 'unblock'])->name('admin.users.unblock');
+                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
+            });
+        });
+    });
+
     Route::prefix('themes')->group(function () {
         Route::get('/', [ThemeController::class, 'index'])->name('themes.index');
         Route::post('/', [ThemeController::class, 'store'])->name('themes.store');
@@ -119,6 +145,4 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
         ->middleware('throttle:6,1')
         ->name('verification.send');
-    Route::get('/user', UserController::class)
-        ->name('user');
 });

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -27,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_at',
         'last_login_ip',
         'role_power',
+        'blocked_at',
     ];
 
     protected $hidden = [
@@ -43,13 +46,28 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function role()
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_power', 'power');
     }
 
-    public function themes()
+    public function themes(): HasMany
     {
         return $this->hasMany(Theme::class, 'owner_id', 'user_id');
+    }
+
+    public function isBlocked(): bool
+    {
+        return !is_null($this->blocked_at);
+    }
+
+    public function block(): void
+    {
+        $this->update(['blocked_at' => now()]);
+    }
+
+    public function unblock(): void
+    {
+        $this->update(['blocked_at' => null]);
     }
 }
