@@ -74,7 +74,7 @@ class ThemeMemberController extends Controller
                 'email' => $user->email,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
-                'avatar_url' => $user->avatar_path,
+                'avatar_path' => $user->avatar_path,
             ];
         });
 
@@ -106,7 +106,7 @@ class ThemeMemberController extends Controller
                 'email' => $permission->user->email,
                 'first_name' => $permission->user->first_name,
                 'last_name' => $permission->user->last_name,
-                'avatar_url' => $permission->user->avatar_path,
+                'avatar_path' => $permission->user->avatar_path,
                 'status' => $permission->status,
                 'invited_at' => $permission->invited_at,
                 'permissions' => [
@@ -127,7 +127,7 @@ class ThemeMemberController extends Controller
             'email' => $owner->email,
             'first_name' => $owner->first_name,
             'last_name' => $owner->last_name,
-            'avatar_url' => $owner->avatar_path,
+            'avatar_path' => $owner->avatar_path,
             'status' => 'owner', // Statut spécial pour le propriétaire
             'invited_at' => null,
             'permissions' => [

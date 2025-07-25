@@ -78,9 +78,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 
-    Route::prefix('user')->group(function () {
+    Route::prefix('/user')->group(function () {
         // Données de l'utilisateur connecté
-        Route::get('/', UserController::class)->name('user.show');
+        Route::get('', UserController::class)->name('user.show');
 
         // Métriques de l'utilisateur connecté
         Route::get('/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');

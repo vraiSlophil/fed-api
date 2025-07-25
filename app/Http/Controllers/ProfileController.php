@@ -25,7 +25,7 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
-                'avatar_url' => $user->avatar_url,
+                'avatar_path' => $user->avatar_path,
                 // Ajoutez d'autres champs si nécessaire
             ]
         ]);
@@ -55,7 +55,7 @@ class ProfileController extends Controller
         }
 
         return ApiResponse::success([
-            'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_url'])
+            'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path'])
         ], 'Profile updated successfully');
     }
 
@@ -109,11 +109,11 @@ class ProfileController extends Controller
 
         $user->update([
             'avatar_path' => $path,
-            'avatar_url' => Storage::disk('public')->url($path)
+            'avatar_path' => Storage::disk('public')->url($path)
         ]);
 
         return ApiResponse::success([
-            'avatar_url' => $user->avatar_url
+            'avatar_path' => $user->avatar_path
         ], 'Avatar updated successfully');
     }
 }
