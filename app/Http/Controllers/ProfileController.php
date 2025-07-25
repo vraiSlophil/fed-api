@@ -26,7 +26,6 @@ class ProfileController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'avatar_path' => $user->avatar_path,
-                // Ajoutez d'autres champs si nécessaire
             ]
         ]);
     }
