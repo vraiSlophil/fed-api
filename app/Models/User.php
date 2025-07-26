@@ -43,7 +43,14 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'settings' => 'array',
             'password' => 'hashed',
+            'blocked_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'user_id', 'user_id');
     }
 
     public function role(): BelongsTo
@@ -56,18 +63,35 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Theme::class, 'owner_id', 'user_id');
     }
 
+    /**
+     * Vérifie si l'utilisateur est bloqué
+     */
     public function isBlocked(): bool
     {
-        return !is_null($this->blocked_at);
+        return $this->blocked_at !== null;
     }
 
+    /**
+     * Bloque l'utilisateur
+     */
     public function block(): void
     {
         $this->update(['blocked_at' => now()]);
     }
 
+    /**
+     * Débloque l'utilisateur
+     */
     public function unblock(): void
     {
         $this->update(['blocked_at' => null]);
+    }
+
+    /**
+     * Relation vers les permissions de thèmes
+     */
+    public function themeUserPermissions(): HasMany
+    {
+        return $this->hasMany(ThemeUserPermission::class, 'user_id', 'user_id');
     }
 }

@@ -108,7 +108,7 @@ class ProfileController extends Controller
 
         $user->update([
             'avatar_path' => $path,
-            'avatar_path' => Storage::disk('public')->url($path)
+            'avatar_url' => Storage::disk('public')->url($path)
         ]);
 
         return ApiResponse::success([

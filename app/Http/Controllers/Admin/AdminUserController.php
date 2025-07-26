@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\ThemeUserPermission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -119,20 +120,70 @@ class AdminUserController extends Controller
             'themes']);
 
         // Ajouter des statistiques supplémentaires pour l'admin
+        $lastActivity = null;
+        if ($user->last_login_at) {
+            $lastActivity = $user->last_login_at;
+        }
+        if ($user->updated_at && (!$lastActivity || $user->updated_at > $lastActivity)) {
+            $lastActivity = $user->updated_at->toDateTimeString();
+        }
+
+        // Calculer le taux de completion des tâches
+        $totalTasks = $user->tasks()->count();
+        $completedTasks = $user->tasks()->where('status', 'done')->count();
+        $completionRate = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 1) : 0;
+
+        // Activité récente (7 derniers jours)
+        $recentTasksCount = $user->tasks()->where('created_at', '>=', now()->subDays(7))->count();
+        $recentThemesCount = $user->themes()->where('created_at', '>=', now()->subDays(7))->count();
+
+        // Nombre de jours d'activité dans les 30 derniers jours
+        $activeDaysLast30 = $this->getActiveDaysCount($user->user_id, 30);
+
         $additionalStats = [
+            // Stats de base (améliorées)
             'themes_count' => $user->themes()->count(),
-            'tasks_count' => $user->tasks()->count(),
-            'completed_tasks_count' => $user->tasks()->where('status',
-                'done')->count(),
-            'last_activity' => max($user->last_login_at?->toDateTimeString(),
-                $user->updated_at->toDateTimeString()),
-            'account_age_days' => $user->created_at->diffInDays(now()),
-            'themes_as_member' => $user->themeUserPermissions()->where('status',
-                'active')->count(),];
+            'tasks_count' => $totalTasks,
+            'completed_tasks_count' => $completedTasks,
+            'completion_rate_percentage' => $completionRate,
+
+            // Temps et activité
+            'last_activity' => $lastActivity,
+            'account_age_days' => $user->created_at->diffInDays(now(), false), // Entier
+            'account_age_human' => $user->created_at->diffForHumans(), // Format lisible
+            'days_since_last_login' => $user->last_login_at ?
+                now()->diffInDays($user->last_login_at) : null,
+
+            // Collaboration
+            'themes_as_member' => ThemeUserPermission::where('user_id', $user->user_id)
+                ->where('status', 'active')->count(),
+            'pending_invitations' => ThemeUserPermission::where('user_id', $user->user_id)
+                ->where('status', 'invited')->count(),
+
+            // Activité récente
+            'recent_activity' => [
+                'tasks_last_7_days' => $recentTasksCount,
+                'themes_last_7_days' => $recentThemesCount,
+                'active_days_last_30' => $activeDaysLast30,
+            ],
+
+            // Stats avancées
+            'average_tasks_per_theme' => $user->themes()->count() > 0 ?
+                round($totalTasks / $user->themes()->count(), 1) : 0,
+            'archived_tasks_count' => $user->tasks()->whereNotNull('archived_at')->count(),
+            'validated_tasks_count' => $user->tasks()->whereNotNull('validated_at')->count(),
+
+            // Statut du compte
+            'is_blocked' => $user->blocked_at !== null,
+            'is_email_verified' => $user->email_verified_at !== null,
+            'blocked_since' => $user->blocked_at?->diffForHumans(),
+            'verified_since' => $user->email_verified_at?->diffForHumans(),
+        ];
 
         return ApiResponse::success([
             'user' => $user,
-            'additional_stats' => $additionalStats,]);
+            'additional_stats' => $additionalStats,
+        ]);
     }
 
     /**
@@ -209,7 +260,7 @@ class AdminUserController extends Controller
      */
     public function block(User $user): JsonResponse
     {
-        if ($user->isBlocked()) {
+        if ($user->blocked_at !== null) {
             return ApiResponse::error('Cet utilisateur est déjà bloqué.',
                 400);
         }
@@ -220,7 +271,7 @@ class AdminUserController extends Controller
                 400);
         }
 
-        $user->block();
+        $user->update(['blocked_at' => now()]);
         return ApiResponse::success($user,
             'Utilisateur bloqué avec succès.');
     }
@@ -230,13 +281,41 @@ class AdminUserController extends Controller
      */
     public function unblock(User $user): JsonResponse
     {
-        if (!$user->isBlocked()) {
+        if ($user->blocked_at === null) {
             return ApiResponse::error('Cet utilisateur n\'est pas bloqué.',
                 400);
         }
 
-        $user->unblock();
+        $user->update(['blocked_at' => null]);
         return ApiResponse::success($user,
             'Utilisateur débloqué avec succès.');
+    }
+
+    /**
+     * Compte le nombre de jours d'activité dans une période donnée
+     */
+    private function getActiveDaysCount(string $userId, int $days): int
+    {
+        $startDate = now()->subDays($days);
+        $endDate = now();
+
+        // Jours où l'utilisateur a créé des thèmes
+        $themeDays = \App\Models\Theme::where('owner_id', $userId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) as date')
+            ->distinct()
+            ->pluck('date');
+
+        // Jours où l'utilisateur a créé des tâches
+        $taskDays = \App\Models\Task::where('user_id', $userId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) as date')
+            ->distinct()
+            ->pluck('date');
+
+        // Jours où l'utilisateur s'est connecté (si on stockait cette info)
+        // Pour l'instant on se base uniquement sur la création de contenu
+
+        return $themeDays->concat($taskDays)->unique()->count();
     }
 }
