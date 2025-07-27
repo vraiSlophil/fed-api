@@ -38,9 +38,9 @@ class RegisterController extends Controller
             'last_login_ip' => $request->ip(),
         ]);
 
-        Log::info('Mail config: ' . json_encode(config('mail')));
-        Log::info('Resend API Key: ' . config('mail.mailers.resend.api_key'));
-        Log::info('User registered: ' . $user->email);
+//        Log::info('Mail config: ' . json_encode(config('mail')));
+//        Log::info('Resend API Key: ' . config('mail.mailers.resend.api_key'));
+//        Log::info('User registered: ' . $user->email);
 
         event(new Registered($user));
 
@@ -49,6 +49,6 @@ class RegisterController extends Controller
         return ApiResponse::success([
             'user' => $user,
             'token' => $token
-        ]);
+        ], 'Compte créé avec succès. Veuillez vérifier votre boîte mail pour confirmer votre adresse email.');
     }
 }

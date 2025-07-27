@@ -235,11 +235,11 @@ class ThemeMemberController extends Controller
                     $declineLink
                 ));
         } catch (Exception $e) {
-            Log::error('Erreur lors de l\'envoi de l\'email d\'invitation', [
-                'error' => $e->getMessage(),
-                'theme_id' => $themeId,
-                'user_id' => $invitedUser->user_id,
-            ]);
+//            Log::error('Erreur lors de l\'envoi de l\'email d\'invitation', [
+//                'error' => $e->getMessage(),
+//                'theme_id' => $themeId,
+//                'user_id' => $invitedUser->user_id,
+//            ]);
 
             // Supprimer la permission si l'email échoue
             $permission->delete();

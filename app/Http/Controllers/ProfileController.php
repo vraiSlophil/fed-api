@@ -46,16 +46,20 @@ class ProfileController extends Controller
 
         $user->update($validated);
 
-        // Si l'email a été modifié, on le marque comme non vérifié
+        // Si l'email a été modifié, on le marque comme non vérifié et on envoie un email
         if ($user->wasChanged('email')) {
             $user->email_verified_at = null;
             $user->save();
             $user->sendEmailVerificationNotification();
+
+            return ApiResponse::success([
+                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
+            ], 'Profil mis à jour avec succès. Un email de vérification a été envoyé à votre nouvelle adresse.');
         }
 
         return ApiResponse::success([
-            'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path'])
-        ], 'Profile updated successfully');
+            'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
+        ], 'Profil mis à jour avec succès.');
     }
 
     /**

@@ -99,11 +99,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/', [AdminUserController::class, 'store'])->name('admin.users.store');
             Route::prefix('/{user}')->group(function () {
                 Route::get('', [AdminUserController::class, 'show'])->name('admin.users.show');
-                Route::put('', [AdminUserController::class, 'update'])->name('admin.users.update');
+                Route::post('', [AdminUserController::class, 'update'])->name('admin.users.update');
                 Route::delete('', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
                 Route::post('/block', [AdminUserController::class, 'block'])->name('admin.users.block');
                 Route::post('/unblock', [AdminUserController::class, 'unblock'])->name('admin.users.unblock');
-                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
+//                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
             });
         });
     });

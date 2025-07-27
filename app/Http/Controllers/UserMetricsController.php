@@ -35,36 +35,36 @@ class UserMetricsController extends Controller
         return ApiResponse::success($metrics);
     }
 
-    /**
-     * Métriques pour un utilisateur spécifique (admin seulement)
-     */
-    public function getAdminUserMetrics(Request $request, User $targetUser): JsonResponse
-    {
-        // Vérifier les droits admin
-        if (!auth()->check() || auth()->user()->role_power < 100) {
-            return ApiResponse::error('Accès refusé. Privilèges administrateur requis.', 403);
-        }
-
-        $userId = $targetUser->user_id;
-        $period = $request->input('period', '12_months');
-        $dateRange = $this->getDateRange($period);
-
-        $metrics = [
-            'overview' => $this->getOverviewMetrics($userId),
-            'themes_over_time' => $this->getThemeMetrics($userId, $dateRange),
-            'tasks_over_time' => $this->getTaskMetrics($userId, $dateRange),
-            'activity_metrics' => $this->getActivityMetrics($userId, $dateRange),
-            'productivity_trends' => $this->getProductivityTrends($userId),
-            'user_info' => [
-                'user_id' => $targetUser->user_id,
-                'username' => $targetUser->username,
-                'email' => $targetUser->email,
-                'created_at' => $targetUser->created_at,
-            ],
-        ];
-
-        return ApiResponse::success($metrics);
-    }
+//    /**
+//     * Métriques pour un utilisateur spécifique (admin seulement)
+//     */
+//    public function getAdminUserMetrics(Request $request, User $user): JsonResponse
+//    {
+//        // Vérifier les droits admin
+//        if (!auth()->check() || auth()->user()->role_power < 100) {
+//            return ApiResponse::error('Accès refusé. Privilèges administrateur requis.', 403);
+//        }
+//
+//        $userId = $user->user_id;
+//        $period = $request->input('period', '12_months');
+//        $dateRange = $this->getDateRange($period);
+//
+//        $metrics = [
+//            'overview' => $this->getOverviewMetrics($userId),
+//            'themes_over_time' => $this->getThemeMetrics($userId, $dateRange),
+//            'tasks_over_time' => $this->getTaskMetrics($userId, $dateRange),
+//            'activity_metrics' => $this->getActivityMetrics($userId, $dateRange),
+//            'productivity_trends' => $this->getProductivityTrends($userId),
+//            'user_info' => [
+//                'user_id' => $user->user_id,
+//                'username' => $user->username,
+//                'email' => $user->email,
+//                'created_at' => $user->created_at,
+//            ],
+//        ];
+//
+//        return ApiResponse::success($metrics);
+//    }
 
     /**
      * Métriques générales de l'utilisateur

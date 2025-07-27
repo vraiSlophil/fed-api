@@ -7,6 +7,9 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\ThemeUserPermission;
+use Exception;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -101,13 +104,17 @@ class AdminUserController extends Controller
         $data['password'] = Hash::make($request->password);
 
         if ($request->hasFile('avatar')) {
-            $data['avatar_path'] = $request->file('avatar')->store('avatars');
+            // Utiliser le disque 'public' au lieu du disque par défaut
+            $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
         }
 
         $user = User::create($data);
 
+        // Envoyer l'email de vérification
+        event(new Registered($user));
+
         return ApiResponse::success($user,
-            'Utilisateur créé avec succès.');
+            'Utilisateur créé avec succès. Un email de vérification a été envoyé à l\'utilisateur.');
     }
 
     /**
@@ -189,21 +196,11 @@ class AdminUserController extends Controller
     /**
      * Mise à jour d'un utilisateur (PUT /users/{user})
      */
-    public function update(Request $request,
-                           User    $user): JsonResponse
+    public function update(Request $request, User $user): JsonResponse
     {
         $request->validate([
-            'username' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('users')->ignore($user->user_id,
-                    'user_id')],
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users')->ignore($user->user_id,
-                    'user_id')],
+            'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->user_id, 'user_id')],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->user_id, 'user_id')],
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
@@ -215,23 +212,37 @@ class AdminUserController extends Controller
             'email',
             'first_name',
             'last_name',
-            'role_power']);
+            'role_power'
+        ]);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         if ($request->hasFile('avatar')) {
+            // Supprimer l'ancien avatar s'il existe
             if ($user->avatar_path) {
-                Storage::delete($user->avatar_path);
+                Storage::disk('public')->delete($user->avatar_path);
             }
-            $data['avatar_path'] = $request->file('avatar')->store('avatars');
+            // Utiliser le disque 'public'
+            $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
         }
+
+        // Vérifier si l'email a été modifié avant la mise à jour
+        $emailChanged = $user->email !== $data['email'];
 
         $user->update($data);
 
-        return ApiResponse::success($user,
-            'Utilisateur mis à jour avec succès.');
+        // Si l'email a été modifié, marquer comme non vérifié et envoyer un email
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+            $user->save();
+            $user->sendEmailVerificationNotification();
+
+            return ApiResponse::success($user, 'Utilisateur mis à jour avec succès. Un email de vérification a été envoyé à la nouvelle adresse.');
+        }
+
+        return ApiResponse::success($user, 'Utilisateur mis à jour avec succès.');
     }
 
     /**
@@ -241,19 +252,53 @@ class AdminUserController extends Controller
     {
         // Empêcher la suppression de son propre compte
         if ($user->user_id === auth()->user()->user_id) {
-            return ApiResponse::error('Vous ne pouvez pas supprimer votre propre compte.',
-                400);
+            return ApiResponse::error('Vous ne pouvez pas supprimer votre propre compte.');
         }
 
-        if ($user->avatar_path) {
-            Storage::delete($user->avatar_path);
+        try {
+            // Supprimer l'avatar s'il existe
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            // Forcer la suppression définitive (ignore le soft delete)
+            $user->forceDelete();
+
+            return ApiResponse::success(null, 'Utilisateur supprimé définitivement avec succès.');
+
+        } catch (QueryException $e) {
+            // Erreur de contrainte de clé étrangère
+            if ($e->getCode() === '23000') {
+                return ApiResponse::error('Impossible de supprimer cet utilisateur car il a des données associées. Supprimez d\'abord ses thèmes, tâches et permissions.', 409);
+            }
+
+            return ApiResponse::error('Erreur lors de la suppression : ' . $e->getMessage(), 500);
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Erreur inattendue lors de la suppression : ' . $e->getMessage(), 500);
         }
-
-        $user->delete();
-
-        return ApiResponse::success(null,
-            'Utilisateur supprimé avec succès.');
     }
+
+//    /**
+//     * Supprimer les relations de l'utilisateur avant suppression définitive
+//     */
+//    private function deleteUserRelations(User $user): void
+//    {
+//        // Supprimer les tokens d'authentification
+//        $user->tokens()->delete();
+//
+//        // Supprimer les métriques utilisateur
+//        $user->metrics()->delete();
+//
+//        // Transférer ou supprimer les thèmes (selon votre logique métier)
+//        $user->themes()->delete(); // ou les transférer à un autre utilisateur
+//
+//        // Supprimer les tâches
+//        $user->tasks()->delete();
+//
+//        // Supprimer les permissions sur les thèmes
+//        ThemeUserPermission::where('user_id', $user->user_id)->delete();
+//    }
 
     /**
      * Bloquer un utilisateur (POST /users/{user}/block)
