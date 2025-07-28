@@ -23,29 +23,25 @@ class AdminUserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = User::with([
-            'role']);
+        $query = User::with(['role']);
 
+        // Recherche générale
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('username',
-                    'like',
-                    "%{$search}%")->orWhere('email',
-                    'like',
-                    "%{$search}%")->orWhere('first_name',
-                    'like',
-                    "%{$search}%")->orWhere('last_name',
-                    'like',
-                    "%{$search}%");
+                $q->where('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
             });
         }
 
+        // Filtrer par rôle
         if ($request->filled('role')) {
-            $query->where('role_power',
-                $request->role);
+            $query->where('role_power', $request->role);
         }
 
+        // Filtrer par statut (blocked/active)
         if ($request->filled('status')) {
             if ($request->status === 'blocked') {
                 $query->whereNotNull('blocked_at');
@@ -54,9 +50,56 @@ class AdminUserController extends Controller
             }
         }
 
-        $users = $query->paginate(20);
+        // Filtrer par statut de vérification email
+        if ($request->filled('verified')) {
+            if (filter_var($request->verified, FILTER_VALIDATE_BOOLEAN)) {
+                $query->whereNotNull('email_verified_at');
+            } else {
+                $query->whereNull('email_verified_at');
+            }
+        }
 
-        // Structure simplifiée
+        // Filtrage multiple par rôles
+        if ($request->filled('roles')) {
+            $roles = explode(',', $request->roles);
+            $query->whereIn('role_power', $roles);
+        }
+
+        // Tri dynamique
+        $sortField = $request->input('sort_by', 'created_at');
+        $sortDirection = $request->input('sort', 'desc');
+
+        // Colonnes autorisées pour le tri
+        $allowedSortFields = [
+            'created_at',
+            'updated_at',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'last_login_at',
+            'email_verified_at',
+            'blocked_at'
+        ];
+
+        // Valider le champ de tri
+        if (!in_array($sortField, $allowedSortFields)) {
+            $sortField = 'created_at';
+        }
+
+        // Valider la direction du tri
+        $sortDirection = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
+
+        // Appliquer le tri
+        $query->orderBy($sortField, $sortDirection);
+
+        // Pagination personnalisable
+        $perPage = $request->input('per_page', 20);
+        $perPage = max(1, min(100, intval($perPage))); // Limiter entre 1 et 100
+
+        $users = $query->paginate($perPage);
+
+        // Structure de réponse complète
         return ApiResponse::success([
             'users' => $users->items(),
             'pagination' => [
@@ -66,6 +109,18 @@ class AdminUserController extends Controller
                 'last_page' => $users->lastPage(),
                 'from' => $users->firstItem(),
                 'to' => $users->lastItem(),
+            ],
+            'sorting' => [
+                'sort_by' => $sortField,
+                'sort_direction' => $sortDirection,
+                'available_sort_fields' => $allowedSortFields,
+            ],
+            'filters' => [
+                'search' => $request->input('search'),
+                'role' => $request->input('role'),
+                'status' => $request->input('status'),
+                'verified' => $request->input('verified'),
+                'roles' => $request->input('roles'),
             ],
             'roles' => Role::all(['power', 'name']),
             'stats' => [
