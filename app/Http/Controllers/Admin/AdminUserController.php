@@ -41,21 +41,18 @@ class AdminUserController extends Controller
             $query->where('role_power', $request->role);
         }
 
-        // Filtrer par statut (blocked/active)
+        // Filtrer par statut (blocked/active/unverified)
         if ($request->filled('status')) {
             if ($request->status === 'blocked') {
                 $query->whereNotNull('blocked_at');
-            } else {
-                $query->whereNull('blocked_at');
-            }
-        }
-
-        // Filtrer par statut de vérification email
-        if ($request->filled('verified')) {
-            if (filter_var($request->verified, FILTER_VALIDATE_BOOLEAN)) {
+            } else if ($request->status === 'active') {
                 $query->whereNotNull('email_verified_at');
-            } else {
+                $query->whereNull('blocked_at');
+            } else if ($request->status === 'unverified') {
                 $query->whereNull('email_verified_at');
+                $query->whereNull('blocked_at');
+            } else {
+                return ApiResponse::error('Statut invalide. Utilisez "blocked", "active" ou "unverified".');
             }
         }
 
