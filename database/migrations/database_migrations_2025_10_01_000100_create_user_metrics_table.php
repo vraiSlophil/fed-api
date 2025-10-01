@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void
-    {
+    public function up(): void {
         Schema::create('user_metrics', function (Blueprint $table) {
             $table->uuid('user_id')->primary();
             $table->unsignedInteger('total_themes_created')->default(0);
@@ -23,12 +22,11 @@ return new class extends Migration {
             $table->unsignedInteger('tasks_completed_last_week')->default(0);
             $table->timestamps();
 
-            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
+            $table->index('last_activity_date');
         });
     }
-
-    public function down(): void
-    {
+    public function down(): void {
         Schema::dropIfExists('user_metrics');
     }
 };

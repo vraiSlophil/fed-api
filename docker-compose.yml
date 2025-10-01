@@ -1,17 +1,20 @@
 services:
-    # Service de base de données MariaDB
-    mariadb:
-        image: bitnami/mariadb:11.4.6-debian-12-r0
+    # Service de base de données PostgreSQL
+    postgres:
+        image: postgres:16.4
         environment:
-            - ALLOW_EMPTY_PASSWORD=no
-            - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_password}
-            - MARIADB_USER=${DB_USERNAME}
-            - MARIADB_PASSWORD=${DB_PASSWORD}
-            - MARIADB_DATABASE=${DB_DATABASE}
+            - POSTGRES_USER=${DB_USERNAME}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_DB=${DB_DATABASE}
         volumes:
-            - mariadb_data:/bitnami/mariadb
+            - postgres_data:/var/lib/postgresql/data
         networks:
             - app-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     # Service Laravel (application web)
     laravel:
@@ -21,30 +24,29 @@ services:
         ports:
             - "8000:8000"
         environment:
-            - DB_HOST=mariadb
-            - DB_PORT=${DB_PORT}
+            - DB_CONNECTION=pgsql
+            - DB_HOST=postgres
+            - DB_PORT=5432
             - DB_USERNAME=${DB_USERNAME}
             - DB_DATABASE=${DB_DATABASE}
             - DB_PASSWORD=${DB_PASSWORD}
-            - LARAVEL_SKIP_CHOWN=yes
         volumes:
             - ./:/app
         depends_on:
-            - mariadb
+            postgres:
+                condition: service_healthy
         networks:
             - app-network
 
-    phpmyadmin:
-        image: phpmyadmin:5.2.2
+    pgadmin:
+        image: dpage/pgadmin4:8.14.0
         depends_on:
-            - mariadb
+            - postgres
         environment:
-            PMA_HOST: mariadb           # Se connecte au service MariaDB
-            PMA_USER: ${DB_USERNAME}
-            PMA_PASSWORD: ${DB_PASSWORD}
-            # Optionnel : PMA_ABSOLUTE_URI, UPLOAD_LIMIT, etc.
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
         ports:
-            - "8080:80"                # http://localhost:8080
+            - "8080:80"
         networks:
             - app-network
 
@@ -54,5 +56,5 @@ networks:
         driver: bridge
 
 volumes:
-    mariadb_data:
+    postgres_data:
         driver: local
