@@ -11,11 +11,6 @@ class ThemeUserPermission extends Model
     use HasFactory, HasUuids;
 
     /**
-     * Indique si le modèle doit être horodaté
-     */
-    public $timestamps = false;
-
-    /**
      * La clé primaire du modèle
      */
     protected $primaryKey = 'permission_id';

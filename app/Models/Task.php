@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
@@ -18,9 +20,24 @@ class Task extends Model
         'theme_id',
         'user_id',
         'title',
+        'description',
         'status',
+        'position',
+        'priority',
+        'due_at',
+        'parent_task_id',
+        'metadata',
         'validated_at',
+        'completed_at',
         'archived_at',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
+        'due_at' => 'datetime',
+        'validated_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     /**
@@ -38,6 +55,7 @@ class Task extends Model
     {
         $this->status = 'done';
         $this->validated_at = now();
+        $this->completed_at = now();
         return $this;
     }
 
@@ -60,21 +78,48 @@ class Task extends Model
         // Si marquée comme terminée, ajouter la date de validation
         if ($value === 'done' && $this->validated_at === null) {
             $this->attributes['validated_at'] = now();
+            $this->attributes['completed_at'] = now();
         }
 
         // Si on change le statut de done à autre chose, retirer la date de validation
         if ($value !== 'done' && $this->validated_at !== null) {
             $this->attributes['validated_at'] = null;
+            $this->attributes['completed_at'] = null;
         }
     }
 
-    public function theme()
+    public function theme(): BelongsTo
     {
         return $this->belongsTo(Theme::class, 'theme_id', 'theme_id');
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function parentTask(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'parent_task_id', 'task_id');
+    }
+
+    public function subTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'parent_task_id', 'task_id');
+    }
+
+    public function dependenciesFrom(): HasMany
+    {
+        return $this->hasMany(TaskDependency::class, 'from_task_id', 'task_id');
+    }
+
+    public function dependenciesTo(): HasMany
+    {
+        return $this->hasMany(TaskDependency::class, 'to_task_id', 'task_id');
+    }
+
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(Reminder::class, 'task_id', 'task_id');
     }
 }

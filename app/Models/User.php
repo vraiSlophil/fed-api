@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -30,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_ip',
         'role_power',
         'blocked_at',
+        'active_playground_id',
     ];
 
     protected $hidden = [
@@ -48,9 +50,9 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function metrics(): HasMany
+    public function metric(): HasOne
     {
-        return $this->hasMany(UserMetric::class, 'user_id', 'user_id');
+        return $this->hasOne(UserMetric::class, 'user_id', 'user_id');
     }
 
     public function tasks(): HasMany
@@ -66,6 +68,39 @@ class User extends Authenticatable implements MustVerifyEmail
     public function themes(): HasMany
     {
         return $this->hasMany(Theme::class, 'owner_id', 'user_id');
+    }
+
+    public function playgrounds(): HasMany
+    {
+        return $this->hasMany(Playground::class, 'user_id', 'user_id');
+    }
+
+    public function activePlayground(): BelongsTo
+    {
+        return $this->belongsTo(Playground::class, 'active_playground_id', 'playground_id');
+    }
+
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(Reminder::class, 'user_id', 'user_id');
+    }
+
+    public function themeTemplates(): HasMany
+    {
+        return $this->hasMany(ThemeTemplate::class, 'user_id', 'user_id');
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(UserSubscription::class, 'user_id', 'user_id');
+    }
+
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(UserSubscription::class, 'user_id', 'user_id')
+            ->where('status', 'active')
+            ->orWhere('status', 'trialing')
+            ->latest('started_at');
     }
 
     /**

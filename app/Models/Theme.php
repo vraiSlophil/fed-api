@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Theme extends Model
 {
@@ -17,8 +18,14 @@ class Theme extends Model
 
     protected $fillable = [
         'owner_id',
+        'playground_id',
         'title',
         'color',
+        'visibility',
+    ];
+
+    protected $casts = [
+        'visibility' => 'string',
     ];
 
     /**
@@ -117,12 +124,17 @@ class Theme extends Model
         return $permissions && $permissions->canValidateTask();
     }
 
-    public function owner()
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id', 'user_id');
     }
 
-    public function tasks()
+    public function playground(): BelongsTo
+    {
+        return $this->belongsTo(Playground::class, 'playground_id', 'playground_id');
+    }
+
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class, 'theme_id', 'theme_id');
     }
