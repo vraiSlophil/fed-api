@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Responses\ApiResponse;
+use App\Models\Playground;
 use App\Models\ThemeUserPermission;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class ThemeInvitationController extends Controller
 {
     /**
      * Gérer l'acceptation ou le refus d'une invitation via le lien email
      */
-    public function handleInvitation(Request $request)
+    public function handleInvitation(Request $request): View
     {
         // Vérifier que la requête a un lien signé valide
         if (!$request->hasValidSignature()) {
             return view('theme.invitation-result', [
                 'status' => 'error',
-                'message' => 'Le lien d\'invitation est invalide ou a expiré.1',
+                'message' => 'Le lien d\'invitation est invalide ou a expiré.',
             ]);
         }
 
@@ -42,7 +44,13 @@ class ThemeInvitationController extends Controller
 
         // Traiter l'action (accepter ou refuser)
         if ($action === 'accept') {
+            // Récupérer le playground par défaut de l'utilisateur
+            $defaultPlayground = Playground::where('user_id', $userId)
+                ->where('is_default', true)
+                ->first();
+
             $permission->status = 'active';
+            $permission->target_playground_id = $defaultPlayground?->playground_id;
             $permission->save();
 
             return view('theme.invitation-result', [
@@ -68,5 +76,53 @@ class ThemeInvitationController extends Controller
                 'expires' => $request->expires,
             ]);
         }
+    }
+
+    /**
+     * Accepter une invitation (API - pour accepter depuis l'app)
+     */
+    public function acceptInvitation(Request $request, string $themeId): JsonResponse
+    {
+        $userId = $request->user()->user_id;
+
+        $validated = $request->validate([
+            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id'
+        ]);
+
+        // Vérifier que le playground appartient à l'utilisateur
+        $playground = Playground::where('playground_id', $validated['target_playground_id'])
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $permission = ThemeUserPermission::where('theme_id', $themeId)
+            ->where('user_id', $userId)
+            ->where('status', 'invited')
+            ->firstOrFail();
+
+        $permission->update([
+            'status' => 'active',
+            'target_playground_id' => $validated['target_playground_id']
+        ]);
+
+        return ApiResponse::success([
+            'permission' => $permission->fresh(['theme', 'targetPlayground'])
+        ], 'Invitation acceptée avec succès');
+    }
+
+    /**
+     * Refuser une invitation (API)
+     */
+    public function declineInvitation(Request $request, string $themeId): JsonResponse
+    {
+        $userId = $request->user()->user_id;
+
+        $permission = ThemeUserPermission::where('theme_id', $themeId)
+            ->where('user_id', $userId)
+            ->where('status', 'invited')
+            ->firstOrFail();
+
+        $permission->delete();
+
+        return ApiResponse::success(null, 'Invitation refusée avec succès');
     }
 }

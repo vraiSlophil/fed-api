@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Responses\ApiResponse;
 use App\Mail\ThemeInvitation;
+use App\Models\Playground;
 use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
@@ -397,6 +398,37 @@ class ThemeMemberController extends Controller
         $permission->delete();
 
         return ApiResponse::success(null, 'Vous avez quitté le thème avec succès.');
+    }
+
+    /**
+     * Déplacer un thème partagé vers un autre playground
+     */
+    public function moveToPlayground(Request $request, string $themeId): JsonResponse
+    {
+        $userId = $request->user()->user_id;
+
+        $validated = $request->validate([
+            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id'
+        ]);
+
+        // Vérifier que le playground appartient à l'utilisateur
+        $playground = Playground::where('playground_id', $validated['target_playground_id'])
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        // Récupérer la permission
+        $permission = ThemeUserPermission::where('theme_id', $themeId)
+            ->where('user_id', $userId)
+            ->where('status', 'active')
+            ->firstOrFail();
+
+        $permission->update([
+            'target_playground_id' => $validated['target_playground_id']
+        ]);
+
+        return ApiResponse::success([
+            'permission' => $permission->fresh(['theme', 'targetPlayground'])
+        ], 'Thème déplacé avec succès');
     }
 
     /**
