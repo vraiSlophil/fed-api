@@ -38,10 +38,6 @@ class RegisterController extends Controller
             'last_login_ip' => $request->ip(),
         ]);
 
-//        Log::info('Mail config: ' . json_encode(config('mail')));
-//        Log::info('Resend API Key: ' . config('mail.mailers.resend.api_key'));
-//        Log::info('User registered: ' . $user->email);
-
         event(new Registered($user));
 
         $token = $user->createToken('auth-token')->plainTextToken;
