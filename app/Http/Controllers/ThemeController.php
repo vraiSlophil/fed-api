@@ -16,15 +16,24 @@ class ThemeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $userId = $request->user()->user_id;
+        $playgroundId = $request->query('playground_id');
 
-        $ownedThemes = Theme::where('owner_id', $userId)->get();
+        // Thèmes possédés par l'utilisateur
+        $ownedThemes = Theme::where('owner_id', $userId)
+            ->when($playgroundId, function($query, $playgroundId) {
+                $query->where('playground_id', $playgroundId);
+            })
+            ->get();
 
-        // Récupérer les thèmes dans lesquels l'utilisateur est invité avec can_view=true et status=active
-        // en incluant les permissions associées
-        $invitedThemes = Theme::whereHas('themeUserPermissions', function ($query) use ($userId) {
+        // Thèmes partagés avec l'utilisateur
+        $invitedThemes = Theme::whereHas('themeUserPermissions', function ($query) use ($userId, $playgroundId) {
             $query->where('user_id', $userId)
                 ->where('can_view', true)
-                ->where('status', 'active');
+                ->where('status', 'active')
+                // Filtrer par playground cible si spécifié
+                ->when($playgroundId, function($q, $playgroundId) {
+                    $q->where('target_playground_id', $playgroundId);
+                });
         })
             ->whereNot('owner_id', $userId)
             ->with(['themeUserPermissions' => function($query) use ($userId) {
@@ -32,17 +41,13 @@ class ThemeController extends Controller
             }])
             ->get();
 
-        // Ajouter le champ permission pour chaque thème invité
         $invitedThemes->each(function ($theme) {
-            // Récupérer la première permission (il n'y en aura qu'une par utilisateur et thème)
             $permission = $theme->themeUserPermissions->first();
-
-            // Ajouter les permissions comme attribut au thème et supprimer la relation complète
             $theme->permissions = $permission;
+            $theme->target_playground_id = $permission->target_playground_id;
             unset($theme->themeUserPermissions);
         });
 
-        // Combiner les deux collections
         $allThemes = $ownedThemes->concat($invitedThemes);
 
         return ApiResponse::success([

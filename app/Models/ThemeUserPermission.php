@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ThemeUserPermission extends Model
 {
@@ -127,17 +128,19 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Relation avec le thème
+     * Relation vers le playground cible (où l'invité voit le thème)
      */
-    public function theme()
+    public function targetPlayground(): BelongsTo
+    {
+        return $this->belongsTo(Playground::class, 'target_playground_id', 'playground_id');
+    }
+
+    public function theme(): BelongsTo
     {
         return $this->belongsTo(Theme::class, 'theme_id', 'theme_id');
     }
 
-    /**
-     * Relation avec l'utilisateur
-     */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }

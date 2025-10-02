@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PlaygroundController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TaskController;
@@ -108,6 +109,18 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
     });
 
+    Route::prefix('playgrounds')->group(function () {
+        Route::get('/', [PlaygroundController::class, 'index']);
+        Route::post('/', [PlaygroundController::class, 'store']);
+        Route::prefix('/{playgroundId}')->group(function () {
+            Route::get('', [PlaygroundController::class, 'show']);
+            Route::put('', [PlaygroundController::class, 'update']);
+            Route::delete('', [PlaygroundController::class, 'destroy']);
+            Route::post('/set-default', [PlaygroundController::class, 'setAsDefault']);
+            Route::get('/stats', [PlaygroundController::class, 'stats']);
+        });
+    });
+
     Route::prefix('themes')->group(function () {
         Route::get('/', [ThemeController::class, 'index'])->name('themes.index');
         Route::post('/', [ThemeController::class, 'store'])->name('themes.store');
@@ -115,6 +128,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('', [ThemeController::class, 'show'])->name('themes.show');
             Route::put('', [ThemeController::class, 'update'])->name('themes.update');
             Route::delete('', [ThemeController::class, 'destroy'])->name('themes.destroy');
+            Route::prefix('/invitations')->group(function () {
+                Route::post('/accept', [ThemeInvitationController::class, 'acceptInvitation'])->name('themes.invitations.accept');
+                Route::post('/decline', [ThemeInvitationController::class, 'declineInvitation'])->name('themes.invitations.decline');
+            });
             Route::get('/stats', [StatsController::class, 'themeStats'])->name('stats.theme');
             Route::prefix('/members')->group(function () {
                 Route::get('', [ThemeMemberController::class, 'listMembers'])->name('theme.members.list');
@@ -124,6 +141,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                     Route::delete('', [ThemeMemberController::class, 'removeMember'])->name('theme.members.remove');
                     Route::post('/deactivate', [ThemeMemberController::class, 'deactivateMember'])->name('theme.members.deactivate');
                     Route::post('/reactivate', [ThemeMemberController::class, 'reactivateMember'])->name('theme.members.reactivate');
+                    Route::put('/move-to-playground', [ThemeMemberController::class, 'moveToPlayground'])->name('theme.members.move-to-playground');
                 });
             });
             Route::post('/leave', [ThemeMemberController::class, 'leaveTheme'])->name('theme.leave');
