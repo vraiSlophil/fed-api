@@ -55,7 +55,8 @@ class ThemeController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $userId = $request->user()->user_id;
+        $user = $request->user();
+        $userId = $user->user_id;
 
         $validated = $request->validate([
             'title' => 'required|string|max:150',
@@ -66,6 +67,7 @@ class ThemeController extends Controller
             'owner_id' => $userId,
             'title' => $validated['title'],
             'color' => $validated['color'],
+            'playground_id' => $user->activePlayground->playground_id,
         ]);
 
         return ApiResponse::success([
