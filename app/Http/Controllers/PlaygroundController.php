@@ -277,22 +277,28 @@ class PlaygroundController extends Controller
         ];
     }
 
-    /**
-     * Calculer le taux de completion des tâches du playground
-     */
     private function calculateCompletionRate(Playground $playground): float
     {
-        $totalTasks = Task::whereHas('theme', function($query) use ($playground) {
+        $totalTasks = $this->getTasksQueryForPlayground($playground)->count();
+
+        if ($totalTasks === 0) {
+            return 0.0;
+        }
+
+        $completedTasks = $this->getTasksQueryForPlayground($playground)
+            ->where('status', 'done')
+            ->count();
+
+        $completionRate = ($completedTasks / $totalTasks) * 100.0;
+
+        return round($completionRate, 2);
+    }
+
+    private function getTasksQueryForPlayground(Playground $playground)
+    {
+        return Task::whereHas('theme', function($query) use ($playground) {
             $query->where('playground_id', $playground->playground_id);
-        })->count();
-
-        if ($totalTasks === 0) return 0.0;
-
-        $completedTasks = Task::whereHas('theme', function($query) use ($playground) {
-            $query->where('playground_id', $playground->playground_id);
-        })->where('status', 'done')->count();
-
-        return round(($completedTasks / $totalTasks) * 100, 2);
+        });
     }
 
     /**
