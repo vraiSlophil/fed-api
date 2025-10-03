@@ -19,15 +19,18 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        return ApiResponse::success([
-            'user' => [
-                'username' => $user->username,
-                'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'avatar_path' => $user->avatar_path,
-            ]
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'user' => [
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'avatar_path' => $user->avatar_path,
+                ]
+            ])
+            ->json();
     }
 
     /**
@@ -52,14 +55,20 @@ class ProfileController extends Controller
             $user->save();
             $user->sendEmailVerificationNotification();
 
-            return ApiResponse::success([
-                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
-            ], 'Profil mis à jour avec succès. Un email de vérification a été envoyé à votre nouvelle adresse.');
+            return ApiResponse::builder()
+                ->success(200, 'Profil mis à jour avec succès. Un email de vérification a été envoyé à votre nouvelle adresse.')
+                ->data([
+                    'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
+                ])
+                ->json();
         }
 
-        return ApiResponse::success([
-            'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
-        ], 'Profil mis à jour avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Profil mis à jour avec succès.')
+            ->data([
+                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
+            ])
+            ->json();
     }
 
     /**
@@ -75,14 +84,18 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if (!Hash::check($validated['current_password'], $user->password)) {
-            return ApiResponse::error('The provided password does not match your current password.', 422);
+            return ApiResponse::builder()
+                ->error(422, 'The provided password does not match your current password.')
+                ->json();
         }
 
         $user->update([
             'password' => Hash::make($validated['password'])
         ]);
 
-        return ApiResponse::success(null, 'Password updated successfully');
+        return ApiResponse::builder()
+            ->success(200, 'Password updated successfully')
+            ->json();
     }
 
     /**
@@ -115,8 +128,11 @@ class ProfileController extends Controller
             'avatar_url' => Storage::disk('public')->url($path)
         ]);
 
-        return ApiResponse::success([
-            'avatar_path' => $user->avatar_path
-        ], 'Avatar updated successfully');
+        return ApiResponse::builder()
+            ->success(200, 'Avatar updated successfully')
+            ->data([
+                'avatar_path' => $user->avatar_path
+            ])
+            ->json();
     }
 }

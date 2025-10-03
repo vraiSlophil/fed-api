@@ -11,7 +11,9 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next)
     {
         if (!auth()->check() || auth()->user()->role_power < 100) {
-            return ApiResponse::error('Accès refusé. Privilèges administrateur requis.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Accès refusé. Privilèges administrateur requis.')
+                ->json();
         }
 
         return $next($request);

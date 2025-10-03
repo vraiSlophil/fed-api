@@ -23,9 +23,12 @@ class PlaygroundController extends Controller
             ->orderBy('name')
             ->get();
 
-        return ApiResponse::success([
-            'playgrounds' => $playgrounds
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'playgrounds' => $playgrounds
+            ])
+            ->json();
     }
 
     /**
@@ -41,10 +44,15 @@ class PlaygroundController extends Controller
             // Récupérer toutes les données du playground
             $playgroundData = $this->getPlaygroundCompleteData($playground);
 
-            return ApiResponse::success($playgroundData);
+            return ApiResponse::builder()
+                ->success()
+                ->data($playgroundData)
+                ->json();
 
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::error('Playground non trouvé', 404);
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
         }
     }
 
@@ -78,9 +86,12 @@ class PlaygroundController extends Controller
             $playground->setAsDefault();
         }
 
-        return ApiResponse::success([
-            'playground' => $playground
-        ], 'Playground créé avec succès', 201);
+        return ApiResponse::builder()
+            ->success(201, 'Playground créé avec succès')
+            ->data([
+                'playground' => $playground
+            ])
+            ->json();
     }
 
     /**
@@ -110,12 +121,17 @@ class PlaygroundController extends Controller
                 $playground->setAsDefault();
             }
 
-            return ApiResponse::success([
-                'playground' => $playground->fresh()
-            ], 'Playground mis à jour avec succès');
+            return ApiResponse::builder()
+                ->success(200, 'Playground mis à jour avec succès')
+                ->data([
+                    'playground' => $playground->fresh()
+                ])
+                ->json();
 
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::error('Playground non trouvé', 404);
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
         }
     }
 
@@ -133,16 +149,22 @@ class PlaygroundController extends Controller
             if ($playground->is_default) {
                 $playgroundCount = $request->user()->playgrounds()->count();
                 if ($playgroundCount === 1) {
-                    return ApiResponse::error('Impossible de supprimer le dernier playground', 400);
+                    return ApiResponse::builder()
+                        ->error(400, 'Impossible de supprimer le dernier playground')
+                        ->json();
                 }
             }
 
             $playground->delete();
 
-            return ApiResponse::success(null, 'Playground supprimé avec succès');
+            return ApiResponse::builder()
+                ->success(200, 'Playground supprimé avec succès')
+                ->json();
 
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::error('Playground non trouvé', 404);
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
         }
     }
 
@@ -161,12 +183,17 @@ class PlaygroundController extends Controller
             // Mettre à jour l'utilisateur pour définir ce playground comme actif
             $request->user()->update(['active_playground_id' => $playground->playground_id]);
 
-            return ApiResponse::success([
-                'playground' => $playground->fresh()
-            ], 'Playground défini comme par défaut');
+            return ApiResponse::builder()
+                ->success(200, 'Playground défini comme par défaut')
+                ->data([
+                    'playground' => $playground->fresh()
+                ])
+                ->json();
 
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::error('Playground non trouvé', 404);
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
         }
     }
 
@@ -205,13 +232,18 @@ class PlaygroundController extends Controller
                 'recent_activity' => $this->getRecentActivity($playground)
             ];
 
-            return ApiResponse::success([
-                'playground' => $playground,
-                'stats' => $stats
-            ]);
+            return ApiResponse::builder()
+                ->success()
+                ->data([
+                    'playground' => $playground,
+                    'stats' => $stats
+                ])
+                ->json();
 
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::error('Playground non trouvé', 404);
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
         }
     }
 
@@ -239,7 +271,7 @@ class PlaygroundController extends Controller
                 'completed_tasks_count' => Task::whereHas('theme', function($query) use ($playground) {
                     $query->where('playground_id', $playground->playground_id);
                 })->where('status', 'done')->count(),
-                'completion_rate' => $this->calculateCompletionRate($playground),
+                'completion_rate' => $this->calculateCompletionRate($playground)
             ],
             'recent_activity' => $this->getRecentActivity($playground)
         ];

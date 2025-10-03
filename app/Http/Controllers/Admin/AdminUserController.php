@@ -52,7 +52,9 @@ class AdminUserController extends Controller
                 $query->whereNull('email_verified_at');
                 $query->whereNull('blocked_at');
             } else {
-                return ApiResponse::error('Statut invalide. Utilisez "blocked", "active" ou "unverified".');
+                return ApiResponse::builder()
+                    ->error(400, 'Statut invalide. Utilisez "blocked", "active" ou "unverified".')
+                    ->json();
             }
         }
 
@@ -97,40 +99,43 @@ class AdminUserController extends Controller
         $users = $query->paginate($perPage);
 
         // Structure de réponse complète
-        return ApiResponse::success([
-            'users' => $users->items(),
-            'pagination' => [
-                'current_page' => $users->currentPage(),
-                'total' => $users->total(),
-                'per_page' => $users->perPage(),
-                'last_page' => $users->lastPage(),
-                'from' => $users->firstItem(),
-                'to' => $users->lastItem(),
-            ],
-            'sorting' => [
-                'sort_by' => $sortField,
-                'sort_direction' => $sortDirection,
-                'available_sort_fields' => $allowedSortFields,
-            ],
-            'filters' => [
-                'search' => $request->input('search'),
-                'role' => $request->input('role'),
-                'status' => $request->input('status'),
-                'verified' => $request->input('verified'),
-                'roles' => $request->input('roles'),
-            ],
-            'roles' => Role::all(['power', 'name']),
-            'stats' => [
-                'total_users' => User::count(),
-                'active_users' => User::whereNull('blocked_at')->count(),
-                'blocked_users' => User::whereNotNull('blocked_at')->count(),
-                'verified_users' => User::whereNotNull('email_verified_at')->count(),
-                'unverified_users' => User::whereNull('email_verified_at')->count(),
-                'created_last_7_days' => User::where('created_at', '>=', now()->subDays(7))->count(),
-                'verified_last_7_days' => User::where('email_verified_at', '>=', now()->subDays(7))->count(),
-                'blocked_last_7_days' => User::where('blocked_at', '>=', now()->subDays(7))->count(),
-            ],
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'users' => $users->items(),
+                'pagination' => [
+                    'current_page' => $users->currentPage(),
+                    'total' => $users->total(),
+                    'per_page' => $users->perPage(),
+                    'last_page' => $users->lastPage(),
+                    'from' => $users->firstItem(),
+                    'to' => $users->lastItem(),
+                ],
+                'sorting' => [
+                    'sort_by' => $sortField,
+                    'sort_direction' => $sortDirection,
+                    'available_sort_fields' => $allowedSortFields,
+                ],
+                'filters' => [
+                    'search' => $request->input('search'),
+                    'role' => $request->input('role'),
+                    'status' => $request->input('status'),
+                    'verified' => $request->input('verified'),
+                    'roles' => $request->input('roles'),
+                ],
+                'roles' => Role::all(['power', 'name']),
+                'stats' => [
+                    'total_users' => User::count(),
+                    'active_users' => User::whereNull('blocked_at')->count(),
+                    'blocked_users' => User::whereNotNull('blocked_at')->count(),
+                    'verified_users' => User::whereNotNull('email_verified_at')->count(),
+                    'unverified_users' => User::whereNull('email_verified_at')->count(),
+                    'created_last_7_days' => User::where('created_at', '>=', now()->subDays(7))->count(),
+                    'verified_last_7_days' => User::where('email_verified_at', '>=', now()->subDays(7))->count(),
+                    'blocked_last_7_days' => User::where('blocked_at', '>=', now()->subDays(7))->count(),
+                ],
+            ])
+            ->json();
     }
 
     /**
@@ -165,8 +170,10 @@ class AdminUserController extends Controller
         // Envoyer l'email de vérification
         event(new Registered($user));
 
-        return ApiResponse::success($user,
-            'Utilisateur créé avec succès. Un email de vérification a été envoyé à l\'utilisateur.');
+        return ApiResponse::builder()
+            ->success(200, 'Utilisateur créé avec succès. Un email de vérification a été envoyé à l\'utilisateur.')
+            ->data($user)
+            ->json();
     }
 
     /**
@@ -239,10 +246,13 @@ class AdminUserController extends Controller
             'verified_since' => $user->email_verified_at?->diffForHumans(),
         ];
 
-        return ApiResponse::success([
-            'user' => $user,
-            'additional_stats' => $additionalStats,
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'user' => $user,
+                'additional_stats' => $additionalStats,
+            ])
+            ->json();
     }
 
     /**
@@ -291,10 +301,16 @@ class AdminUserController extends Controller
             $user->save();
             $user->sendEmailVerificationNotification();
 
-            return ApiResponse::success($user, 'Utilisateur mis à jour avec succès. Un email de vérification a été envoyé à la nouvelle adresse.');
+            return ApiResponse::builder()
+                ->success(200, 'Utilisateur mis à jour avec succès. Un email de vérification a été envoyé à la nouvelle adresse.')
+                ->data($user)
+                ->json();
         }
 
-        return ApiResponse::success($user, 'Utilisateur mis à jour avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Utilisateur mis à jour avec succès.')
+            ->data($user)
+            ->json();
     }
 
     /**
@@ -304,7 +320,9 @@ class AdminUserController extends Controller
     {
         // Empêcher la suppression de son propre compte
         if ($user->user_id === auth()->user()->user_id) {
-            return ApiResponse::error('Vous ne pouvez pas supprimer votre propre compte.');
+            return ApiResponse::builder()
+                ->error(400, 'Vous ne pouvez pas supprimer votre propre compte.')
+                ->json();
         }
 
         try {
@@ -316,18 +334,26 @@ class AdminUserController extends Controller
             // Forcer la suppression définitive (ignore le soft delete)
             $user->forceDelete();
 
-            return ApiResponse::success(null, 'Utilisateur supprimé définitivement avec succès.');
+            return ApiResponse::builder()
+                ->success(200, 'Utilisateur supprimé définitivement avec succès.')
+                ->json();
 
         } catch (QueryException $e) {
             // Erreur de contrainte de clé étrangère
             if ($e->getCode() === '23000') {
-                return ApiResponse::error('Impossible de supprimer cet utilisateur car il a des données associées. Supprimez d\'abord ses thèmes, tâches et permissions.', 409);
+                return ApiResponse::builder()
+                    ->error(409, 'Impossible de supprimer cet utilisateur car il a des données associées. Supprimez d\'abord ses thèmes, tâches et permissions.')
+                    ->json();
             }
 
-            return ApiResponse::error('Erreur lors de la suppression : ' . $e->getMessage(), 500);
+            return ApiResponse::builder()
+                ->error(500, 'Erreur lors de la suppression : ' . $e->getMessage())
+                ->json();
 
         } catch (Exception $e) {
-            return ApiResponse::error('Erreur inattendue lors de la suppression : ' . $e->getMessage(), 500);
+            return ApiResponse::builder()
+                ->error(500, 'Erreur inattendue lors de la suppression : ' . $e->getMessage())
+                ->json();
         }
     }
 
@@ -358,19 +384,23 @@ class AdminUserController extends Controller
     public function block(User $user): JsonResponse
     {
         if ($user->blocked_at !== null) {
-            return ApiResponse::error('Cet utilisateur est déjà bloqué.',
-                400);
+            return ApiResponse::builder()
+                ->error(400, 'Cet utilisateur est déjà bloqué.')
+                ->json();
         }
 
         // Empêcher de se bloquer soi-même
         if ($user->user_id === auth()->user()->user_id) {
-            return ApiResponse::error('Vous ne pouvez pas bloquer votre propre compte.',
-                400);
+            return ApiResponse::builder()
+                ->error(400, 'Vous ne pouvez pas bloquer votre propre compte.')
+                ->json();
         }
 
         $user->update(['blocked_at' => now()]);
-        return ApiResponse::success($user,
-            'Utilisateur bloqué avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Utilisateur bloqué avec succès.')
+            ->data($user)
+            ->json();
     }
 
     /**
@@ -379,13 +409,16 @@ class AdminUserController extends Controller
     public function unblock(User $user): JsonResponse
     {
         if ($user->blocked_at === null) {
-            return ApiResponse::error('Cet utilisateur n\'est pas bloqué.',
-                400);
+            return ApiResponse::builder()
+                ->error(400, 'Cet utilisateur n\'est pas bloqué.')
+                ->json();
         }
 
         $user->update(['blocked_at' => null]);
-        return ApiResponse::success($user,
-            'Utilisateur débloqué avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Utilisateur débloqué avec succès.')
+            ->data($user)
+            ->json();
     }
 
     /**

@@ -19,7 +19,10 @@ class StatsController extends Controller
         $userId = $request->user()->user_id;
         $stats = $this->getTaskStats($userId);
 
-        return ApiResponse::success($stats);
+        return ApiResponse::builder()
+            ->success()
+            ->data($stats)
+            ->json();
     }
 
     /**
@@ -48,7 +51,10 @@ class StatsController extends Controller
             'color' => $theme->color
         ];
 
-        return ApiResponse::success($stats);
+        return ApiResponse::builder()
+            ->success()
+            ->data($stats)
+            ->json();
     }
 
     /**

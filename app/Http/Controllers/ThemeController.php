@@ -50,9 +50,12 @@ class ThemeController extends Controller
 
         $allThemes = $ownedThemes->concat($invitedThemes);
 
-        return ApiResponse::success([
-            'themes' => $allThemes
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'themes' => $allThemes
+            ])
+            ->json();
     }
 
     /**
@@ -75,9 +78,12 @@ class ThemeController extends Controller
             'playground_id' => $user->activePlayground->playground_id,
         ]);
 
-        return ApiResponse::success([
-            'theme' => $theme
-        ], 201);
+        return ApiResponse::builder()
+            ->success(201)
+            ->data([
+                'theme' => $theme
+            ])
+            ->json();
     }
 
     /**
@@ -105,9 +111,12 @@ class ThemeController extends Controller
             $theme->permissions = $permissions;
         }
 
-        return ApiResponse::success([
-            'theme' => $theme
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'theme' => $theme
+            ])
+            ->json();
     }
 
     /**
@@ -142,9 +151,12 @@ class ThemeController extends Controller
             $theme->permissions = $permissions;
         }
 
-        return ApiResponse::success([
-            'theme' => $theme
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'theme' => $theme
+            ])
+            ->json();
     }
 
     /**
@@ -159,6 +171,8 @@ class ThemeController extends Controller
 
         $theme->delete();
 
-        return ApiResponse::success(null, 204);
+        return ApiResponse::builder()
+            ->success(204)
+            ->json();
     }
 }

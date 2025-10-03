@@ -73,8 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
 |----------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    Route::get('/ping', function () {return ApiResponse::success(message: 'pong');})
-        ->name('ping');
+    Route::get('/ping', function () {
+        return ApiResponse::builder()
+            ->success(message: 'pong')
+            ->json();
+    })->name('ping');
 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');

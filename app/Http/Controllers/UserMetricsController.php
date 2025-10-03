@@ -32,7 +32,10 @@ class UserMetricsController extends Controller
             'productivity_trends' => $this->getProductivityTrends($userId),
         ];
 
-        return ApiResponse::success($metrics);
+        return ApiResponse::builder()
+            ->success()
+            ->data($metrics)
+            ->json();
     }
 
 //    /**
@@ -42,7 +45,7 @@ class UserMetricsController extends Controller
 //    {
 //        // Vérifier les droits admin
 //        if (!auth()->check() || auth()->user()->role_power < 100) {
-//            return ApiResponse::error('Accès refusé. Privilèges administrateur requis.', 403);
+//            return ApiResponse::builder()->error(403, 'Accès refusé. Privilèges administrateur requis.')->json();
 //        }
 //
 //        $userId = $user->user_id;
@@ -63,7 +66,7 @@ class UserMetricsController extends Controller
 //            ],
 //        ];
 //
-//        return ApiResponse::success($metrics);
+//        return ApiResponse::builder()->success()->data($metrics)->json();
 //    }
 
     /**

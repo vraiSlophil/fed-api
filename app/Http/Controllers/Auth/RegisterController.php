@@ -42,9 +42,12 @@ class RegisterController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        return ApiResponse::success([
-            'user' => $user,
-            'token' => $token
-        ], 'Compte créé avec succès. Veuillez vérifier votre boîte mail pour confirmer votre adresse email.');
+        return ApiResponse::builder()
+            ->success(200, 'Compte créé avec succès. Veuillez vérifier votre boîte mail pour confirmer votre adresse email.')
+            ->data([
+                'user' => $user,
+                'token' => $token
+            ])
+            ->json();
     }
 }
