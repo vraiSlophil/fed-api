@@ -26,9 +26,12 @@ class LoginController extends Controller
 
         $token = $user->createToken('sanctum-token')->plainTextToken;
 
-        return ApiResponse::success([
-            'user' => $user,
-            'token' => $token,
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'user' => $user,
+                'token' => $token,
+            ])
+            ->json();
     }
 }

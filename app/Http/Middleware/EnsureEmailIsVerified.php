@@ -20,10 +20,9 @@ class EnsureEmailIsVerified
         if (! $request->user() ||
             ($request->user() instanceof MustVerifyEmail &&
             ! $request->user()->hasVerifiedEmail())) {
-            return ApiResponse::error(
-                'Votre adresse e-mail n\'est pas vérifiée. Veuillez vérifier votre e-mail pour continuer.',
-                403
-            );
+            return ApiResponse::builder()
+                ->error(403, 'Votre adresse e-mail n\'est pas vérifiée. Veuillez vérifier votre e-mail pour continuer.')
+                ->json();
         }
 
         return $next($request);

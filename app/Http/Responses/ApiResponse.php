@@ -6,59 +6,48 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
+/**
+ * ApiResponse facade + Builder implementations.
+ *
+ * Usage examples:
+ *  ApiResponse::builder()->success()->message('ok')->data($payload)->header('X-Foo','bar')->json();
+ *  ApiResponse::builder()->error(422)->message('Invalid')->errors($validation)->json();
+ *  ApiResponse::media()->path($file)->filename('export.pdf')->attachment()->build();
+ */
 final class ApiResponse
 {
     /**
-     * Réponse standard en cas de succès.
+     * Create a new generic response builder.
      */
-    public static function success(
-        mixed $data = null,
-        string $message = 'OK',
-        int $status = 200
-    ): JsonResponse {
-        return response()->json([
-            'status'  => 'success',
-            'message' => $message,
-            'data'    => $data,
-        ], $status);
+    public static function builder(): ApiResponseBuilder
+    {
+        return new ApiResponseBuilder();
     }
 
     /**
-     * Réponse standard en cas d'erreur.
+     * Convenience shortcuts for the common patterns.
      */
-    public static function error(
-        string $message = 'Une erreur est survenue',
-        int $status = 400,
-        mixed $errors = null
-    ): JsonResponse {
-        return response()->json([
-            'status'  => 'error',
-            'message' => $message,
-            'errors'  => $errors,
-        ], $status);
+    public static function success(mixed $data = null, string $message = 'OK', int $status = 200): JsonResponse
+    {
+        return self::builder()
+            ->success($status, $message)
+            ->data($data)
+            ->json();
     }
-    
+
+    public static function error(string $message = 'Une erreur est survenue', int $status = 400, mixed $errors = null): JsonResponse
+    {
+        return self::builder()
+            ->error($status, $message)
+            ->errors($errors)
+            ->json();
+    }
+
     /**
-     * Réponse pour les fichiers médias.
+     * Media response builder (files).
      */
-    public static function media(
-        string $path,
-        string $mimeType = null,
-        string $filename = null,
-        array $headers = []
-    ): BinaryFileResponse|Response {
-        if (!file_exists($path)) {
-            return response('', 404);
-        }
-        
-        $response = response()->file($path, array_merge([
-            'Content-Type' => $mimeType ?: mime_content_type($path),
-        ], $headers));
-        
-        if ($filename) {
-            $response->setContentDisposition('inline', $filename);
-        }
-        
-        return $response;
+    public static function media(): ApiMediaBuilder
+    {
+        return new ApiMediaBuilder();
     }
 }

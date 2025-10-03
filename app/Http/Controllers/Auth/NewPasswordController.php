@@ -52,7 +52,7 @@ class NewPasswordController extends Controller
         }
 
         return $isPasswordReset
-            ? ApiResponse::success(null, __($status))
-            : ApiResponse::error(__($status));
+            ? ApiResponse::builder()->success(200, __($status))->json()
+            : ApiResponse::builder()->error(400, __($status))->json();
     }
 }

@@ -11,10 +11,9 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $e)
     {
         if ($e instanceof AuthenticationException) {
-            return ApiResponse::error(
-                $e->getMessage(),
-                $e->getCode()
-            );
+            return ApiResponse::builder()
+                ->error($e->getCode(), $e->getMessage())
+                ->json();
         }
 
         return parent::render($request, $e);

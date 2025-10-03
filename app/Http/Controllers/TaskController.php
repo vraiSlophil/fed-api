@@ -40,17 +40,20 @@ class TaskController extends Controller
         $perPage = $request->has('per_page') ? intval($request->per_page) : 15;
         $tasks = $query->paginate($perPage);
 
-        return ApiResponse::success([
-            'tasks' => $tasks->items(),
-            'pagination' => [
-                'total' => $tasks->total(),
-                'per_page' => $tasks->perPage(),
-                'current_page' => $tasks->currentPage(),
-                'last_page' => $tasks->lastPage(),
-                'from' => $tasks->firstItem(),
-                'to' => $tasks->lastItem(),
-            ]
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'tasks' => $tasks->items(),
+                'pagination' => [
+                    'total' => $tasks->total(),
+                    'per_page' => $tasks->perPage(),
+                    'current_page' => $tasks->currentPage(),
+                    'last_page' => $tasks->lastPage(),
+                    'from' => $tasks->firstItem(),
+                    'to' => $tasks->lastItem(),
+                ]
+            ])
+            ->json();
     }
 
     /**
@@ -165,17 +168,20 @@ class TaskController extends Controller
         $perPage = $request->input('per_page', 15);
         $paginatedTasks = $this->paginateCollection($filteredTasks, $perPage, $page);
 
-        return ApiResponse::success([
-            'tasks' => $paginatedTasks['items'],
-            'pagination' => [
-                'total' => $paginatedTasks['total'],
-                'per_page' => $paginatedTasks['per_page'],
-                'current_page' => $paginatedTasks['current_page'],
-                'last_page' => $paginatedTasks['last_page'],
-                'from' => $paginatedTasks['from'],
-                'to' => $paginatedTasks['to'],
-            ]
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'tasks' => $paginatedTasks['items'],
+                'pagination' => [
+                    'total' => $paginatedTasks['total'],
+                    'per_page' => $paginatedTasks['per_page'],
+                    'current_page' => $paginatedTasks['current_page'],
+                    'last_page' => $paginatedTasks['last_page'],
+                    'from' => $paginatedTasks['from'],
+                    'to' => $paginatedTasks['to'],
+                ]
+            ])
+            ->json();
     }
 
     /**
@@ -245,9 +251,12 @@ class TaskController extends Controller
             'status' => $validated['status'] ?? 'todo',
         ]);
 
-        return ApiResponse::success([
-            'task' => $task
-        ], 201);
+        return ApiResponse::builder()
+            ->success(201)
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -271,9 +280,12 @@ class TaskController extends Controller
             })
             ->firstOrFail();
 
-        return ApiResponse::success([
-            'task' => $task
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -288,7 +300,9 @@ class TaskController extends Controller
         $theme = $task->theme;
 
         if (!$theme->canEditTaskBy($userId)) {
-            return ApiResponse::error('Vous n\'avez pas la permission de modifier cette tâche.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Vous n\'avez pas la permission de modifier cette tâche.')
+                ->json();
         }
 
         $validated = $request->validate([
@@ -299,16 +313,21 @@ class TaskController extends Controller
         // Vérifier spécifiquement la permission de validation si le statut est modifié en "done"
         if (isset($validated['status']) && $validated['status'] === 'done' && $task->status !== 'done') {
             if (!$theme->canValidateTaskBy($userId)) {
-                return ApiResponse::error('Vous n\'avez pas la permission de valider cette tâche.', 403);
+                return ApiResponse::builder()
+                    ->error(403, 'Vous n\'avez pas la permission de valider cette tâche.')
+                    ->json();
             }
         }
 
         // Mise à jour - le mutateur setStatusAttribute gère automatiquement validated_at
         $task->update($validated);
 
-        return ApiResponse::success([
-            'task' => $task
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -324,15 +343,20 @@ class TaskController extends Controller
         // Vérifier que l'utilisateur a le droit de modifier cette tâche
         $theme = $task->theme;
         if (!$theme->canEditTaskBy($userId)) {
-            return ApiResponse::error('Vous n\'avez pas la permission de modifier cette tâche.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Vous n\'avez pas la permission de modifier cette tâche.')
+                ->json();
         }
 
         $task->archived_at = now();
         $task->save();
 
-        return ApiResponse::success([
-            'task' => $task
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -348,15 +372,20 @@ class TaskController extends Controller
         // Vérifier que l'utilisateur a le droit de modifier cette tâche
         $theme = $task->theme;
         if (!$theme->canEditTaskBy($userId)) {
-            return ApiResponse::error('Vous n\'avez pas la permission de modifier cette tâche.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Vous n\'avez pas la permission de modifier cette tâche.')
+                ->json();
         }
 
         $task->archived_at = null;
         $task->save();
 
-        return ApiResponse::success([
-            'task' => $task
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -371,16 +400,21 @@ class TaskController extends Controller
         $theme = $task->theme;
 
         if (!$theme->canValidateTaskBy($userId)) {
-            return ApiResponse::error('Vous n\'avez pas la permission de valider cette tâche.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Vous n\'avez pas la permission de valider cette tâche.')
+                ->json();
         }
 
         // Si l'utilisateur est autorisé, mettre à jour la tâche
         $task->status = 'done';
         $task->save();
 
-        return ApiResponse::success([
-            'task' => $task
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -395,16 +429,21 @@ class TaskController extends Controller
         $theme = $task->theme;
 
         if (!$theme->canValidateTaskBy($userId)) {
-            return ApiResponse::error('Vous n\'avez pas la permission de modifier la validation de cette tâche.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Vous n\'avez pas la permission de modifier la validation de cette tâche.')
+                ->json();
         }
 
         // Si l'utilisateur est autorisé, mettre à jour la tâche
         $task->status = 'todo';
         $task->save();
 
-        return ApiResponse::success([
-            'task' => $task
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'task' => $task
+            ])
+            ->json();
     }
 
     /**
@@ -418,11 +457,15 @@ class TaskController extends Controller
 
         // Vérifier si l'utilisateur a le droit de supprimer cette tâche
         if (!$theme->canDeleteTaskBy($userId)) {
-            return ApiResponse::error('Vous n\'avez pas la permission de supprimer cette tâche.', 403);
+            return ApiResponse::builder()
+                ->error(403, 'Vous n\'avez pas la permission de supprimer cette tâche.')
+                ->json();
         }
 
         $task->delete();
 
-        return ApiResponse::success(status: 204);
+        return ApiResponse::builder()
+            ->success(204)
+            ->json();
     }
 }

@@ -79,9 +79,12 @@ class ThemeMemberController extends Controller
             ];
         });
 
-        return ApiResponse::success([
-            'users' => $formattedUsers
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'users' => $formattedUsers
+            ])
+            ->json();
     }
 
     /**
@@ -144,9 +147,12 @@ class ThemeMemberController extends Controller
         // Placer le propriétaire en premier
         $allMembers = collect([$ownerData])->merge($members);
 
-        return ApiResponse::success([
-            'members' => $allMembers
-        ]);
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'members' => $allMembers
+            ])
+            ->json();
     }
 
     /**
@@ -169,20 +175,18 @@ class ThemeMemberController extends Controller
         // Vérifier que l'utilisateur n'est pas le propriétaire du thème
 
         if ($theme->owner_id === $validated['user_id']) {
-            return ApiResponse::error(
-                'Vous ne pouvez pas inviter le propriétaire du thème.',
-                403
-            );
+            return ApiResponse::builder()
+                ->error(403, 'Vous ne pouvez pas inviter le propriétaire du thème.')
+                ->json();
         }
 
         // Vérifier que l'utilisateur n'est pas déjà membre du thème
         if (ThemeUserPermission::where('theme_id', $themeId)
             ->where('user_id', $validated['user_id'])
             ->first()) {
-            return ApiResponse::error(
-                'Cet utilisateur est déjà membre de ce thème.',
-                409
-            );
+            return ApiResponse::builder()
+                ->error(409, 'Cet utilisateur est déjà membre de ce thème.')
+                ->json();
         }
 
         // Créer les permissions pour l'utilisateur
@@ -245,24 +249,25 @@ class ThemeMemberController extends Controller
             // Supprimer la permission si l'email échoue
             $permission->delete();
 
-            return ApiResponse::error(
-                'Erreur lors de l\'envoi de l\'email d\'invitation. Veuillez réessayer.',
-                500
-            );
+            return ApiResponse::builder()
+                ->error(500, 'Erreur lors de l\'envoi de l\'email d\'invitation. Veuillez réessayer.')
+                ->json();
         }
 
-        return ApiResponse::success([
-            'invitation' => [
-                'user_id' => $invitedUser->user_id,
-                'username' => $invitedUser->username,
-                'email' => $invitedUser->email,
-                'first_name' => $invitedUser->first_name,
-                'last_name' => $invitedUser->last_name,
-                'status' => 'invited',
-                'invited_at' => $permission->invited_at,
-                ],],
-            "Invitation envoyée à {$invitedUser->email}",
-            201);
+        return ApiResponse::builder()
+            ->success(201, "Invitation envoyée à {$invitedUser->email}")
+            ->data([
+                'invitation' => [
+                    'user_id' => $invitedUser->user_id,
+                    'username' => $invitedUser->username,
+                    'email' => $invitedUser->email,
+                    'first_name' => $invitedUser->first_name,
+                    'last_name' => $invitedUser->last_name,
+                    'status' => 'invited',
+                    'invited_at' => $permission->invited_at,
+                ]
+            ])
+            ->json();
     }
 
     /**
@@ -296,17 +301,19 @@ class ThemeMemberController extends Controller
             'can_validate_task' => $validated['can_validate_task'],
         ]);
 
-        return ApiResponse::success([
-            'permissions' => [
-                'can_view' => $permission->can_view,
-                'can_update_theme' => $permission->can_update_theme,
-                'can_add_task' => $permission->can_add_task,
-                'can_edit_task' => $permission->can_edit_task,
-                'can_delete_task' => $permission->can_delete_task,
-                'can_validate_task' => $permission->can_validate_task,
-            ],],
-            'Permissions mises à jour avec succès.'
-        );
+        return ApiResponse::builder()
+            ->success(200, 'Permissions mises à jour avec succès.')
+            ->data([
+                'permissions' => [
+                    'can_view' => $permission->can_view,
+                    'can_update_theme' => $permission->can_update_theme,
+                    'can_add_task' => $permission->can_add_task,
+                    'can_edit_task' => $permission->can_edit_task,
+                    'can_delete_task' => $permission->can_delete_task,
+                    'can_validate_task' => $permission->can_validate_task,
+                ]
+            ])
+            ->json();
     }
 
     /**
@@ -318,9 +325,9 @@ class ThemeMemberController extends Controller
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
-            return ApiResponse::error(
-                'Vous ne pouvez pas désactiver le propriétaire du thème.'
-            );
+            return ApiResponse::builder()
+                ->error(400, 'Vous ne pouvez pas désactiver le propriétaire du thème.')
+                ->json();
         }
 
         // Récupérer la permission
@@ -332,7 +339,9 @@ class ThemeMemberController extends Controller
         $permission->status = 'revoked';
         $permission->save();
 
-        return ApiResponse::success(null, 'Membre désactivé avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Membre désactivé avec succès.')
+            ->json();
     }
 
     /**
@@ -350,7 +359,9 @@ class ThemeMemberController extends Controller
         $permission->status = 'active';
         $permission->save();
 
-        return ApiResponse::success(null, 'Membre réactivé avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Membre réactivé avec succès.')
+            ->json();
     }
 
     /**
@@ -362,7 +373,9 @@ class ThemeMemberController extends Controller
 
         // Vérifier que l'utilisateur n'est pas le propriétaire
         if ($theme->owner_id === $userId) {
-            return ApiResponse::error('Vous ne pouvez pas supprimer le propriétaire du thème.');
+            return ApiResponse::builder()
+                ->error(400, 'Vous ne pouvez pas supprimer le propriétaire du thème.')
+                ->json();
         }
 
         // Récupérer la permission
@@ -373,7 +386,9 @@ class ThemeMemberController extends Controller
         // Supprimer la permission
         $permission->delete();
 
-        return ApiResponse::success(null, 'Membre supprimé avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Membre supprimé avec succès.')
+            ->json();
     }
 
     /**
@@ -386,7 +401,9 @@ class ThemeMemberController extends Controller
         // Vérifier que l'utilisateur n'est pas le propriétaire
         $theme = Theme::findOrFail($themeId);
         if ($theme->owner_id === $userId) {
-            return ApiResponse::error('En tant que propriétaire, vous ne pouvez pas quitter ce thème. Vous devez le supprimer ou transférer la propriété.');
+            return ApiResponse::builder()
+                ->error(400, 'En tant que propriétaire, vous ne pouvez pas quitter ce thème. Vous devez le supprimer ou transférer la propriété.')
+                ->json();
         }
 
         // Récupérer la permission
@@ -397,7 +414,9 @@ class ThemeMemberController extends Controller
         // Supprimer la permission
         $permission->delete();
 
-        return ApiResponse::success(null, 'Vous avez quitté le thème avec succès.');
+        return ApiResponse::builder()
+            ->success(200, 'Vous avez quitté le thème avec succès.')
+            ->json();
     }
 
     /**
@@ -426,9 +445,12 @@ class ThemeMemberController extends Controller
             'target_playground_id' => $validated['target_playground_id']
         ]);
 
-        return ApiResponse::success([
-            'permission' => $permission->fresh(['theme', 'targetPlayground'])
-        ], 'Thème déplacé avec succès');
+        return ApiResponse::builder()
+            ->success(200, 'Thème déplacé avec succès')
+            ->data([
+                'permission' => $permission->fresh(['theme', 'targetPlayground'])
+            ])
+            ->json();
     }
 
     /**

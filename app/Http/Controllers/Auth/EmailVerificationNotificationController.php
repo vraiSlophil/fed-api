@@ -21,6 +21,8 @@ class EmailVerificationNotificationController extends Controller
 
         $request->user()->sendEmailVerificationNotification();
 
-        return ApiResponse::success();
+        return ApiResponse::builder()
+            ->success()
+            ->json();
     }
 }

@@ -104,9 +104,12 @@ class ThemeInvitationController extends Controller
             'target_playground_id' => $validated['target_playground_id']
         ]);
 
-        return ApiResponse::success([
-            'permission' => $permission->fresh(['theme', 'targetPlayground'])
-        ], 'Invitation acceptée avec succès');
+        return ApiResponse::builder()
+            ->success(200, 'Invitation acceptée avec succès')
+            ->data([
+                'permission' => $permission->fresh(['theme', 'targetPlayground'])
+            ])
+            ->json();
     }
 
     /**
@@ -123,6 +126,8 @@ class ThemeInvitationController extends Controller
 
         $permission->delete();
 
-        return ApiResponse::success(null, 'Invitation refusée avec succès');
+        return ApiResponse::builder()
+            ->success(200, 'Invitation refusée avec succès')
+            ->json();
     }
 }

@@ -13,8 +13,8 @@ class LogoutController extends Controller
     {
         $request->user()->tokens()->delete();
 
-        return ApiResponse::success();
-
+        return ApiResponse::builder()
+            ->success()
+            ->json();
     }
-
 }
