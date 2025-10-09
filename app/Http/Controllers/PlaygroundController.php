@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Playground;
-use App\Models\Theme;
+use App\Models\Playground;;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -73,7 +73,7 @@ class PlaygroundController extends Controller
 
         $playground = $request->user()->playgrounds()->create([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] ?? \Str::slug($validated['name']),
+            'slug' => $validated['slug'] ?? Str::slug($validated['name']),
             'icon' => $validated['icon'] ?? null,
             'color' => $validated['color'] ?? '#6366F1',
             'background_color' => $validated['background_color'] ?? null,
@@ -289,9 +289,7 @@ class PlaygroundController extends Controller
             ->where('status', 'done')
             ->count();
 
-        $completionRate = ($completedTasks / $totalTasks) * 100.0;
-
-        return round($completionRate, 2);
+        return (float) number_format(($completedTasks / $totalTasks) * 100.0, 2, '.', '');
     }
 
     private function getTasksQueryForPlayground(Playground $playground)
