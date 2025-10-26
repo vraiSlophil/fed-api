@@ -69,13 +69,14 @@ class ThemeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:150',
             'color' => 'required|string|size:7',
+            'playground_id' => 'required|string|max:100',
         ]);
 
         $theme = Theme::create([
             'owner_id' => $userId,
             'title' => $validated['title'],
             'color' => $validated['color'],
-            'playground_id' => $user->activePlayground->playground_id,
+            'playground_id' => $validated['playground_id'],
         ]);
 
         return ApiResponse::builder()
