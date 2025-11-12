@@ -20,7 +20,7 @@ class PlaygroundController extends Controller
         $playgrounds = $request->user()->playgrounds()
             ->withCount(['themes'])
             ->orderBy('is_default', 'desc')
-            ->orderBy('name')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         return ApiResponse::builder()
