@@ -9,6 +9,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Utils\PaginationUtil;
+use Symfony\Component\Translation\Exception\NotFoundResourceException;
 
 class PlaygroundController extends Controller
 {
@@ -32,21 +36,29 @@ class PlaygroundController extends Controller
     }
 
     /**
-     * Récupérer un playground avec toutes ses données
+     * Récupérer un playground (métadonnées uniquement, sans thèmes complets)
+     *
+     * Cette route est utilisée par le front pour récupérer la méta d'un playground
+     * à partir de son UUID. Si l'identifiant n'est pas un UUID valide, on renvoie 404
+     * afin d'éviter une erreur de type dans PostgreSQL.
      */
     public function show(Request $request, string $playgroundId): JsonResponse
     {
-        try {
-            $playground = Playground::where('playground_id', $playgroundId)
-                ->where('user_id', $request->user()->user_id)
-                ->firstOrFail();
+        // Si l'identifiant n'est pas un UUID valide, renvoyer 404 directement
+        if (! Str::isUuid($playgroundId)) {
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
+        }
 
-            // Récupérer toutes les données du playground
-            $playgroundData = $this->getPlaygroundCompleteData($playground);
+        try {
+            $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id, withThemesCount: true);
 
             return ApiResponse::builder()
                 ->success()
-                ->data($playgroundData)
+                ->data([
+                    'playground' => $playground,
+                ])
                 ->json();
 
         } catch (ModelNotFoundException $e) {
@@ -322,5 +334,128 @@ class PlaygroundController extends Controller
             'recent_tasks' => $recentTasks,
             'recent_themes' => $recentThemes
         ];
+    }
+
+    /**
+     * Récupérer les thèmes d'un playground avec pagination (par ID)
+     */
+    public function themes(Request $request, string $playgroundId): JsonResponse
+    {
+        try {
+            $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id);
+
+            $paginator = $this->paginatePlaygroundThemes($playground->themes(), $request);
+
+            return ApiResponse::builder()
+                ->success()
+                ->data([
+                    'themes' => $paginator['items'],
+                    'pagination' => $paginator['pagination'],
+                ])
+                ->json();
+        } catch (ModelNotFoundException $e) {
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
+        }
+    }
+
+    /**
+     * Récupérer un playground par slug (métadonnées uniquement)
+     */
+    public function showBySlug(Request $request, string $slug): JsonResponse
+    {
+        try {
+            $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id, withThemesCount: true);
+
+            return ApiResponse::builder()
+                ->success()
+                ->data([
+                    'playground' => $playground,
+                ])
+                ->json();
+        } catch (ModelNotFoundException $e) {
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
+        }
+    }
+
+    /**
+     * Récupérer les thèmes d'un playground via son slug, avec pagination
+     */
+    public function themesBySlug(Request $request, string $slug): JsonResponse
+    {
+        try {
+            $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id);
+
+            $paginator = $this->paginatePlaygroundThemes($playground->themes(), $request);
+
+            return ApiResponse::builder()
+                ->success()
+                ->data([
+                    'themes' => $paginator['items'],
+                    'pagination' => $paginator['pagination'],
+                ])
+                ->json();
+        } catch (ModelNotFoundException $e) {
+            return ApiResponse::builder()
+                ->error(404, 'Playground non trouvé')
+                ->json();
+        }
+    }
+
+    /**
+     * Trouver un playground pour un utilisateur à partir de son ID
+     */
+    private function findPlaygroundForUserById(string $playgroundId, string $userId, bool $withThemesCount = false): Playground
+    {
+        $query = Playground::where('playground_id', $playgroundId)
+            ->where('user_id', $userId);
+
+        if ($withThemesCount) {
+            $query->withCount(['themes']);
+        }
+
+        return $query->firstOrFail();
+    }
+
+    /**
+     * Trouver un playground pour un utilisateur à partir de son slug
+     */
+    private function findPlaygroundForUserBySlug(string $slug, string $userId, bool $withThemesCount = false): Playground
+    {
+        $query = Playground::where('slug', $slug)
+            ->where('user_id', $userId);
+
+        if ($withThemesCount) {
+            $query->withCount(['themes']);
+        }
+
+        return $query->firstOrFail();
+    }
+
+    /**
+     * Paginer les thèmes d'un playground
+     *
+     * @param Builder|Relation $themesQuery
+     * @param Request $request
+     * @return array{items: array, pagination: array}
+     */
+    private function paginatePlaygroundThemes($themesQuery, Request $request): array
+    {
+        // Normalisation des paramètres de pagination
+        $perPage = (int) $request->input('per_page', 20);
+        $perPage = max(1, min(100, $perPage));
+
+        $page = (int) $request->input('page', 1);
+        $page = max(1, $page);
+
+        // Tri par défaut (le front peut se baser sur created_at desc)
+        if ($themesQuery instanceof Relation || $themesQuery instanceof Builder) {
+            $themesQuery->orderBy('created_at', 'desc');
+        }
+
+        return PaginationUtil::paginate($themesQuery, $perPage, $page);
     }
 }

@@ -115,12 +115,21 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::prefix('playgrounds')->group(function () {
         Route::get('/', [PlaygroundController::class, 'index']);
         Route::post('/', [PlaygroundController::class, 'store']);
+
+        // Accès par ID
         Route::prefix('/{playgroundId}')->group(function () {
             Route::get('', [PlaygroundController::class, 'show']);
+            Route::get('/themes', [PlaygroundController::class, 'themes']);
             Route::put('', [PlaygroundController::class, 'update']);
             Route::delete('', [PlaygroundController::class, 'destroy']);
             Route::post('/set-default', [PlaygroundController::class, 'setAsDefault']);
             Route::get('/stats', [PlaygroundController::class, 'stats']);
+        });
+
+        // Accès par slug
+        Route::prefix('/by-slug/{slug}')->group(function () {
+            Route::get('', [PlaygroundController::class, 'showBySlug']);
+            Route::get('/themes', [PlaygroundController::class, 'themesBySlug']);
         });
     });
 
