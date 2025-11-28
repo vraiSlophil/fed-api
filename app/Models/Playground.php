@@ -42,7 +42,8 @@ class Playground extends Model
 
     public function themes(): HasMany
     {
-        return $this->hasMany(Theme::class, 'playground_id', 'playground_id');
+        return $this->hasMany(Theme::class, 'playground_id', 'playground_id')
+                    ->orderBy('created_at', 'asc');
     }
 
     /**
