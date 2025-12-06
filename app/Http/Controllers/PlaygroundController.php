@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Playground;;
 use App\Models\Task;
+use App\Models\Theme;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -343,20 +344,9 @@ class PlaygroundController extends Controller
     {
         try {
             $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id);
-
-            $paginator = $this->paginatePlaygroundThemes($playground->themes(), $request);
-
-            return ApiResponse::builder()
-                ->success()
-                ->data([
-                    'themes' => $paginator['items'],
-                    'pagination' => $paginator['pagination'],
-                ])
-                ->json();
+            return $this->getThemesPaginated($request, $playground);
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404, 'Playground non trouvé')
-                ->json();
+            return ApiResponse::builder()->error(404, 'Playground non trouvé')->json();
         }
     }
 
@@ -388,20 +378,9 @@ class PlaygroundController extends Controller
     {
         try {
             $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id);
-
-            $paginator = $this->paginatePlaygroundThemes($playground->themes(), $request);
-
-            return ApiResponse::builder()
-                ->success()
-                ->data([
-                    'themes' => $paginator['items'],
-                    'pagination' => $paginator['pagination'],
-                ])
-                ->json();
+            return $this->getThemesPaginated($request, $playground);
         } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404, 'Playground non trouvé')
-                ->json();
+            return ApiResponse::builder()->error(404, 'Playground non trouvé')->json();
         }
     }
 
@@ -436,26 +415,45 @@ class PlaygroundController extends Controller
     }
 
     /**
-     * Paginer les thèmes d'un playground
-     *
-     * @param Builder|Relation $themesQuery
-     * @param Request $request
-     * @return array{items: array, pagination: array}
+     * Construire la requête des thèmes accessibles pour un utilisateur dans un playground
      */
-    private function paginatePlaygroundThemes($themesQuery, Request $request): array
+    private function buildAccessibleThemesQuery(string $playgroundId, string $userId): Builder
     {
-        // Normalisation des paramètres de pagination
-        $perPage = (int) $request->input('per_page', 20);
-        $perPage = max(1, min(100, $perPage));
+        $ownedThemes = Theme::where('playground_id', $playgroundId)
+            ->where('owner_id', $userId);
 
-        $page = (int) $request->input('page', 1);
-        $page = max(1, $page);
+        $sharedThemes = Theme::whereHas('themeUserPermissions', function ($query) use ($userId, $playgroundId) {
+            $query->where('user_id', $userId)
+                ->where('status', 'active')
+                ->where('can_view', true)
+                ->where('target_playground_id', $playgroundId);
+        })->whereNot('owner_id', $userId);
 
-        // Tri par défaut (le front peut se baser sur created_at desc)
-        if ($themesQuery instanceof Relation || $themesQuery instanceof Builder) {
-            $themesQuery->orderBy('created_at', 'desc');
-        }
+        return $ownedThemes->union($sharedThemes)->orderBy('created_at', 'desc');
+    }
 
-        return PaginationUtil::paginate($themesQuery, $perPage, $page);
+    /**
+     * Récupérer les thèmes paginés d'un playground
+     */
+    private function getThemesPaginated(Request $request, Playground $playground): JsonResponse
+    {
+        $themesQuery = $this->buildAccessibleThemesQuery(
+            $playground->playground_id,
+            $request->user()->user_id
+        );
+
+        $paginator = PaginationUtil::paginate(
+            $themesQuery,
+            max(1, min(100, (int) $request->input('per_page', 20))),
+            max(1, (int) $request->input('page', 1))
+        );
+
+        return ApiResponse::builder()
+            ->success()
+            ->data([
+                'themes' => $paginator['items'],
+                'pagination' => $paginator['pagination'],
+            ])
+            ->json();
     }
 }

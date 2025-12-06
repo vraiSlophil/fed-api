@@ -32,6 +32,7 @@ class ThemeUserPermission extends Model
     protected $fillable = [
         'theme_id',
         'user_id',
+        'target_playground_id',
         'can_view',
         'can_update_theme',
         'can_add_task',
