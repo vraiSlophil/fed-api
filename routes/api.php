@@ -120,7 +120,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('/{playgroundId}')->group(function () {
             Route::get('', [PlaygroundController::class, 'show']);
             Route::get('/themes', [PlaygroundController::class, 'themes']);
-            Route::put('', [PlaygroundController::class, 'update']);
+            Route::patch('', [PlaygroundController::class, 'update']);
             Route::delete('', [PlaygroundController::class, 'destroy']);
             Route::post('/set-default', [PlaygroundController::class, 'setAsDefault']);
             Route::get('/stats', [PlaygroundController::class, 'stats']);
@@ -138,7 +138,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::post('/', [ThemeController::class, 'store'])->name('themes.store');
         Route::prefix('/{id}')->group(function () {
             Route::get('', [ThemeController::class, 'show'])->name('themes.show');
-            Route::put('', [ThemeController::class, 'update'])->name('themes.update');
+            Route::patch('', [ThemeController::class, 'update'])->name('themes.update');
             Route::delete('', [ThemeController::class, 'destroy'])->name('themes.destroy');
             Route::prefix('/invitations')->group(function () {
                 Route::post('/accept', [ThemeInvitationController::class, 'acceptInvitation'])->name('themes.invitations.accept');
@@ -149,11 +149,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::get('', [ThemeMemberController::class, 'listMembers'])->name('theme.members.list');
                 Route::post('', [ThemeMemberController::class, 'inviteUser'])->name('theme.members.invite');
                 Route::prefix('/{userId}')->group(function () {
-                    Route::put('', [ThemeMemberController::class, 'updateMemberPermissions'])->name('theme.members.update');
+                    Route::patch('', [ThemeMemberController::class, 'updateMemberPermissions'])->name('theme.members.update');
                     Route::delete('', [ThemeMemberController::class, 'removeMember'])->name('theme.members.remove');
                     Route::post('/deactivate', [ThemeMemberController::class, 'deactivateMember'])->name('theme.members.deactivate');
                     Route::post('/reactivate', [ThemeMemberController::class, 'reactivateMember'])->name('theme.members.reactivate');
-                    Route::put('/move-to-playground', [ThemeMemberController::class, 'moveToPlayground'])->name('theme.members.move-to-playground');
+                    Route::patch('/move-to-playground', [ThemeMemberController::class, 'moveToPlayground'])->name('theme.members.move-to-playground');
                 });
             });
             Route::post('/leave', [ThemeMemberController::class, 'leaveTheme'])->name('theme.leave');
@@ -164,7 +164,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
         Route::prefix('/{id}')->group(function () {
             Route::get('', [TaskController::class, 'show'])->name('tasks.show');
-            Route::put('', [TaskController::class, 'update'])->name('tasks.update');
+            Route::patch('', [TaskController::class, 'update'])->name('tasks.update');
             Route::delete('', [TaskController::class, 'destroy'])->name('tasks.destroy');
             Route::post('/archive', [TaskController::class, 'archive'])->name('tasks.archive');
             Route::post('/restore', [TaskController::class, 'restore'])->name('tasks.restore');

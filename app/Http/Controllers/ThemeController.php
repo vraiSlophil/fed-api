@@ -140,8 +140,9 @@ class ThemeController extends Controller
             ->firstOrFail();
 
         $validated = $request->validate([
-            'title' => 'sometimes|required|string|max:150',
-            'color' => 'sometimes|required|string|size:7',
+            'title' => 'sometimes|string|max:150',
+            'color' => 'sometimes|string|size:7',
+            'playground_id' => 'sometimes|string|max:100',
         ]);
 
         $theme->update($validated);
