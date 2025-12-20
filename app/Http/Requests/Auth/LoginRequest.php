@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Exceptions\ApiException;
 use App\Models\User;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
@@ -20,40 +21,30 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email'    => ['required', 'string', 'email'],
+            'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
     }
 
-    /**
-     * Vérifie les identifiants sans créer de session,
-     * puis attache l’utilisateur authentifié à la requête.
-     *
-     * @throws ValidationException
-     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
         $user = User::where('email', $this->input('email'))->first();
 
-        if (! $user || ! Hash::check($this->input('password'), $user->password)) {
+        if (!$user || !Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
+            throw new AuthenticationException();
         }
 
-        // On attache l’utilisateur à la requête pour que $request->user() soit disponible.
-        $this->setUserResolver(fn () => $user);
+        $this->setUserResolver(fn() => $user);
 
         RateLimiter::clear($this->throttleKey());
     }
 
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -61,16 +52,16 @@ class LoginRequest extends FormRequest
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
-        throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
-        ]);
+        throw new ApiException(
+            'auth.throttle',
+            ['seconds' => $seconds, 'minutes' => (int)ceil($seconds / 60)],
+            429,
+            'Too many attempts'
+        );
     }
 
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->input('email')) . '|' . $this->ip());
     }
 }

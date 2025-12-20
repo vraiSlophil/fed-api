@@ -14,10 +14,8 @@ class UserObserver
      */
     public function created(User $user): void
     {
-        // Créer les métriques utilisateur
         UserMetric::create(['user_id' => $user->user_id]);
 
-        // Créer le playground par défaut
         $defaultPlayground = Playground::create([
             'user_id' => $user->user_id,
             'name' => 'Mon Espace Principal',
@@ -27,7 +25,6 @@ class UserObserver
             'is_default' => true,
         ]);
 
-        // Définir ce playground comme playground actif
         $user->update(['active_playground_id' => $defaultPlayground->playground_id]);
     }
 

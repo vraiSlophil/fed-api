@@ -1,5 +1,4 @@
 <?php
-// app/Exceptions/Handler.php
 
 namespace App\Exceptions;
 
@@ -16,6 +15,20 @@ final class Handler extends ExceptionHandler
 {
     public function register(): void
     {
+        $this->renderable(function (ApiException $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $e->getMessage(),
+                status: $e->status,
+                errors: null,
+                messageCode: $e->messageCode,
+                messageParams: $e->messageParams
+            );
+        });
+
         $this->renderable(function (ValidationException $e, $request) {
             if (!$request->expectsJson()) {
                 return null;
@@ -25,7 +38,8 @@ final class Handler extends ExceptionHandler
                 message: 'Validation failed',
                 status: 422,
                 errors: $e->errors(),
-                messageCode: 'validation.invalid'
+                messageCode: 'validation.invalid',
+                messageParams: []
             );
         });
 
@@ -55,20 +69,7 @@ final class Handler extends ExceptionHandler
             );
         });
 
-        $this->renderable(function (ModelNotFoundException $e, $request) {
-            if (!$request->expectsJson()) {
-                return null;
-            }
-
-            return ApiResponse::error(
-                message: 'Not found',
-                status: 404,
-                errors: null,
-                messageCode: 'resource.not_found'
-            );
-        });
-
-        $this->renderable(function (NotFoundHttpException $e, $request) {
+        $this->renderable(function (ModelNotFoundException|NotFoundHttpException $e, $request) {
             if (!$request->expectsJson()) {
                 return null;
             }
@@ -89,9 +90,9 @@ final class Handler extends ExceptionHandler
             $isProd = app()->environment('production');
 
             return ApiResponse::error(
-                message: $isProd ? 'Server error' : ($e->getMessage() ?? 'Server error'),
+                message: $isProd ? 'Server error' : ($e->getMessage() ?: 'Server error'),
                 status: 500,
-                errors: $isProd ?? ['exception' => get_class($e)],
+                errors: $isProd ? null : ['exception' => get_class($e)],
                 messageCode: 'common.error'
             );
         });

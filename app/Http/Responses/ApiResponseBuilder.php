@@ -143,9 +143,12 @@ final class ApiResponseBuilder
 
     public function build(): JsonResponse
     {
+
+        $isProd = app()->environment('production');
+
         $payload = [
             'status' => $this->status,
-            'message' => $this->message,
+            'message' => ($this->status >= 500 && $isProd) ? 'Server error' : $this->message,
             'data' => $this->data,
         ];
 
@@ -157,7 +160,7 @@ final class ApiResponseBuilder
             $payload['message_params'] = $this->messageParams;
         }
 
-        if (!empty($this->errors)) {
+        if (!(empty($this->errors) && $isProd)) {
             $payload['errors'] = $this->errors;
         }
 
