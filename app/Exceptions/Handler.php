@@ -1,21 +1,99 @@
 <?php
+// app/Exceptions/Handler.php
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use App\Http\Responses\ApiResponse;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
-class Handler extends ExceptionHandler
+final class Handler extends ExceptionHandler
 {
-    public function render($request, Throwable $e)
+    public function register(): void
     {
-        if ($e instanceof AuthenticationException) {
-            return ApiResponse::builder()
-                ->error($e->getCode(), $e->getMessage())
-                ->json();
-        }
+        $this->renderable(function (ValidationException $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
 
-        return parent::render($request, $e);
+            return ApiResponse::error(
+                message: 'Validation failed',
+                status: 422,
+                errors: $e->errors(),
+                messageCode: 'validation.invalid'
+            );
+        });
+
+        $this->renderable(function (AuthenticationException $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: 'Authentication required',
+                status: 401,
+                errors: null,
+                messageCode: 'auth.failed'
+            );
+        });
+
+        $this->renderable(function (AuthorizationException $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: 'Forbidden',
+                status: 403,
+                errors: null,
+                messageCode: 'permission.denied'
+            );
+        });
+
+        $this->renderable(function (ModelNotFoundException $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: 'Not found',
+                status: 404,
+                errors: null,
+                messageCode: 'resource.not_found'
+            );
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: 'Not found',
+                status: 404,
+                errors: null,
+                messageCode: 'resource.not_found'
+            );
+        });
+
+        $this->renderable(function (Throwable $e, $request) {
+            if (!$request->expectsJson()) {
+                return null;
+            }
+
+            $isProd = app()->environment('production');
+
+            return ApiResponse::error(
+                message: $isProd ? 'Server error' : ($e->getMessage() ?? 'Server error'),
+                status: 500,
+                errors: $isProd ?? ['exception' => get_class($e)],
+                messageCode: 'common.error'
+            );
+        });
     }
 }
