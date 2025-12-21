@@ -25,7 +25,6 @@ class MediaController extends Controller
             ->path($filePath)
             ->mimeType($mimeType)
             ->filename(basename($path))
-            ->messageCode('common.ok')
             ->build();
     }
 

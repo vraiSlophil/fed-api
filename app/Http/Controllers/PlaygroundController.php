@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\Theme;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -35,32 +36,20 @@ class PlaygroundController extends Controller
 
     public function show(Request $request, string $playgroundId): JsonResponse
     {
-        if (!Str::isUuid($playgroundId)) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
 
-        try {
-            $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id, withThemesCount: true);
+        $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id, withThemesCount: true);
 
-            return ApiResponse::builder()
-                ->success()
-                ->messageCode('playground.show.success')
-                ->data([
-                    'playground' => $playground,
-                ])
-                ->json();
-
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('playground.show.success')
+            ->data([
+                'playground' => $playground,
+            ])
+            ->json();
     }
 
     public function store(Request $request): JsonResponse
@@ -100,156 +89,137 @@ class PlaygroundController extends Controller
 
     public function update(Request $request, string $playgroundId): JsonResponse
     {
-        try {
-            $playground = Playground::where('playground_id', $playgroundId)
-                ->where('user_id', $request->user()->user_id)
-                ->firstOrFail();
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
 
-            $validated = $request->validate([
-                'name' => 'sometimes|required|string|max:120',
-                'slug' => 'nullable|string|max:140',
-                'icon' => 'nullable|string|max:50',
-                'color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
-                'background_color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
-                'style' => 'nullable|array',
-                'is_default' => 'boolean'
-            ]);
+        $playground = Playground::where('playground_id', $playgroundId)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
 
-            $playground->update($validated);
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:120',
+            'slug' => 'nullable|string|max:140',
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
+            'background_color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
+            'style' => 'nullable|array',
+            'is_default' => 'boolean'
+        ]);
 
-            if (isset($validated['is_default']) && $validated['is_default']) {
-                $playground->setAsDefault();
-            }
+        $playground->update($validated);
 
-            return ApiResponse::builder()
-                ->success(200)
-                ->messageCode('playground.update.success')
-                ->data([
-                    'playground' => $playground->fresh()
-                ])
-                ->json();
-
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
+        if (isset($validated['is_default']) && $validated['is_default']) {
+            $playground->setAsDefault();
         }
+
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('playground.update.success')
+            ->data([
+                'playground' => $playground->fresh()
+            ])
+            ->json();
     }
 
     public function destroy(Request $request, string $playgroundId): JsonResponse
     {
-        try {
-            $playground = Playground::where('playground_id', $playgroundId)
-                ->where('user_id', $request->user()->user_id)
-                ->firstOrFail();
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
 
-            if ($playground->is_default) {
-                $playgroundCount = $request->user()->playgrounds()->count();
-                if ($playgroundCount === 1) {
-                    // Erreur métier contrôlée : utiliser ApiException pour laisser le Handler construire la réponse
-                    throw new ApiException(
-                        messageCode: 'playground.delete.last',
-                        messageParams: [],
-                        status: 400,
-                        message: 'Cannot delete last playground'
-                    );
-                }
-            }
+        $playground = Playground::where('playground_id', $playgroundId)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
 
-            $playground->delete();
-
-            return ApiResponse::builder()
-                ->success(200)
-                ->messageCode('playground.delete.success')
-                ->json();
-
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
+        if ($playground->is_default) {
+            throw new ApiException(
+                messageCode: 'playground.delete.last',
+                messageParams: [],
+                status: 400,
+                message: 'Cannot delete last playground'
+            );
         }
+
+        $playground->delete();
+
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('playground.delete.success')
+            ->json();
     }
 
     public function setAsDefault(Request $request, string $playgroundId): JsonResponse
     {
-        try {
-            $playground = Playground::where('playground_id', $playgroundId)
-                ->where('user_id', $request->user()->user_id)
-                ->firstOrFail();
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
 
-            $playground->setAsDefault();
+        $playground = Playground::where('playground_id', $playgroundId)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
 
-            $request->user()->update(['active_playground_id' => $playground->playground_id]);
+        $playground->setAsDefault();
 
-            return ApiResponse::builder()
-                ->success(200)
-                ->messageCode('playground.set_default.success')
-                ->data([
-                    'playground' => $playground->fresh()
-                ])
-                ->json();
+        $request->user()->update(['active_playground_id' => $playground->playground_id]);
 
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('playground.set_default.success')
+            ->data([
+                'playground' => $playground->fresh()
+            ])
+            ->json();
     }
 
     public function stats(Request $request, string $playgroundId): JsonResponse
     {
-        try {
-            $playground = Playground::where('playground_id', $playgroundId)
-                ->where('user_id', $request->user()->user_id)
-                ->firstOrFail();
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
 
-            $stats = [
-                'themes' => [
-                    'total' => $playground->themes()->count(),
-                    'private' => $playground->themes()->where('visibility', 'private')->count(),
-                    'shared' => $playground->themes()->where('visibility', 'shared')->count(),
-                    'public' => $playground->themes()->where('visibility', 'public')->count(),
-                ],
-                'tasks' => [
-                    'total' => Task::whereHas('theme', function ($query) use ($playground) {
-                        $query->where('playground_id', $playground->playground_id);
-                    })->count(),
-                    'todo' => Task::whereHas('theme', function ($query) use ($playground) {
-                        $query->where('playground_id', $playground->playground_id);
-                    })->where('status', 'todo')->count(),
-                    'in_progress' => Task::whereHas('theme', function ($query) use ($playground) {
-                        $query->where('playground_id', $playground->playground_id);
-                    })->where('status', 'in_progress')->count(),
-                    'done' => Task::whereHas('theme', function ($query) use ($playground) {
-                        $query->where('playground_id', $playground->playground_id);
-                    })->where('status', 'done')->count(),
-                ],
-                'completion_rate' => $this->calculateCompletionRate($playground),
-                'recent_activity' => $this->getRecentActivity($playground)
-            ];
+        $playground = Playground::where('playground_id', $playgroundId)
+            ->where('user_id', $request->user()->user_id)
+            ->firstOrFail();
 
-            return ApiResponse::builder()
-                ->success()
-                ->messageCode('playground.stats.success')
-                ->data([
-                    'playground' => $playground,
-                    'stats' => $stats
-                ])
-                ->json();
+        $stats = [
+            'themes' => [
+                'total' => $playground->themes()->count(),
+                'private' => $playground->themes()->where('visibility', 'private')->count(),
+                'shared' => $playground->themes()->where('visibility', 'shared')->count(),
+                'public' => $playground->themes()->where('visibility', 'public')->count(),
+            ],
+            'tasks' => [
+                'total' => Task::whereHas('theme', function ($query) use ($playground) {
+                    $query->where('playground_id', $playground->playground_id);
+                })->count(),
+                'todo' => Task::whereHas('theme', function ($query) use ($playground) {
+                    $query->where('playground_id', $playground->playground_id);
+                })->where('status', 'todo')->count(),
+                'in_progress' => Task::whereHas('theme', function ($query) use ($playground) {
+                    $query->where('playground_id', $playground->playground_id);
+                })->where('status', 'in_progress')->count(),
+                'done' => Task::whereHas('theme', function ($query) use ($playground) {
+                    $query->where('playground_id', $playground->playground_id);
+                })->where('status', 'done')->count(),
+            ],
+            'completion_rate' => $this->calculateCompletionRate($playground),
+            'recent_activity' => $this->getRecentActivity($playground)
+        ];
 
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('playground.stats.success')
+            ->data([
+                'playground' => $playground,
+                'stats' => $stats
+            ])
+            ->json();
+
     }
 
     private function getPlaygroundCompleteData(Playground $playground): array
@@ -325,51 +295,32 @@ class PlaygroundController extends Controller
 
     public function themes(Request $request, string $playgroundId): JsonResponse
     {
-        try {
-            $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id);
-            return $this->getThemesPaginated($request, $playground);
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
+
+        $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id);
+        return $this->getThemesPaginated($request, $playground);
     }
 
     public function showBySlug(Request $request, string $slug): JsonResponse
     {
-        try {
-            $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id, withThemesCount: true);
+        $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id, withThemesCount: true);
 
-            return ApiResponse::builder()
-                ->success()
-                ->messageCode('playground.show.success')
-                ->data([
-                    'playground' => $playground,
-                ])
-                ->json();
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('playground.show.success')
+            ->data([
+                'playground' => $playground,
+            ])
+            ->json();
     }
 
     public function themesBySlug(Request $request, string $slug): JsonResponse
     {
-        try {
-            $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id);
-            return $this->getThemesPaginated($request, $playground);
-        } catch (ModelNotFoundException $e) {
-            return ApiResponse::builder()
-                ->error(404)
-                ->message('Not found')
-                ->messageCode('resource.not_found', ['resource' => 'playground'])
-                ->json();
-        }
+        $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id);
+        return $this->getThemesPaginated($request, $playground);
     }
 
     private function findPlaygroundForUserById(string $playgroundId, string $userId, bool $withThemesCount = false): Playground
@@ -398,6 +349,11 @@ class PlaygroundController extends Controller
 
     private function buildAccessibleThemesQuery(string $playgroundId, string $userId): Builder
     {
+        Validator::make(
+            ['playground' => $playgroundId],
+            ['playground' => ['required', 'uuid']]
+        )->validate();
+
         $ownedThemes = Theme::where('playground_id', $playgroundId)
             ->where('owner_id', $userId);
 

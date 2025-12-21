@@ -83,10 +83,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 
     Route::prefix('/user')->group(function () {
-        // Données de l'utilisateur connecté
         Route::get('', UserController::class)->name('user.show');
-
-        // Métriques de l'utilisateur connecté
         Route::get('/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
     });
 
@@ -124,7 +121,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::delete('', [PlaygroundController::class, 'destroy']);
             Route::post('/set-default', [PlaygroundController::class, 'setAsDefault']);
             Route::get('/stats', [PlaygroundController::class, 'stats']);
-        });
+        })->whereUuid('playgroundId');
 
         // Accès par slug
         Route::prefix('/by-slug/{slug}')->group(function () {

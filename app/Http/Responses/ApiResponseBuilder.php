@@ -5,6 +5,7 @@ namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 final class ApiResponseBuilder
 {
@@ -148,7 +149,7 @@ final class ApiResponseBuilder
 
         $payload = [
             'status' => $this->status,
-            'message' => ($this->status >= 500 && $isProd) ? 'Server error' : $this->message,
+            'message' => ($this->statusCode >= 500 && $isProd) ? 'Server error' : $this->message,
             'data' => $this->data,
         ];
 

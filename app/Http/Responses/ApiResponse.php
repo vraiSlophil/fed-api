@@ -35,7 +35,7 @@ final class ApiResponse
     ): JsonResponse
     {
         return self::builder()
-            ->error($status, $message ?? 'Error')
+            ->error($status, $message)
             ->messageCode($messageCode, $messageParams)
             ->errors($errors)
             ->json();
