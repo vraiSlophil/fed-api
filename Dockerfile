@@ -26,8 +26,8 @@ WORKDIR /app
 # Copier les fichiers composer en premier pour profiter du cache Docker
 COPY composer.json composer.lock ./
 
-# Installer les dépendances PHP
-RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+# Installer les dépendances PHP (include dev dependencies for seeders/factories)
+RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
 # Copier le reste des fichiers du projet
 COPY . .
