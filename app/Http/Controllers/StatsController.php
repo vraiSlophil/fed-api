@@ -7,7 +7,6 @@ use App\Models\Task;
 use App\Models\Theme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class StatsController extends Controller
 {
@@ -34,9 +33,9 @@ class StatsController extends Controller
 
         // Vérifier que l'utilisateur a accès au thème
         $theme = Theme::where('theme_id', $themeId)
-            ->where(function($query) use ($userId) {
+            ->where(function ($query) use ($userId) {
                 $query->where('owner_id', $userId)
-                    ->orWhereHas('themeUserPermissions', function($q) use ($userId) {
+                    ->orWhereHas('themeUserPermissions', function ($q) use ($userId) {
                         $q->where('user_id', $userId)
                             ->where('can_view', true)
                             ->where('status', 'active');
@@ -48,7 +47,7 @@ class StatsController extends Controller
         $stats['theme'] = [
             'theme_id' => $theme->theme_id,
             'title' => $theme->title,
-            'color' => $theme->color
+            'color' => $theme->color,
         ];
 
         return ApiResponse::builder()
@@ -137,7 +136,7 @@ class StatsController extends Controller
             'done' => $doneTasks,
             'recently_created' => $recentlyCreatedTasks,
             'recently_completed' => $recentlyCompletedTasks,
-            'completion_rate' => $completionRate
+            'completion_rate' => $completionRate,
         ];
     }
 }

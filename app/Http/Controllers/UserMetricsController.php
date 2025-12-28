@@ -38,36 +38,36 @@ class UserMetricsController extends Controller
             ->json();
     }
 
-//    /**
-//     * Métriques pour un utilisateur spécifique (admin seulement)
-//     */
-//    public function getAdminUserMetrics(Request $request, User $user): JsonResponse
-//    {
-//        // Vérifier les droits admin
-//        if (!auth()->check() || auth()->user()->role_power < 100) {
-//            return ApiResponse::builder()->error(403, 'Accès refusé. Privilèges administrateur requis.')->json();
-//        }
-//
-//        $userId = $user->user_id;
-//        $period = $request->input('period', '12_months');
-//        $dateRange = $this->getDateRange($period);
-//
-//        $metrics = [
-//            'overview' => $this->getOverviewMetrics($userId),
-//            'themes_over_time' => $this->getThemeMetrics($userId, $dateRange),
-//            'tasks_over_time' => $this->getTaskMetrics($userId, $dateRange),
-//            'activity_metrics' => $this->getActivityMetrics($userId, $dateRange),
-//            'productivity_trends' => $this->getProductivityTrends($userId),
-//            'user_info' => [
-//                'user_id' => $user->user_id,
-//                'username' => $user->username,
-//                'email' => $user->email,
-//                'created_at' => $user->created_at,
-//            ],
-//        ];
-//
-//        return ApiResponse::builder()->success()->data($metrics)->json();
-//    }
+    //    /**
+    //     * Métriques pour un utilisateur spécifique (admin seulement)
+    //     */
+    //    public function getAdminUserMetrics(Request $request, User $user): JsonResponse
+    //    {
+    //        // Vérifier les droits admin
+    //        if (!auth()->check() || auth()->user()->role_power < 100) {
+    //            return ApiResponse::builder()->error(403, 'Accès refusé. Privilèges administrateur requis.')->json();
+    //        }
+    //
+    //        $userId = $user->user_id;
+    //        $period = $request->input('period', '12_months');
+    //        $dateRange = $this->getDateRange($period);
+    //
+    //        $metrics = [
+    //            'overview' => $this->getOverviewMetrics($userId),
+    //            'themes_over_time' => $this->getThemeMetrics($userId, $dateRange),
+    //            'tasks_over_time' => $this->getTaskMetrics($userId, $dateRange),
+    //            'activity_metrics' => $this->getActivityMetrics($userId, $dateRange),
+    //            'productivity_trends' => $this->getProductivityTrends($userId),
+    //            'user_info' => [
+    //                'user_id' => $user->user_id,
+    //                'username' => $user->username,
+    //                'email' => $user->email,
+    //                'created_at' => $user->created_at,
+    //            ],
+    //        ];
+    //
+    //        return ApiResponse::builder()->success()->data($metrics)->json();
+    //    }
 
     /**
      * Métriques générales de l'utilisateur
@@ -80,7 +80,7 @@ class UserMetricsController extends Controller
             ->where('status', 'done')
             ->count();
 
-        $memberOf = Theme::whereHas('themeUserPermissions', function($q) use ($userId) {
+        $memberOf = Theme::whereHas('themeUserPermissions', function ($q) use ($userId) {
             $q->where('user_id', $userId)->where('status', 'active');
         })->count();
 
@@ -172,7 +172,7 @@ class UserMetricsController extends Controller
         $lastWeek = Task::where('user_id', $userId)
             ->whereBetween('created_at', [
                 now()->subWeek()->startOfWeek(),
-                now()->subWeek()->endOfWeek()
+                now()->subWeek()->endOfWeek(),
             ])
             ->count();
 
@@ -183,7 +183,7 @@ class UserMetricsController extends Controller
         $lastMonth = Task::where('user_id', $userId)
             ->whereBetween('created_at', [
                 now()->subMonth()->startOfMonth(),
-                now()->subMonth()->endOfMonth()
+                now()->subMonth()->endOfMonth(),
             ])
             ->count();
 
@@ -209,6 +209,7 @@ class UserMetricsController extends Controller
         if ($previous === 0) {
             return $current > 0 ? 100 : 0;
         }
+
         return round((($current - $previous) / $previous) * 100, 2);
     }
 
@@ -289,7 +290,7 @@ class UserMetricsController extends Controller
             ->exists();
 
         $hasTaskActivity = Task::where('user_id', $userId)
-            ->where(function($q) use ($dateString) {
+            ->where(function ($q) use ($dateString) {
                 $q->whereDate('created_at', $dateString)
                     ->orWhereDate('updated_at', $dateString);
             })
@@ -305,6 +306,7 @@ class UserMetricsController extends Controller
     {
         [$startDate, $endDate] = $dateRange;
         $totalDays = $startDate->diffInDays($endDate) + 1;
+
         return $totalDays > 0 ? round(($activeDays / $totalDays) * 100, 2) : 0;
     }
 
@@ -315,6 +317,7 @@ class UserMetricsController extends Controller
     {
         [$startDate, $endDate] = $dateRange;
         $totalDays = $startDate->diffInDays($endDate) + 1;
+
         return $totalDays > 0 ? round($total / $totalDays, 2) : 0;
     }
 
@@ -325,7 +328,7 @@ class UserMetricsController extends Controller
     {
         $end = Carbon::now();
 
-        $start = match($period) {
+        $start = match ($period) {
             '7_days' => Carbon::now()->subDays(7),
             '30_days' => Carbon::now()->subDays(30),
             '3_months' => Carbon::now()->subMonths(3),

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Theme;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Theme;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ThemeController extends Controller
 {
@@ -20,7 +19,7 @@ class ThemeController extends Controller
 
         // Thèmes possédés par l'utilisateur
         $ownedThemes = Theme::where('owner_id', $userId)
-            ->when($playgroundId, function($query, $playgroundId) {
+            ->when($playgroundId, function ($query, $playgroundId) {
                 $query->where('playground_id', $playgroundId);
             })
             ->get();
@@ -31,12 +30,12 @@ class ThemeController extends Controller
                 ->where('can_view', true)
                 ->where('status', 'active')
                 // Filtrer par playground cible si spécifié
-                ->when($playgroundId, function($q, $playgroundId) {
+                ->when($playgroundId, function ($q, $playgroundId) {
                     $q->where('target_playground_id', $playgroundId);
                 });
         })
             ->whereNot('owner_id', $userId)
-            ->with(['themeUserPermissions' => function($query) use ($userId) {
+            ->with(['themeUserPermissions' => function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             }])
             ->get();
@@ -53,7 +52,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'themes' => $allThemes
+                'themes' => $allThemes,
             ])
             ->json();
     }
@@ -82,7 +81,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success(201)
             ->data([
-                'theme' => $theme
+                'theme' => $theme,
             ])
             ->json();
     }
@@ -96,9 +95,9 @@ class ThemeController extends Controller
 
         // Récupérer le thème s'il appartient à l'utilisateur ou s'il a les permissions nécessaires
         $theme = Theme::where('theme_id', $id)
-            ->where(function($query) use ($userId) {
+            ->where(function ($query) use ($userId) {
                 $query->where('owner_id', $userId)
-                    ->orWhereHas('themeUserPermissions', function($q) use ($userId) {
+                    ->orWhereHas('themeUserPermissions', function ($q) use ($userId) {
                         $q->where('user_id', $userId)
                             ->where('can_view', true)
                             ->where('status', 'active');
@@ -107,7 +106,7 @@ class ThemeController extends Controller
             ->firstOrFail();
 
         // Ajouter les permissions si l'utilisateur n'est pas le propriétaire
-        if (!$theme->isOwnedBy($userId)) {
+        if (! $theme->isOwnedBy($userId)) {
             $permissions = $theme->getPermissionsFor($userId);
             $theme->permissions = $permissions;
         }
@@ -115,7 +114,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'theme' => $theme
+                'theme' => $theme,
             ])
             ->json();
     }
@@ -129,9 +128,9 @@ class ThemeController extends Controller
 
         // Récupérer le thème s'il appartient à l'utilisateur ou s'il a les permissions nécessaires
         $theme = Theme::where('theme_id', $id)
-            ->where(function($query) use ($userId) {
+            ->where(function ($query) use ($userId) {
                 $query->where('owner_id', $userId)
-                    ->orWhereHas('themeUserPermissions', function($q) use ($userId) {
+                    ->orWhereHas('themeUserPermissions', function ($q) use ($userId) {
                         $q->where('user_id', $userId)
                             ->where('can_update_theme', true)
                             ->where('status', 'active');
@@ -148,7 +147,7 @@ class ThemeController extends Controller
         $theme->update($validated);
 
         // Ajouter les permissions si l'utilisateur n'est pas le propriétaire
-        if (!$theme->isOwnedBy($userId)) {
+        if (! $theme->isOwnedBy($userId)) {
             $permissions = $theme->getPermissionsFor($userId);
             $theme->permissions = $permissions;
         }
@@ -156,7 +155,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'theme' => $theme
+                'theme' => $theme,
             ])
             ->json();
     }

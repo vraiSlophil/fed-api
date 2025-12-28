@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Illuminate\Http\Response;
 
 class MediaController extends Controller
 {
     /**
      * Récupère et renvoie un fichier média.
      *
-     * @param Request $request
-     * @param string $path Le chemin relatif du fichier demandé
+     * @param  string  $path  Le chemin relatif du fichier demandé
      * @return BinaryFileResponse|Response
      */
     public function show(Request $request, string $path)
@@ -23,7 +22,7 @@ class MediaController extends Controller
         $path = $this->sanitizePath($path);
 
         // Vérifier si le fichier existe dans le stockage public
-        if (!Storage::disk('public')->exists($path)) {
+        if (! Storage::disk('public')->exists($path)) {
             return response('Fichier non trouvé', 404);
         }
 
@@ -43,9 +42,6 @@ class MediaController extends Controller
 
     /**
      * Nettoie le chemin pour éviter les attaques de traversée de répertoire.
-     *
-     * @param string $path
-     * @return string
      */
     private function sanitizePath(string $path): string
     {
@@ -59,10 +55,6 @@ class MediaController extends Controller
 
     /**
      * Détermine le type MIME à utiliser en fonction des en-têtes Accept.
-     *
-     * @param Request $request
-     * @param string $filePath
-     * @return string
      */
     private function determineMimeType(Request $request, string $filePath): string
     {
@@ -70,7 +62,7 @@ class MediaController extends Controller
         $actualMimeType = mime_content_type($filePath);
 
         // Si pas d'en-tête Accept, retourner le type MIME actuel
-        if (!$request->header('Accept')) {
+        if (! $request->header('Accept')) {
             return $actualMimeType;
         }
 

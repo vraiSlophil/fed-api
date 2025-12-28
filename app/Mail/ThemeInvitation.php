@@ -13,9 +13,13 @@ class ThemeInvitation extends Mailable
     use Queueable, SerializesModels;
 
     public $themeModel;
+
     public $inviter;
+
     public $invitee;
+
     public $acceptLink;
+
     public $declineLink;
 
     /**
@@ -35,10 +39,10 @@ class ThemeInvitation extends Mailable
      */
     public function build()
     {
-        return $this->subject("Invitation à rejoindre un thème")
+        return $this->subject('Invitation à rejoindre un thème')
             ->markdown('emails.theme.invitation')
             ->with([
-                'theme' => $this->themeModel
+                'theme' => $this->themeModel,
             ]);
     }
 }

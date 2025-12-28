@@ -4,8 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('theme_user_permissions', function (Blueprint $table) {
             $table->uuid('permission_id')->primary();
             $table->uuid('theme_id');
@@ -18,20 +20,22 @@ return new class extends Migration {
             $table->boolean('can_edit_task')->default(false);
             $table->boolean('can_delete_task')->default(false);
             $table->boolean('can_validate_task')->default(false);
-            $table->enum('status', ['invited','active','revoked'])->default('invited');
+            $table->enum('status', ['invited', 'active', 'revoked'])->default('invited');
             $table->timestamp('invited_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['theme_id','user_id']);
+            $table->unique(['theme_id', 'user_id']);
             $table->foreign('theme_id')->references('theme_id')->on('themes')->cascadeOnDelete();
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
             $table->foreign('target_playground_id')->references('playground_id')->on('playgrounds')->nullOnDelete();
             $table->index('target_playground_id');
-            $table->index(['theme_id','status']);
+            $table->index(['theme_id', 'status']);
             $table->index('user_id');
         });
     }
-    public function down(): void {
+
+    public function down(): void
+    {
         Schema::dropIfExists('theme_user_permissions');
     }
 };

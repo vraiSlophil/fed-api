@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Responses\ApiResponse;
 use App\Models\Task;
 use App\Models\Theme;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -32,7 +32,7 @@ class TaskController extends Controller
         $query = $this->applyFiltersAndSorting($query, $request);
 
         // Recherche par titre (insensible aux accents et à la casse)
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             return $this->handleSearchRequest($query, $request);
         }
 
@@ -51,7 +51,7 @@ class TaskController extends Controller
                     'last_page' => $tasks->lastPage(),
                     'from' => $tasks->firstItem(),
                     'to' => $tasks->lastItem(),
-                ]
+                ],
             ])
             ->json();
     }
@@ -158,8 +158,9 @@ class TaskController extends Controller
         $tasks = $query->get();
 
         // Filtrer les résultats en PHP
-        $filteredTasks = $tasks->filter(function($task) use ($searchTerm) {
+        $filteredTasks = $tasks->filter(function ($task) use ($searchTerm) {
             $normalizedTitle = $this->normalizeString($task->title);
+
             return strpos($normalizedTitle, $searchTerm) !== false;
         });
 
@@ -179,7 +180,7 @@ class TaskController extends Controller
                     'last_page' => $paginatedTasks['last_page'],
                     'from' => $paginatedTasks['from'],
                     'to' => $paginatedTasks['to'],
-                ]
+                ],
             ])
             ->json();
     }
@@ -233,9 +234,9 @@ class TaskController extends Controller
 
         // Vérifier que l'utilisateur a accès au thème
         $theme = Theme::where('theme_id', $validated['theme_id'])
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('owner_id', Auth::id())
-                    ->orWhereHas('themeUserPermissions', function($q) {
+                    ->orWhereHas('themeUserPermissions', function ($q) {
                         $q->where('user_id', Auth::id())
                             ->where('can_add_task', true)
                             ->where('status', 'active');
@@ -254,7 +255,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success(201)
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -283,7 +284,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -299,7 +300,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             return ApiResponse::builder()
                 ->error(403, 'Vous n\'avez pas la permission de modifier cette tâche.')
                 ->json();
@@ -312,7 +313,7 @@ class TaskController extends Controller
 
         // Vérifier spécifiquement la permission de validation si le statut est modifié en "done"
         if (isset($validated['status']) && $validated['status'] === 'done' && $task->status !== 'done') {
-            if (!$theme->canValidateTaskBy($userId)) {
+            if (! $theme->canValidateTaskBy($userId)) {
                 return ApiResponse::builder()
                     ->error(403, 'Vous n\'avez pas la permission de valider cette tâche.')
                     ->json();
@@ -325,7 +326,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -342,7 +343,7 @@ class TaskController extends Controller
 
         // Vérifier que l'utilisateur a le droit de modifier cette tâche
         $theme = $task->theme;
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             return ApiResponse::builder()
                 ->error(403, 'Vous n\'avez pas la permission de modifier cette tâche.')
                 ->json();
@@ -354,7 +355,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -371,7 +372,7 @@ class TaskController extends Controller
 
         // Vérifier que l'utilisateur a le droit de modifier cette tâche
         $theme = $task->theme;
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             return ApiResponse::builder()
                 ->error(403, 'Vous n\'avez pas la permission de modifier cette tâche.')
                 ->json();
@@ -383,7 +384,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -399,7 +400,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canValidateTaskBy($userId)) {
+        if (! $theme->canValidateTaskBy($userId)) {
             return ApiResponse::builder()
                 ->error(403, 'Vous n\'avez pas la permission de valider cette tâche.')
                 ->json();
@@ -412,7 +413,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -428,7 +429,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canValidateTaskBy($userId)) {
+        if (! $theme->canValidateTaskBy($userId)) {
             return ApiResponse::builder()
                 ->error(403, 'Vous n\'avez pas la permission de modifier la validation de cette tâche.')
                 ->json();
@@ -441,7 +442,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -456,7 +457,7 @@ class TaskController extends Controller
         $theme = $task->theme;
 
         // Vérifier si l'utilisateur a le droit de supprimer cette tâche
-        if (!$theme->canDeleteTaskBy($userId)) {
+        if (! $theme->canDeleteTaskBy($userId)) {
             return ApiResponse::builder()
                 ->error(403, 'Vous n\'avez pas la permission de supprimer cette tâche.')
                 ->json();

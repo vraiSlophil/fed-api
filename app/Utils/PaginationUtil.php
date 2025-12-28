@@ -13,8 +13,6 @@ class PaginationUtil
      * dans le format attendu par le front.
      *
      * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Relations\Relation  $queryOrRelation
-     * @param  int  $perPage
-     * @param  int  $page
      * @return array{items: array, pagination: array}
      */
     public static function paginate($queryOrRelation, int $perPage, int $page): array
@@ -43,4 +41,3 @@ class PaginationUtil
         ];
     }
 }
-

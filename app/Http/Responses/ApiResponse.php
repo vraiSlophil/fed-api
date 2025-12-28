@@ -4,7 +4,6 @@ namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * ApiResponse facade + Builder implementations.
@@ -21,7 +20,7 @@ final class ApiResponse
      */
     public static function builder(): ApiResponseBuilder
     {
-        return new ApiResponseBuilder();
+        return new ApiResponseBuilder;
     }
 
     /**
@@ -48,6 +47,6 @@ final class ApiResponse
      */
     public static function media(): ApiMediaBuilder
     {
-        return new ApiMediaBuilder();
+        return new ApiMediaBuilder;
     }
 }

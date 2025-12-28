@@ -11,11 +11,17 @@ use Illuminate\Http\Response;
 final class ApiResponseBuilder
 {
     private string $status = 'success';
+
     private ?string $message = 'OK';
+
     private int $statusCode = 200;
+
     private mixed $data = null;
+
     private mixed $errors = null;
+
     private array $headers = [];
+
     private array $meta = [];
 
     /**
@@ -24,6 +30,7 @@ final class ApiResponseBuilder
     public function status(string $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
@@ -35,6 +42,7 @@ final class ApiResponseBuilder
         $this->status = 'success';
         $this->statusCode = $statusCode;
         $this->message($message);
+
         return $this;
     }
 
@@ -46,6 +54,7 @@ final class ApiResponseBuilder
         $this->status = 'error';
         $this->statusCode = $statusCode;
         $this->message($message);
+
         return $this;
     }
 
@@ -55,6 +64,7 @@ final class ApiResponseBuilder
     public function message(string $message): self
     {
         $this->message = $message;
+
         return $this;
     }
 
@@ -64,6 +74,7 @@ final class ApiResponseBuilder
     public function code(int $statusCode): self
     {
         $this->statusCode = $statusCode;
+
         return $this;
     }
 
@@ -73,6 +84,7 @@ final class ApiResponseBuilder
     public function data(mixed $data): self
     {
         $this->data = $data;
+
         return $this;
     }
 
@@ -83,12 +95,13 @@ final class ApiResponseBuilder
     public function mergeData(array|object $extra): self
     {
         if (is_array($this->data)) {
-            $this->data = array_merge($this->data, (array)$extra);
+            $this->data = array_merge($this->data, (array) $extra);
         } elseif (is_object($this->data)) {
-            $this->data = (object)array_merge((array)$this->data, (array)$extra);
+            $this->data = (object) array_merge((array) $this->data, (array) $extra);
         } else {
             $this->data = $extra;
         }
+
         return $this;
     }
 
@@ -99,21 +112,25 @@ final class ApiResponseBuilder
     {
         if (is_null($this->data)) {
             $this->data = [$key => $value];
+
             return $this;
         }
 
         if (is_array($this->data)) {
             $this->data[$key] = $value;
+
             return $this;
         }
 
         if (is_object($this->data)) {
             $this->data->{$key} = $value;
+
             return $this;
         }
 
         // scalar, turn into array
         $this->data = [$key => $value];
+
         return $this;
     }
 
@@ -123,6 +140,7 @@ final class ApiResponseBuilder
     public function errors(mixed $errors): self
     {
         $this->errors = $errors;
+
         return $this;
     }
 
@@ -136,12 +154,13 @@ final class ApiResponseBuilder
             $this->errors = [];
         }
 
-        if (!is_array($this->errors)) {
+        if (! is_array($this->errors)) {
             // normalize into array
             $this->errors = [$this->errors];
         }
 
         $this->errors[] = $error;
+
         return $this;
     }
 
@@ -151,6 +170,7 @@ final class ApiResponseBuilder
     public function meta(array $meta): self
     {
         $this->meta = array_merge($this->meta, $meta);
+
         return $this;
     }
 
@@ -160,6 +180,7 @@ final class ApiResponseBuilder
     public function header(string $name, string $value): self
     {
         $this->headers[$name] = $value;
+
         return $this;
     }
 
@@ -171,6 +192,7 @@ final class ApiResponseBuilder
         foreach ($headers as $k => $v) {
             $this->headers[$k] = $v;
         }
+
         return $this;
     }
 
@@ -185,11 +207,11 @@ final class ApiResponseBuilder
             'data' => $this->data,
         ];
 
-        if (!empty($this->errors)) {
+        if (! empty($this->errors)) {
             $payload['errors'] = $this->errors;
         }
 
-        if (!empty($this->meta)) {
+        if (! empty($this->meta)) {
             $payload['meta'] = $this->meta;
         }
 

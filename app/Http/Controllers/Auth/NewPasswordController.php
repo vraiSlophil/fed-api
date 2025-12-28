@@ -45,7 +45,7 @@ class NewPasswordController extends Controller
 
         $isPasswordReset = $status === Password::PASSWORD_RESET;
 
-        if (!$isPasswordReset) {
+        if (! $isPasswordReset) {
             throw ValidationException::withMessages([
                 'email' => [__($status)],
             ]);

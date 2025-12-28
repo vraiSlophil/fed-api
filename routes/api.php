@@ -33,28 +33,27 @@ use Illuminate\Support\Facades\Route;
 |----------------------------------------------------------------------
 */
 
-    Route::post('/register', RegisterController::class)
-        ->name('register');
-    Route::post('/login', LoginController::class)
-        ->name('login');
-    Route::post('/forgot-password', PasswordResetLinkController::class)
-        ->name('password.email');
-    Route::post('/reset-password', NewPasswordController::class)
-        ->name('password.store');
+Route::post('/register', RegisterController::class)
+    ->name('register');
+Route::post('/login', LoginController::class)
+    ->name('login');
+Route::post('/forgot-password', PasswordResetLinkController::class)
+    ->name('password.email');
+Route::post('/reset-password', NewPasswordController::class)
+    ->name('password.store');
 
-    // Vérification d’e-mail via URL signée
-    Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
+// Vérification d’e-mail via URL signée
+Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
-    // Gestion des invitations aux thèmes via URL signée
-    Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
-        ->name('theme.accept-invitation');
+// Gestion des invitations aux thèmes via URL signée
+Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
+    ->name('theme.accept-invitation');
 
-
-    Route::get('/media/{path}', [MediaController::class, 'show'])
-        ->where('path', '.*')
-        ->name('media.show');
+Route::get('/media/{path}', [MediaController::class, 'show'])
+    ->where('path', '.*')
+    ->name('media.show');
 
 /*
 |----------------------------------------------------------------------
@@ -107,7 +106,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::delete('', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
                 Route::post('/block', [AdminUserController::class, 'block'])->name('admin.users.block');
                 Route::post('/unblock', [AdminUserController::class, 'unblock'])->name('admin.users.unblock');
-//                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
+                //                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
             });
         });
     });

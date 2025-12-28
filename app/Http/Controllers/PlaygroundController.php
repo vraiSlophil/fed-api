@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Playground;;
+use App\Http\Responses\ApiResponse;
+use App\Models\Playground;
 use App\Models\Task;
 use App\Models\Theme;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
-use App\Http\Responses\ApiResponse;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Utils\PaginationUtil;
-use Symfony\Component\Translation\Exception\NotFoundResourceException;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PlaygroundController extends Controller
 {
@@ -31,7 +29,7 @@ class PlaygroundController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'playgrounds' => $playgrounds
+                'playgrounds' => $playgrounds,
             ])
             ->json();
     }
@@ -81,7 +79,7 @@ class PlaygroundController extends Controller
             'color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
             'background_color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
             'style' => 'nullable|array',
-            'is_default' => 'boolean'
+            'is_default' => 'boolean',
         ]);
 
         $playground = $request->user()->playgrounds()->create([
@@ -102,7 +100,7 @@ class PlaygroundController extends Controller
         return ApiResponse::builder()
             ->success(201, 'Playground créé avec succès')
             ->data([
-                'playground' => $playground
+                'playground' => $playground,
             ])
             ->json();
     }
@@ -124,7 +122,7 @@ class PlaygroundController extends Controller
                 'color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
                 'background_color' => 'nullable|string|size:7|regex:/^#[0-9A-F]{6}$/i',
                 'style' => 'nullable|array',
-                'is_default' => 'boolean'
+                'is_default' => 'boolean',
             ]);
 
             $playground->update($validated);
@@ -137,7 +135,7 @@ class PlaygroundController extends Controller
             return ApiResponse::builder()
                 ->success(200, 'Playground mis à jour avec succès')
                 ->data([
-                    'playground' => $playground->fresh()
+                    'playground' => $playground->fresh(),
                 ])
                 ->json();
 
@@ -199,7 +197,7 @@ class PlaygroundController extends Controller
             return ApiResponse::builder()
                 ->success(200, 'Playground défini comme par défaut')
                 ->data([
-                    'playground' => $playground->fresh()
+                    'playground' => $playground->fresh(),
                 ])
                 ->json();
 
@@ -228,28 +226,28 @@ class PlaygroundController extends Controller
                     'public' => $playground->themes()->where('visibility', 'public')->count(),
                 ],
                 'tasks' => [
-                    'total' => Task::whereHas('theme', function($query) use ($playground) {
+                    'total' => Task::whereHas('theme', function ($query) use ($playground) {
                         $query->where('playground_id', $playground->playground_id);
                     })->count(),
-                    'todo' => Task::whereHas('theme', function($query) use ($playground) {
+                    'todo' => Task::whereHas('theme', function ($query) use ($playground) {
                         $query->where('playground_id', $playground->playground_id);
                     })->where('status', 'todo')->count(),
-                    'in_progress' => Task::whereHas('theme', function($query) use ($playground) {
+                    'in_progress' => Task::whereHas('theme', function ($query) use ($playground) {
                         $query->where('playground_id', $playground->playground_id);
                     })->where('status', 'in_progress')->count(),
-                    'done' => Task::whereHas('theme', function($query) use ($playground) {
+                    'done' => Task::whereHas('theme', function ($query) use ($playground) {
                         $query->where('playground_id', $playground->playground_id);
                     })->where('status', 'done')->count(),
                 ],
                 'completion_rate' => $this->calculateCompletionRate($playground),
-                'recent_activity' => $this->getRecentActivity($playground)
+                'recent_activity' => $this->getRecentActivity($playground),
             ];
 
             return ApiResponse::builder()
                 ->success()
                 ->data([
                     'playground' => $playground,
-                    'stats' => $stats
+                    'stats' => $stats,
                 ])
                 ->json();
 
@@ -269,24 +267,24 @@ class PlaygroundController extends Controller
             'playground' => $playground,
             'themes' => $playground->themes()
                 ->with([
-                    'tasks' => function($query) {
+                    'tasks' => function ($query) {
                         $query->orderBy('position')->orderBy('created_at');
                     },
-                    'themeUserPermissions.user:user_id,username,first_name,last_name'
+                    'themeUserPermissions.user:user_id,username,first_name,last_name',
                 ])
                 ->withCount(['tasks'])
                 ->get(),
             'stats' => [
                 'themes_count' => $playground->themes()->count(),
-                'tasks_count' => Task::whereHas('theme', function($query) use ($playground) {
+                'tasks_count' => Task::whereHas('theme', function ($query) use ($playground) {
                     $query->where('playground_id', $playground->playground_id);
                 })->count(),
-                'completed_tasks_count' => Task::whereHas('theme', function($query) use ($playground) {
+                'completed_tasks_count' => Task::whereHas('theme', function ($query) use ($playground) {
                     $query->where('playground_id', $playground->playground_id);
                 })->where('status', 'done')->count(),
-                'completion_rate' => $this->calculateCompletionRate($playground)
+                'completion_rate' => $this->calculateCompletionRate($playground),
             ],
-            'recent_activity' => $this->getRecentActivity($playground)
+            'recent_activity' => $this->getRecentActivity($playground),
         ];
     }
 
@@ -307,7 +305,7 @@ class PlaygroundController extends Controller
 
     private function getTasksQueryForPlayground(Playground $playground)
     {
-        return Task::whereHas('theme', function($query) use ($playground) {
+        return Task::whereHas('theme', function ($query) use ($playground) {
             $query->where('playground_id', $playground->playground_id);
         });
     }
@@ -317,7 +315,7 @@ class PlaygroundController extends Controller
      */
     private function getRecentActivity(Playground $playground): array
     {
-        $recentTasks = Task::whereHas('theme', function($query) use ($playground) {
+        $recentTasks = Task::whereHas('theme', function ($query) use ($playground) {
             $query->where('playground_id', $playground->playground_id);
         })
             ->with(['theme:theme_id,title', 'user:user_id,username'])
@@ -333,7 +331,7 @@ class PlaygroundController extends Controller
 
         return [
             'recent_tasks' => $recentTasks,
-            'recent_themes' => $recentThemes
+            'recent_themes' => $recentThemes,
         ];
     }
 
@@ -344,6 +342,7 @@ class PlaygroundController extends Controller
     {
         try {
             $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id);
+
             return $this->getThemesPaginated($request, $playground);
         } catch (ModelNotFoundException $e) {
             return ApiResponse::builder()->error(404, 'Playground non trouvé')->json();
@@ -378,6 +377,7 @@ class PlaygroundController extends Controller
     {
         try {
             $playground = $this->findPlaygroundForUserBySlug($slug, $request->user()->user_id);
+
             return $this->getThemesPaginated($request, $playground);
         } catch (ModelNotFoundException $e) {
             return ApiResponse::builder()->error(404, 'Playground non trouvé')->json();

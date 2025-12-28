@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Role;
-use App\Models\User;
 use App\Models\ThemeUserPermission;
+use App\Models\User;
 use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\QueryException;
@@ -45,10 +45,10 @@ class AdminUserController extends Controller
         if ($request->filled('status')) {
             if ($request->status === 'blocked') {
                 $query->whereNotNull('blocked_at');
-            } else if ($request->status === 'active') {
+            } elseif ($request->status === 'active') {
                 $query->whereNotNull('email_verified_at');
                 $query->whereNull('blocked_at');
-            } else if ($request->status === 'unverified') {
+            } elseif ($request->status === 'unverified') {
                 $query->whereNull('email_verified_at');
                 $query->whereNull('blocked_at');
             } else {
@@ -78,11 +78,11 @@ class AdminUserController extends Controller
             'last_name',
             'last_login_at',
             'email_verified_at',
-            'blocked_at'
+            'blocked_at',
         ];
 
         // Valider le champ de tri
-        if (!in_array($sortField, $allowedSortFields)) {
+        if (! in_array($sortField, $allowedSortFields)) {
             $sortField = 'created_at';
         }
 
@@ -150,7 +150,7 @@ class AdminUserController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
-            'avatar' => 'nullable|image|max:2048',]);
+            'avatar' => 'nullable|image|max:2048', ]);
 
         $data = $request->only([
             'username',
@@ -190,7 +190,7 @@ class AdminUserController extends Controller
         if ($user->last_login_at) {
             $lastActivity = $user->last_login_at;
         }
-        if ($user->updated_at && (!$lastActivity || $user->updated_at > $lastActivity)) {
+        if ($user->updated_at && (! $lastActivity || $user->updated_at > $lastActivity)) {
             $lastActivity = $user->updated_at->toDateTimeString();
         }
 
@@ -267,14 +267,14 @@ class AdminUserController extends Controller
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
             'password' => 'nullable|string|min:8|confirmed',
-            'avatar' => 'nullable|image|max:2048',]);
+            'avatar' => 'nullable|image|max:2048', ]);
 
         $data = $request->only([
             'username',
             'email',
             'first_name',
             'last_name',
-            'role_power'
+            'role_power',
         ]);
 
         if ($request->filled('password')) {
@@ -347,36 +347,36 @@ class AdminUserController extends Controller
             }
 
             return ApiResponse::builder()
-                ->error(500, 'Erreur lors de la suppression : ' . $e->getMessage())
+                ->error(500, 'Erreur lors de la suppression : '.$e->getMessage())
                 ->json();
 
         } catch (Exception $e) {
             return ApiResponse::builder()
-                ->error(500, 'Erreur inattendue lors de la suppression : ' . $e->getMessage())
+                ->error(500, 'Erreur inattendue lors de la suppression : '.$e->getMessage())
                 ->json();
         }
     }
 
-//    /**
-//     * Supprimer les relations de l'utilisateur avant suppression définitive
-//     */
-//    private function deleteUserRelations(User $user): void
-//    {
-//        // Supprimer les tokens d'authentification
-//        $user->tokens()->delete();
-//
-//        // Supprimer les métriques utilisateur
-//        $user->metrics()->delete();
-//
-//        // Transférer ou supprimer les thèmes (selon votre logique métier)
-//        $user->themes()->delete(); // ou les transférer à un autre utilisateur
-//
-//        // Supprimer les tâches
-//        $user->tasks()->delete();
-//
-//        // Supprimer les permissions sur les thèmes
-//        ThemeUserPermission::where('user_id', $user->user_id)->delete();
-//    }
+    //    /**
+    //     * Supprimer les relations de l'utilisateur avant suppression définitive
+    //     */
+    //    private function deleteUserRelations(User $user): void
+    //    {
+    //        // Supprimer les tokens d'authentification
+    //        $user->tokens()->delete();
+    //
+    //        // Supprimer les métriques utilisateur
+    //        $user->metrics()->delete();
+    //
+    //        // Transférer ou supprimer les thèmes (selon votre logique métier)
+    //        $user->themes()->delete(); // ou les transférer à un autre utilisateur
+    //
+    //        // Supprimer les tâches
+    //        $user->tasks()->delete();
+    //
+    //        // Supprimer les permissions sur les thèmes
+    //        ThemeUserPermission::where('user_id', $user->user_id)->delete();
+    //    }
 
     /**
      * Bloquer un utilisateur (POST /users/{user}/block)
@@ -397,6 +397,7 @@ class AdminUserController extends Controller
         }
 
         $user->update(['blocked_at' => now()]);
+
         return ApiResponse::builder()
             ->success(200, 'Utilisateur bloqué avec succès.')
             ->data($user)
@@ -415,6 +416,7 @@ class AdminUserController extends Controller
         }
 
         $user->update(['blocked_at' => null]);
+
         return ApiResponse::builder()
             ->success(200, 'Utilisateur débloqué avec succès.')
             ->data($user)

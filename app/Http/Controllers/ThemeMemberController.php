@@ -11,7 +11,6 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -19,7 +18,6 @@ use Illuminate\Support\Str;
 
 class ThemeMemberController extends Controller
 {
-
     /**
      * @var User|mixed Utilisateur authentifié présent dans la requête
      */
@@ -28,7 +26,7 @@ class ThemeMemberController extends Controller
     /**
      * Constructeur pour initialiser l'utilisateur authentifié
      *
-     * @param Request $request Requête HTTP contenant l'utilisateur authentifié et d'autres données
+     * @param  Request  $request  Requête HTTP contenant l'utilisateur authentifié et d'autres données
      */
     public function __construct(Request $request)
     {
@@ -82,7 +80,7 @@ class ThemeMemberController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'users' => $formattedUsers
+                'users' => $formattedUsers,
             ])
             ->json();
     }
@@ -150,7 +148,7 @@ class ThemeMemberController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data([
-                'members' => $allMembers
+                'members' => $allMembers,
             ])
             ->json();
     }
@@ -213,7 +211,7 @@ class ThemeMemberController extends Controller
                 'theme_id' => $themeId,
                 'user_id' => $invitedUser->user_id,
                 'token' => Str::random(40),
-                'action' => 'accept'
+                'action' => 'accept',
             ]
         );
 
@@ -224,10 +222,9 @@ class ThemeMemberController extends Controller
                 'theme_id' => $themeId,
                 'user_id' => $invitedUser->user_id,
                 'token' => Str::random(40),
-                'action' => 'decline'
+                'action' => 'decline',
             ]
         );
-
 
         // Envoyer l'e-mail d'invitation
         try {
@@ -240,11 +237,11 @@ class ThemeMemberController extends Controller
                     $declineLink
                 ));
         } catch (Exception $e) {
-//            Log::error('Erreur lors de l\'envoi de l\'email d\'invitation', [
-//                'error' => $e->getMessage(),
-//                'theme_id' => $themeId,
-//                'user_id' => $invitedUser->user_id,
-//            ]);
+            //            Log::error('Erreur lors de l\'envoi de l\'email d\'invitation', [
+            //                'error' => $e->getMessage(),
+            //                'theme_id' => $themeId,
+            //                'user_id' => $invitedUser->user_id,
+            //            ]);
 
             // Supprimer la permission si l'email échoue
             $permission->delete();
@@ -265,7 +262,7 @@ class ThemeMemberController extends Controller
                     'last_name' => $invitedUser->last_name,
                     'status' => 'invited',
                     'invited_at' => $permission->invited_at,
-                ]
+                ],
             ])
             ->json();
     }
@@ -311,7 +308,7 @@ class ThemeMemberController extends Controller
                     'can_edit_task' => $permission->can_edit_task,
                     'can_delete_task' => $permission->can_delete_task,
                     'can_validate_task' => $permission->can_validate_task,
-                ]
+                ],
             ])
             ->json();
     }
@@ -427,7 +424,7 @@ class ThemeMemberController extends Controller
         $userId = $request->user()->user_id;
 
         $validated = $request->validate([
-            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id'
+            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id',
         ]);
 
         // Vérifier que le playground appartient à l'utilisateur
@@ -442,13 +439,13 @@ class ThemeMemberController extends Controller
             ->firstOrFail();
 
         $permission->update([
-            'target_playground_id' => $validated['target_playground_id']
+            'target_playground_id' => $validated['target_playground_id'],
         ]);
 
         return ApiResponse::builder()
             ->success(200, 'Thème déplacé avec succès')
             ->data([
-                'permission' => $permission->fresh(['theme', 'targetPlayground'])
+                'permission' => $permission->fresh(['theme', 'targetPlayground']),
             ])
             ->json();
     }

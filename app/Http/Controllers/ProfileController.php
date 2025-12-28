@@ -28,7 +28,7 @@ class ProfileController extends Controller
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
                     'avatar_path' => $user->avatar_path,
-                ]
+                ],
             ])
             ->json();
     }
@@ -58,7 +58,7 @@ class ProfileController extends Controller
             return ApiResponse::builder()
                 ->success(200, 'Profil mis à jour avec succès. Un email de vérification a été envoyé à votre nouvelle adresse.')
                 ->data([
-                    'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
+                    'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at']),
                 ])
                 ->json();
         }
@@ -66,7 +66,7 @@ class ProfileController extends Controller
         return ApiResponse::builder()
             ->success(200, 'Profil mis à jour avec succès.')
             ->data([
-                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
+                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at']),
             ])
             ->json();
     }
@@ -83,14 +83,14 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             return ApiResponse::builder()
                 ->error(422, 'The provided password does not match your current password.')
                 ->json();
         }
 
         $user->update([
-            'password' => Hash::make($validated['password'])
+            'password' => Hash::make($validated['password']),
         ]);
 
         return ApiResponse::builder()
@@ -109,8 +109,8 @@ class ProfileController extends Controller
                 'image',
                 'max:2048',
                 'mimes:jpeg,png,jpg,gif',
-                'dimensions:min_width=100,min_height=100,max_width=2000,max_height=2000'
-            ]
+                'dimensions:min_width=100,min_height=100,max_width=2000,max_height=2000',
+            ],
         ]);
 
         $user = $request->user();
@@ -125,13 +125,13 @@ class ProfileController extends Controller
 
         $user->update([
             'avatar_path' => $path,
-            'avatar_url' => Storage::disk('public')->url($path)
+            'avatar_url' => Storage::disk('public')->url($path),
         ]);
 
         return ApiResponse::builder()
             ->success(200, 'Avatar updated successfully')
             ->data([
-                'avatar_path' => $user->avatar_path
+                'avatar_path' => $user->avatar_path,
             ])
             ->json();
     }

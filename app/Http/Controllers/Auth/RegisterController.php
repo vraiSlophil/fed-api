@@ -8,10 +8,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
@@ -46,7 +43,7 @@ class RegisterController extends Controller
             ->success(200, 'Compte créé avec succès. Veuillez vérifier votre boîte mail pour confirmer votre adresse email.')
             ->data([
                 'user' => $user,
-                'token' => $token
+                'token' => $token,
             ])
             ->json();
     }

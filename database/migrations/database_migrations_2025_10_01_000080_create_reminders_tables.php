@@ -2,11 +2,13 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('reminders', function (Blueprint $table) {
             $table->uuid('reminder_id')->primary();
             $table->uuid('user_id');
@@ -16,7 +18,7 @@ return new class extends Migration {
             $table->string('timezone', 64);
             $table->timestamp('due_at')->nullable();
             $table->text('rrule')->nullable();
-            $table->enum('status', ['active','paused','completed','cancelled'])->default('active');
+            $table->enum('status', ['active', 'paused', 'completed', 'cancelled'])->default('active');
             $table->integer('occurrences_count')->default(0);
             $table->integer('max_occurrences')->nullable();
             $table->timestamp('last_triggered_at')->nullable();
@@ -26,7 +28,7 @@ return new class extends Migration {
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
             $table->foreign('task_id')->references('task_id')->on('tasks')->cascadeOnDelete();
 
-            $table->index(['user_id','status']);
+            $table->index(['user_id', 'status']);
             $table->index('task_id');
             $table->index('next_run_at'); // Option: enlever et créer un index partiel
         });
@@ -47,11 +49,12 @@ return new class extends Migration {
             $table->foreign('reminder_id')->references('reminder_id')->on('reminders')->cascadeOnDelete();
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
 
-            $table->index(['user_id','delivered_at']);
+            $table->index(['user_id', 'delivered_at']);
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('reminder_notifications');
         Schema::dropIfExists('reminders');
     }

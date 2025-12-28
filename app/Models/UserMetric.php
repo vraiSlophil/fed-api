@@ -2,21 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class UserMetric extends Model
 {
     use HasFactory, HasUuids;
 
     protected $primaryKey = 'user_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
-    protected $fillable = ['user_id', 'total_themes_created', 'total_tasks_created', 'total_tasks_completed', 'current_streak_days', 'longest_streak_days', 'last_activity_date', 'themes_created_this_week', 'themes_created_last_week', 'tasks_created_this_week', 'tasks_created_last_week', 'tasks_completed_this_week', 'tasks_completed_last_week',];
+    protected $fillable = ['user_id', 'total_themes_created', 'total_tasks_created', 'total_tasks_completed', 'current_streak_days', 'longest_streak_days', 'last_activity_date', 'themes_created_this_week', 'themes_created_last_week', 'tasks_created_this_week', 'tasks_created_last_week', 'tasks_completed_this_week', 'tasks_completed_last_week'];
 
-    protected $casts = ['last_activity_date' => 'date', 'updated_at' => 'datetime', 'created_at' => 'datetime',];
+    protected $casts = ['last_activity_date' => 'date', 'updated_at' => 'datetime', 'created_at' => 'datetime'];
 
     public function user()
     {
