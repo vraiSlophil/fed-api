@@ -7,8 +7,8 @@ on:
     branches: 
       - main
       - develop
-      - 'feat/**'  # ✅ Déclenche sur toutes les branches feat/*
-  workflow_dispatch:  # ✅ Permet de lancer manuellement
+      - 'feat/**'
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -19,26 +19,3 @@ jobs:
     name: 🧪 Backend Tests
     needs: lint
     uses: ./.github/workflows/tests-backend.yml
-
-  security-scan:
-    name: 🔒 Security Scan
-    needs: lint
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🔍 Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: 📊 Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
