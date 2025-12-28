@@ -33,6 +33,7 @@ services:
         volumes:
             - ./:/app
             - /app/vendor
+            - laravel_logs:/app/storage/logs
         depends_on:
             postgres:
                 condition: service_healthy
@@ -45,7 +46,7 @@ services:
             context: .
             dockerfile: Dockerfile.logrotate
         volumes:
-            - laravel_logs:/var/log/laravel:ro
+            - laravel_logs:/var/log/laravel
         networks:
             - app-network
         restart: unless-stopped
