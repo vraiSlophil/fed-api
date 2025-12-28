@@ -7,7 +7,7 @@ on:
     branches: 
       - main
       - develop
-      - 'feat/**'  # ✅ Déclenche sur toutes les branches feat/*
+      - 'feat/**'  # ✅ Déclenche sur feat/*
   workflow_dispatch:  # ✅ Permet de lancer manuellement
   workflow_call:      # ✅ Permet d'être appelé par ci.yml
 
@@ -86,12 +86,3 @@ jobs:
           DB_USERNAME: laravel
           DB_PASSWORD: secret
         run: php artisan test --coverage --min=80
-
-      - name: 📊 Upload coverage reports to Codecov
-        if: matrix.php-version == '8.3'
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          flags: backend
-          name: backend-coverage
