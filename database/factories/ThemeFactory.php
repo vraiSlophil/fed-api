@@ -20,6 +20,7 @@ class ThemeFactory extends Factory
         return [
             'theme_id' => (string) Str::uuid(),
             'owner_id' => null, // à renseigner lors de l'utilisation
+            'playground_id' => null, // à renseigner lors de l'utilisation
             'title' => $this->faker->sentence(3),
             'color' => $this->faker->safeHexColor(),
         ];
