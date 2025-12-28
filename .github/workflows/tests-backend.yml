@@ -1,0 +1,91 @@
+name: 🧪 Tests Backend
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  laravel-tests:
+    name: Laravel Tests (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.3']
+    
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_USER: laravel
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: laravel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql
+          coverage: xdebug
+
+      - name: 📦 Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: 📥 Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: 📋 Copy .env.testing
+        run: cp .env.example .env.testing
+
+      - name: 🔑 Generate application key
+        run: php artisan key:generate --env=testing
+
+      - name: 🗄️ Run migrations
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: laravel_test
+          DB_USERNAME: laravel
+          DB_PASSWORD: secret
+        run: php artisan migrate --force --env=testing
+
+      - name: 🧪 Execute tests (Unit and Feature)
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: laravel_test
+          DB_USERNAME: laravel
+          DB_PASSWORD: secret
+        run: php artisan test --coverage --min=80
+
+      - name: 📊 Upload coverage reports to Codecov
+        if: matrix.php-version == '8.3'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: backend
+          name: backend-coverage
