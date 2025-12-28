@@ -39,6 +39,17 @@ services:
         networks:
             - app-network
 
+     # Service de rotation et analyse des logs
+    logrotate:
+        build:
+            context: .
+            dockerfile: Dockerfile.logrotate
+        volumes:
+            - laravel_logs:/var/log/laravel:ro
+        networks:
+            - app-network
+        restart: unless-stopped
+    
     pgadmin:
         image: dpage/pgadmin4:9.8.0
         depends_on:
@@ -58,4 +69,6 @@ networks:
 
 volumes:
     postgres_data:
+        driver: local
+    laravel_logs:
         driver: local
