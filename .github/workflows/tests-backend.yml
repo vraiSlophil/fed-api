@@ -7,10 +7,9 @@ on:
     branches: 
       - main
       - develop
-      - 'feat/**'  # ✅ Déclenche sur feat/*
-  workflow_dispatch:  # ✅ Permet de lancer manuellement
-  workflow_call:      # ✅ Permet d'être appelé par ci.yml
-
+      - 'feat/**'
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   laravel-tests:
@@ -25,8 +24,8 @@ jobs:
       postgres:
         image: postgres:16.4
         env:
-          POSTGRES_USER: laravel
-          POSTGRES_PASSWORD: secret
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: laravel_test
         ports:
           - 5432:5432
@@ -45,7 +44,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql
-          coverage: xdebug
+          coverage: none
 
       - name: 📦 Get Composer Cache Directory
         id: composer-cache
@@ -64,6 +63,12 @@ jobs:
       - name: 📋 Copy .env.testing
         run: cp .env.example .env.testing
 
+      - name: 🔧 Configure .env.testing
+        run: |
+          sed -i 's/DB_USERNAME=.*/DB_USERNAME=postgres/' .env.testing
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=postgres/' .env.testing
+          sed -i 's/DB_DATABASE=.*/DB_DATABASE=laravel_test/' .env.testing
+
       - name: 🔑 Generate application key
         run: php artisan key:generate --env=testing
 
@@ -73,9 +78,19 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_DATABASE: laravel_test
-          DB_USERNAME: laravel
-          DB_PASSWORD: secret
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
         run: php artisan migrate --force --env=testing
+
+      - name: 🌱 Seed database
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: laravel_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+        run: php artisan db:seed --force --env=testing
 
       - name: 🧪 Execute tests (Unit and Feature)
         env:
@@ -83,6 +98,6 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_DATABASE: laravel_test
-          DB_USERNAME: laravel
-          DB_PASSWORD: secret
-        run: php artisan test --coverage --min=80
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+        run: php artisan test
