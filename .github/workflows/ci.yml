@@ -4,7 +4,11 @@ on:
   pull_request:
     branches: [ main, develop ]
   push:
-    branches: [ main, develop ]
+    branches: 
+      - main
+      - develop
+      - 'feat/**'  # ✅ Déclenche sur toutes les branches feat/*
+  workflow_dispatch:  # ✅ Permet de lancer manuellement
 
 jobs:
   lint:

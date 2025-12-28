@@ -4,7 +4,13 @@ on:
   pull_request:
     branches: [ main, develop ]
   push:
-    branches: [ main, develop ]
+    branches: 
+      - main
+      - develop
+      - 'feat/**'  # ✅ Déclenche sur toutes les branches feat/*
+  workflow_dispatch:  # ✅ Permet de lancer manuellement
+  workflow_call:      # ✅ Permet d'être appelé par ci.yml
+
 
 jobs:
   pint:
