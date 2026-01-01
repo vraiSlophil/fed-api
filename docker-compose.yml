@@ -32,12 +32,25 @@ services:
             - DB_PASSWORD=${DB_PASSWORD}
         volumes:
             - ./:/app
+            - /app/vendor
+            - laravel_logs:/app/storage/logs
         depends_on:
             postgres:
                 condition: service_healthy
         networks:
             - app-network
 
+     # Service de rotation et analyse des logs
+    logrotate:
+        build:
+            context: .
+            dockerfile: Dockerfile.logrotate
+        volumes:
+            - laravel_logs:/var/log/laravel
+        networks:
+            - app-network
+        restart: unless-stopped
+    
     pgadmin:
         image: dpage/pgadmin4:9.8.0
         depends_on:
@@ -57,4 +70,6 @@ networks:
 
 volumes:
     postgres_data:
+        driver: local
+    laravel_logs:
         driver: local

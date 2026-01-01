@@ -1,0 +1,23 @@
+FROM alpine:3.19
+
+# Installer logrotate et des outils d'analyse
+RUN apk add --no-cache \
+    logrotate \
+    bash \
+    gawk \
+    grep \
+    findutils
+
+# Créer les répertoires nécessaires
+RUN mkdir -p /var/log/laravel /var/log/nginx /etc/logrotate.d
+
+# Copier la configuration logrotate
+COPY docker/logrotate/laravel.conf /etc/logrotate.d/laravel
+COPY docker/logrotate/analyze-logs.sh /usr/local/bin/analyze-logs.sh
+RUN chmod +x /usr/local/bin/analyze-logs.sh
+
+# Script de rotation périodique
+COPY docker/logrotate/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

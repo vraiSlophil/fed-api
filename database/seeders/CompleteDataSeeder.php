@@ -7,6 +7,7 @@ use App\Models\Theme;
 use App\Models\Task;
 use App\Models\ThemeUserPermission;
 use App\Models\UserMetric;
+use App\Models\Playground;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
@@ -27,15 +28,19 @@ class CompleteDataSeeder extends Seeder
         $this->command->info('📊 Création des métriques utilisateurs...');
         $this->createUserMetrics($users);
 
-        // 3. Créer les thèmes
-        $this->command->info('🎨 Création des thèmes...');
-        $themes = $this->createThemes($users);
+        // 3. Créer les playgrounds pour chaque utilisateur
+        $this->command->info('🎮 Création des playgrounds...');
+        $playgrounds = $this->createPlaygrounds($users);
 
-        // 4. Créer les permissions sur les thèmes
+        // 4. Créer les thèmes
+        $this->command->info('🎨 Création des thèmes...');
+        $themes = $this->createThemes($users, $playgrounds);
+
+        // 5. Créer les permissions sur les thèmes
         $this->command->info('🔐 Création des permissions...');
         $this->createThemePermissions($themes, $users);
 
-        // 5. Créer les tâches
+        // 6. Créer les tâches
         $this->command->info('✅ Création des tâches...');
         $this->createTasks($themes, $users);
 
@@ -103,17 +108,58 @@ class CompleteDataSeeder extends Seeder
         }
     }
 
-    private function createThemes(Collection $users): Collection
+    private function createPlaygrounds(Collection $users): Collection
+    {
+        $playgrounds = collect();
+
+        // Récupérer les playgrounds par défaut déjà créés par l'observer
+        $users->where('blocked_at', null)->each(function (User $user) use ($playgrounds) {
+            // Le playground par défaut a déjà été créé par le UserObserver
+            $defaultPlayground = Playground::where('user_id', $user->user_id)
+                ->where('is_default', true)
+                ->first();
+            
+            if ($defaultPlayground) {
+                $playgrounds->push($defaultPlayground);
+            }
+
+            // Créer 0 à 2 playgrounds supplémentaires (non-défaut)
+            $additionalCount = fake()->numberBetween(0, 2);
+            
+            for ($i = 0; $i < $additionalCount; $i++) {
+                $playground = Playground::factory()->create([
+                    'user_id' => $user->user_id,
+                    'is_default' => false,
+                ]);
+                $playgrounds->push($playground);
+            }
+        });
+
+        return $playgrounds;
+    }
+
+    private function createThemes(Collection $users, Collection $playgrounds): Collection
     {
         $themes = collect();
 
         // Chaque utilisateur non bloqué crée entre 1 et 5 thèmes
-        $users->where('blocked_at', null)->each(function (User $user) use ($themes) {
+        $users->where('blocked_at', null)->each(function (User $user) use ($themes, $playgrounds) {
+            // Récupérer les playgrounds de cet utilisateur
+            $userPlaygrounds = $playgrounds->where('user_id', $user->user_id);
+            
+            if ($userPlaygrounds->isEmpty()) {
+                return;
+            }
+
             $themeCount = fake()->numberBetween(1, 5);
 
             for ($i = 0; $i < $themeCount; $i++) {
+                // Attribuer le thème à un playground aléatoire de l'utilisateur
+                $playground = $userPlaygrounds->random();
+                
                 $theme = Theme::factory()->create([
                     'owner_id' => $user->user_id,
+                    'playground_id' => $playground->playground_id,
                 ]);
                 $themes->push($theme);
             }
@@ -195,7 +241,7 @@ class CompleteDataSeeder extends Seeder
 
             for ($i = 0; $i < $taskCount; $i++) {
                 $assignedUser = $accessibleUsers->random();
-                $status = fake()->randomElement(['todo', 'doing', 'done']);
+                $status = fake()->randomElement(['todo', 'in_progress', 'done']);
 
                 $taskData = [
                     'theme_id' => $theme->theme_id,

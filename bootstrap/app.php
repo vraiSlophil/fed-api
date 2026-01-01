@@ -31,6 +31,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
         ]);
 
+        $middleware->append(\App\Http\Middleware\LogHttpRequests::class);
+
+
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
