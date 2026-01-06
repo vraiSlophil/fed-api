@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ApiException;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,15 +13,13 @@ use Illuminate\Validation\Rules;
 
 class ProfileController extends Controller
 {
-    /**
-     * Afficher les informations du profil
-     */
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
 
         return ApiResponse::builder()
             ->success()
+            ->messageCode('profile.show.success')
             ->data([
                 'user' => [
                     'username' => $user->username,
@@ -33,9 +32,6 @@ class ProfileController extends Controller
             ->json();
     }
 
-    /**
-     * Mettre à jour les informations du profil
-     */
     public function update(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -49,14 +45,14 @@ class ProfileController extends Controller
 
         $user->update($validated);
 
-        // Si l'email a été modifié, on le marque comme non vérifié et on envoie un email
         if ($user->wasChanged('email')) {
             $user->email_verified_at = null;
             $user->save();
             $user->sendEmailVerificationNotification();
 
             return ApiResponse::builder()
-                ->success(200, 'Profil mis à jour avec succès. Un email de vérification a été envoyé à votre nouvelle adresse.')
+                ->success()
+                ->messageCode('profile.update.email_changed', ['email_verification_sent' => true])
                 ->data([
                     'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
                 ])
@@ -64,16 +60,14 @@ class ProfileController extends Controller
         }
 
         return ApiResponse::builder()
-            ->success(200, 'Profil mis à jour avec succès.')
+            ->success()
+            ->messageCode('profile.update.success')
             ->data([
                 'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at'])
             ])
             ->json();
     }
 
-    /**
-     * Mettre à jour le mot de passe
-     */
     public function updatePassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -84,9 +78,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if (!Hash::check($validated['current_password'], $user->password)) {
-            return ApiResponse::builder()
-                ->error(422, 'The provided password does not match your current password.')
-                ->json();
+            throw new ApiException('auth.failed', [], 422, 'Authentication failed');
         }
 
         $user->update([
@@ -94,13 +86,11 @@ class ProfileController extends Controller
         ]);
 
         return ApiResponse::builder()
-            ->success(200, 'Password updated successfully')
+            ->success()
+            ->messageCode('auth.password.updated')
             ->json();
     }
 
-    /**
-     * Mettre à jour l'avatar
-     */
     public function updateAvatar(Request $request): JsonResponse
     {
         $request->validate([
@@ -115,12 +105,10 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // Supprimer l'ancien avatar s'il existe
         if ($user->avatar_path) {
             Storage::disk('public')->delete($user->avatar_path);
         }
 
-        // Stocker le nouvel avatar
         $path = $request->file('avatar')->store('avatars', 'public');
 
         $user->update([
@@ -129,7 +117,8 @@ class ProfileController extends Controller
         ]);
 
         return ApiResponse::builder()
-            ->success(200, 'Avatar updated successfully')
+            ->success()
+            ->messageCode('profile.avatar.updated')
             ->data([
                 'avatar_path' => $user->avatar_path
             ])
