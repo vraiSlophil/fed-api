@@ -1,5 +1,4 @@
 <?php
-<?php
 
 namespace App\Http\Middleware;
 
@@ -13,9 +12,9 @@ class LogHttpRequests
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        
+
         $statusCode = $response->getStatusCode();
-        
+
         // Logger les codes d'erreur intéressants pour la sécurité
         if (in_array($statusCode, [401, 403, 404, 429, 500, 502, 503])) {
             $logData = [
@@ -28,12 +27,12 @@ class LogHttpRequests
                 'user_agent' => $request->userAgent(),
                 'referer' => $request->header('referer'),
             ];
-            
+
             // Si utilisateur authentifié, ajouter son ID
             if ($request->user()) {
                 $logData['user_id'] = $request->user()->id;
             }
-            
+
             // Logger selon la sévérité
             match(true) {
                 $statusCode >= 500 => Log::emergency('HTTP 500 Error', $logData),
@@ -43,7 +42,7 @@ class LogHttpRequests
                 default => Log::info("HTTP {$statusCode}", $logData),
             };
         }
-        
+
         return $response;
     }
 }
