@@ -6,7 +6,6 @@ use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,9 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustHosts(at: fn () => config('app.trusted_hosts'));
 
+        // API = stateless : pas de cookies Sanctum stateful, seulement Bearer tokens.
         $middleware->api(prepend: [
-            EnsureFrontendRequestsAreStateful::class,
-            AttachRequestId::class
+            AttachRequestId::class,
         ]);
 
         $middleware->alias([
@@ -33,8 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->append(\App\Http\Middleware\LogHttpRequests::class);
 
-
-        $middleware->statefulApi();
+        // IMPORTANT: ne pas activer statefulApi() (cookies/session) pour une API REST stateless.
+        // $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
