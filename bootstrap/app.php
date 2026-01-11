@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\LogHttpRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
         ]);
 
-        $middleware->append(\App\Http\Middleware\LogHttpRequests::class);
+        $middleware->append(LogHttpRequests::class);
 
         // IMPORTANT: ne pas activer statefulApi() (cookies/session) pour une API REST stateless.
         // $middleware->statefulApi();
