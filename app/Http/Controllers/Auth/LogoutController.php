@@ -15,6 +15,7 @@ class LogoutController extends Controller
 
         return ApiResponse::builder()
             ->success()
+            ->messageCode('auth.logout.success')
             ->json();
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,34 +15,43 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyEmailController extends Controller
 {
-    /**
-     * Mark the authenticated user's email address as verified.
-     */
     public function __invoke(Request $request)
     {
-        // Journaliser les informations pour le débogage
-//        Log::info('Verification attempt', [
-//            'id' => $request->route('id'),
-//            'hash' => $request->route('hash')
-//        ]);
+        $id = $request->route('id');
 
-        // Trouver l'utilisateur par user_id
-        $user = User::where('user_id', $request->route('id'))->first();
+        try {
+            $user = User::where('user_id', $id)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            if ($request->expectsJson()) {
+                return ApiResponse::error(
+                    message: 'User not found',
+                    status: 404,
+                    errors: null,
+                    messageCode: 'resource.not_found',
+                    messageParams: ['resource' => 'user', 'id' => $id]
+                );
+            }
 
-        if (!$user) {
-//            Log::error('User not found during verification', ['id' => $request->route('id')]);
             return view('auth.verify-email-result', [
                 'status' => 'error',
                 'message' => 'Utilisateur non trouvé'
             ]);
         }
 
-        // Vérifier que le hash correspond
-        if (!hash_equals(sha1($user->getEmailForVerification()), (string) $request->route('hash'))) {
-//            Log::error('Invalid hash during verification', [
-//                'id' => $request->route('id'),
-//                'hash' => $request->route('hash')
-//            ]);
+        $expectedHash = sha1($user->getEmailForVerification());
+        $givenHash = (string)$request->route('hash');
+
+        if (!hash_equals($expectedHash, $givenHash)) {
+            if ($request->expectsJson()) {
+                // Erreur métier contrôlée : utilisation d'ApiException pour laisser le Handler construire la réponse JSON standardisée.
+                throw new ApiException(
+                    messageCode: 'auth.verification.invalid',
+                    messageParams: [],
+                    status: 400,
+                    message: 'Invalid verification link'
+                );
+            }
+
             return view('auth.verify-email-result', [
                 'status' => 'error',
                 'message' => 'Lien de vérification invalide'
@@ -49,23 +59,45 @@ class VerifyEmailController extends Controller
         }
 
         if ($user->hasVerifiedEmail()) {
-//            Log::info('Email already verified', ['user_id' => $user->user_id]);
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+
+            if ($request->expectsJson()) {
+                return ApiResponse::success(
+                    data: ['frontendUrl' => $frontendUrl],
+                    message: 'Email already verified',
+                    status: 200,
+                    messageCode: 'auth.verification.already_verified',
+                    messageParams: []
+                );
+            }
+
             return view('auth.verify-email-result', [
                 'status' => 'info',
                 'message' => 'Votre email a déjà été vérifié',
-                'frontendUrl' => config('app.frontend_url', 'http://localhost:3000')
+                'frontendUrl' => $frontendUrl
             ]);
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
-//            Log::info('Email successfully verified', ['user_id' => $user->user_id]);
+        }
+
+        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+
+        if ($request->expectsJson()) {
+            return ApiResponse::success(
+                message: 'Email verified',
+                status: 200,
+                data: ['frontendUrl' => $frontendUrl],
+                messageCode: 'auth.verification.success',
+                messageParams: []
+            );
         }
 
         return view('auth.verify-email-result', [
             'status' => 'success',
             'message' => 'Votre email a été vérifié avec succès',
-            'frontendUrl' => config('app.frontend_url', 'http://localhost:3000')
+            'frontendUrl' => $frontendUrl
         ]);
     }
 }

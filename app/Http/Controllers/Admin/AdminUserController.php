@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Role;
@@ -18,14 +19,10 @@ use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
-    /**
-     * Liste des utilisateurs avec filtres et pagination (GET /users)
-     */
     public function index(Request $request): JsonResponse
     {
         $query = User::with(['role']);
 
-        // Recherche générale
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -36,12 +33,10 @@ class AdminUserController extends Controller
             });
         }
 
-        // Filtrer par rôle
         if ($request->filled('role')) {
             $query->where('role_power', $request->role);
         }
 
-        // Filtrer par statut (blocked/active/unverified)
         if ($request->filled('status')) {
             if ($request->status === 'blocked') {
                 $query->whereNotNull('blocked_at');
@@ -52,23 +47,22 @@ class AdminUserController extends Controller
                 $query->whereNull('email_verified_at');
                 $query->whereNull('blocked_at');
             } else {
-                return ApiResponse::builder()
-                    ->error(400, 'Statut invalide. Utilisez "blocked", "active" ou "unverified".')
-                    ->json();
+                throw new ApiException(
+                    'validation.invalid',
+                    ['field' => 'status', 'allowed' => ['blocked', 'active', 'unverified']],
+                    422
+                );
             }
         }
 
-        // Filtrage multiple par rôles
         if ($request->filled('roles')) {
             $roles = explode(',', $request->roles);
             $query->whereIn('role_power', $roles);
         }
 
-        // Tri dynamique
         $sortField = $request->input('sort_by', 'created_at');
         $sortDirection = $request->input('sort', 'desc');
 
-        // Colonnes autorisées pour le tri
         $allowedSortFields = [
             'created_at',
             'updated_at',
@@ -81,24 +75,19 @@ class AdminUserController extends Controller
             'blocked_at'
         ];
 
-        // Valider le champ de tri
         if (!in_array($sortField, $allowedSortFields)) {
             $sortField = 'created_at';
         }
 
-        // Valider la direction du tri
         $sortDirection = strtolower($sortDirection) === 'asc' ? 'asc' : 'desc';
 
-        // Appliquer le tri
         $query->orderBy($sortField, $sortDirection);
 
-        // Pagination personnalisable
         $perPage = $request->input('per_page', 20);
-        $perPage = max(1, min(100, intval($perPage))); // Limiter entre 1 et 100
+        $perPage = max(1, min(100, intval($perPage)));
 
         $users = $query->paginate($perPage);
 
-        // Structure de réponse complète
         return ApiResponse::builder()
             ->success()
             ->data([
@@ -138,9 +127,6 @@ class AdminUserController extends Controller
             ->json();
     }
 
-    /**
-     * Créer un nouvel utilisateur (POST /users)
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -161,31 +147,27 @@ class AdminUserController extends Controller
         $data['password'] = Hash::make($request->password);
 
         if ($request->hasFile('avatar')) {
-            // Utiliser le disque 'public' au lieu du disque par défaut
             $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
         }
 
         $user = User::create($data);
 
-        // Envoyer l'email de vérification
         event(new Registered($user));
 
         return ApiResponse::builder()
-            ->success(200, 'Utilisateur créé avec succès. Un email de vérification a été envoyé à l\'utilisateur.')
+            ->success(201)
+            ->messageCode('user.create.success')
             ->data($user)
             ->json();
     }
 
-    /**
-     * Affichage d'un utilisateur spécifique (GET /users/{user})
-     */
     public function show(User $user): JsonResponse
     {
         $user->load([
             'role',
-            'themes']);
+            'themes'
+        ]);
 
-        // Ajouter des statistiques supplémentaires pour l'admin
         $lastActivity = null;
         if ($user->last_login_at) {
             $lastActivity = $user->last_login_at;
@@ -194,52 +176,43 @@ class AdminUserController extends Controller
             $lastActivity = $user->updated_at->toDateTimeString();
         }
 
-        // Calculer le taux de completion des tâches
         $totalTasks = $user->tasks()->count();
         $completedTasks = $user->tasks()->where('status', 'done')->count();
         $completionRate = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 1) : 0;
 
-        // Activité récente (7 derniers jours)
         $recentTasksCount = $user->tasks()->where('created_at', '>=', now()->subDays(7))->count();
         $recentThemesCount = $user->themes()->where('created_at', '>=', now()->subDays(7))->count();
 
-        // Nombre de jours d'activité dans les 30 derniers jours
         $activeDaysLast30 = $this->getActiveDaysCount($user->user_id, 30);
 
         $additionalStats = [
-            // Stats de base (améliorées)
             'themes_count' => $user->themes()->count(),
             'tasks_count' => $totalTasks,
             'completed_tasks_count' => $completedTasks,
             'completion_rate_percentage' => $completionRate,
 
-            // Temps et activité
             'last_activity' => $lastActivity,
             'account_age_days' => $user->created_at->diffInDays(now(), false), // Entier
             'account_age_human' => $user->created_at->diffForHumans(), // Format lisible
             'days_since_last_login' => $user->last_login_at ?
                 now()->diffInDays($user->last_login_at) : null,
 
-            // Collaboration
             'themes_as_member' => ThemeUserPermission::where('user_id', $user->user_id)
                 ->where('status', 'active')->count(),
             'pending_invitations' => ThemeUserPermission::where('user_id', $user->user_id)
                 ->where('status', 'invited')->count(),
 
-            // Activité récente
             'recent_activity' => [
                 'tasks_last_7_days' => $recentTasksCount,
                 'themes_last_7_days' => $recentThemesCount,
                 'active_days_last_30' => $activeDaysLast30,
             ],
 
-            // Stats avancées
             'average_tasks_per_theme' => $user->themes()->count() > 0 ?
                 round($totalTasks / $user->themes()->count(), 1) : 0,
             'archived_tasks_count' => $user->tasks()->whereNotNull('archived_at')->count(),
             'validated_tasks_count' => $user->tasks()->whereNotNull('validated_at')->count(),
 
-            // Statut du compte
             'is_blocked' => $user->blocked_at !== null,
             'is_email_verified' => $user->email_verified_at !== null,
             'blocked_since' => $user->blocked_at?->diffForHumans(),
@@ -248,6 +221,7 @@ class AdminUserController extends Controller
 
         return ApiResponse::builder()
             ->success()
+            ->messageCode('user.show.success')
             ->data([
                 'user' => $user,
                 'additional_stats' => $additionalStats,
@@ -255,9 +229,6 @@ class AdminUserController extends Controller
             ->json();
     }
 
-    /**
-     * Mise à jour d'un utilisateur (PUT /users/{user})
-     */
     public function update(Request $request, User $user): JsonResponse
     {
         $request->validate([
@@ -282,169 +253,125 @@ class AdminUserController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            // Supprimer l'ancien avatar s'il existe
             if ($user->avatar_path) {
                 Storage::disk('public')->delete($user->avatar_path);
             }
-            // Utiliser le disque 'public'
             $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
         }
 
-        // Vérifier si l'email a été modifié avant la mise à jour
         $emailChanged = $user->email !== $data['email'];
 
         $user->update($data);
 
-        // Si l'email a été modifié, marquer comme non vérifié et envoyer un email
         if ($emailChanged) {
             $user->email_verified_at = null;
             $user->save();
             $user->sendEmailVerificationNotification();
 
             return ApiResponse::builder()
-                ->success(200, 'Utilisateur mis à jour avec succès. Un email de vérification a été envoyé à la nouvelle adresse.')
+                ->success()
+                ->messageCode('user.update.email')
                 ->data($user)
                 ->json();
         }
 
         return ApiResponse::builder()
-            ->success(200, 'Utilisateur mis à jour avec succès.')
+            ->success()
+            ->messageCode('user.update.success')
             ->data($user)
             ->json();
     }
 
-    /**
-     * Supprimer un utilisateur (DELETE /users/{user})
-     */
     public function destroy(User $user): JsonResponse
     {
-        // Empêcher la suppression de son propre compte
         if ($user->user_id === auth()->user()->user_id) {
             return ApiResponse::builder()
-                ->error(400, 'Vous ne pouvez pas supprimer votre propre compte.')
+                ->error()
+                ->messageCode('user.delete.forbidden_self')
                 ->json();
         }
 
         try {
-            // Supprimer l'avatar s'il existe
             if ($user->avatar_path) {
                 Storage::disk('public')->delete($user->avatar_path);
             }
 
-            // Forcer la suppression définitive (ignore le soft delete)
             $user->forceDelete();
 
             return ApiResponse::builder()
-                ->success(200, 'Utilisateur supprimé définitivement avec succès.')
+                ->success()
+                ->messageCode('user.delete.success')
                 ->json();
 
         } catch (QueryException $e) {
-            // Erreur de contrainte de clé étrangère
             if ($e->getCode() === '23000') {
-                return ApiResponse::builder()
-                    ->error(409, 'Impossible de supprimer cet utilisateur car il a des données associées. Supprimez d\'abord ses thèmes, tâches et permissions.')
-                    ->json();
+                throw new ApiException('user.delete.failed_foreign_key', [], 409);
             }
 
             return ApiResponse::builder()
-                ->error(500, 'Erreur lors de la suppression : ' . $e->getMessage())
+                ->error(500, $e->getMessage())
                 ->json();
 
         } catch (Exception $e) {
             return ApiResponse::builder()
-                ->error(500, 'Erreur inattendue lors de la suppression : ' . $e->getMessage())
+                ->error(500, $e->getMessage())
                 ->json();
         }
     }
 
-//    /**
-//     * Supprimer les relations de l'utilisateur avant suppression définitive
-//     */
-//    private function deleteUserRelations(User $user): void
-//    {
-//        // Supprimer les tokens d'authentification
-//        $user->tokens()->delete();
-//
-//        // Supprimer les métriques utilisateur
-//        $user->metrics()->delete();
-//
-//        // Transférer ou supprimer les thèmes (selon votre logique métier)
-//        $user->themes()->delete(); // ou les transférer à un autre utilisateur
-//
-//        // Supprimer les tâches
-//        $user->tasks()->delete();
-//
-//        // Supprimer les permissions sur les thèmes
-//        ThemeUserPermission::where('user_id', $user->user_id)->delete();
-//    }
-
-    /**
-     * Bloquer un utilisateur (POST /users/{user}/block)
-     */
     public function block(User $user): JsonResponse
     {
         if ($user->blocked_at !== null) {
             return ApiResponse::builder()
-                ->error(400, 'Cet utilisateur est déjà bloqué.')
+                ->error()
+                ->messageCode('user.block.already_blocked')
                 ->json();
         }
 
-        // Empêcher de se bloquer soi-même
         if ($user->user_id === auth()->user()->user_id) {
-            return ApiResponse::builder()
-                ->error(400, 'Vous ne pouvez pas bloquer votre propre compte.')
-                ->json();
+            throw new ApiException('user.block.forbidden_self', [], 400);
         }
 
         $user->update(['blocked_at' => now()]);
+
         return ApiResponse::builder()
-            ->success(200, 'Utilisateur bloqué avec succès.')
+            ->success(200)
+            ->messageCode('user.block.success')
             ->data($user)
             ->json();
     }
 
-    /**
-     * Débloquer un utilisateur (POST /users/{user}/unblock)
-     */
     public function unblock(User $user): JsonResponse
     {
         if ($user->blocked_at === null) {
-            return ApiResponse::builder()
-                ->error(400, 'Cet utilisateur n\'est pas bloqué.')
-                ->json();
+            throw new ApiException('user.unblock.not_blocked', [], 400);
         }
 
         $user->update(['blocked_at' => null]);
+
         return ApiResponse::builder()
-            ->success(200, 'Utilisateur débloqué avec succès.')
+            ->success(200)
+            ->messageCode('user.unblock.success')
             ->data($user)
             ->json();
     }
 
-    /**
-     * Compte le nombre de jours d'activité dans une période donnée
-     */
     private function getActiveDaysCount(string $userId, int $days): int
     {
         $startDate = now()->subDays($days);
         $endDate = now();
 
-        // Jours où l'utilisateur a créé des thèmes
         $themeDays = \App\Models\Theme::where('owner_id', $userId)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date')
             ->distinct()
             ->pluck('date');
 
-        // Jours où l'utilisateur a créé des tâches
         $taskDays = \App\Models\Task::where('user_id', $userId)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date')
             ->distinct()
             ->pluck('date');
-
-        // Jours où l'utilisateur s'est connecté (si on stockait cette info)
-        // Pour l'instant on se base uniquement sur la création de contenu
 
         return $themeDays->concat($taskDays)->unique()->count();
     }
