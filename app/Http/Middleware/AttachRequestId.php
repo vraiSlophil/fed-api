@@ -22,7 +22,12 @@ final class AttachRequestId
         if ($response instanceof JsonResponse) {
             $payload = $response->getData(true);
             if (is_array($payload)) {
-                $payload['meta'] = array_merge($payload['meta'] ?? [], [
+                $meta = $payload['meta'] ?? [];
+                if (!is_array($meta)) {
+                    $meta = [];
+                }
+
+                $payload['meta'] = array_merge($meta, [
                     'request_id' => $requestId,
                 ]);
                 $response->setData($payload);

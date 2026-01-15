@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class EmailVerificationNotificationController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse|RedirectResponse
+    public function __invoke(Request $request): JsonResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
             return ApiResponse::builder()

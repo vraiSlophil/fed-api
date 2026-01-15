@@ -14,11 +14,23 @@ class MediaController extends Controller
     {
         $path = $this->sanitizePath($path);
 
-        if (!Storage::disk('public')->exists($path)) {
+        $disk = Storage::disk('public');
+        if (!$disk->exists($path)) {
             throw new NotFoundHttpException();
         }
 
-        $filePath = Storage::disk('public')->path($path);
+        $filePath = $disk->path($path);
+        $rootPath = realpath($disk->path(''));
+        $resolvedFilePath = realpath($filePath);
+        if ($rootPath === false || $resolvedFilePath === false) {
+            throw new NotFoundHttpException();
+        }
+
+        $rootPrefix = rtrim($rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (strncmp($resolvedFilePath, $rootPrefix, strlen($rootPrefix)) !== 0) {
+            throw new NotFoundHttpException();
+        }
+
         $mimeType = $this->determineMimeType($request, $filePath);
 
         return ApiResponse::media()
@@ -30,9 +42,25 @@ class MediaController extends Controller
 
     private function sanitizePath(string $path): string
     {
-        $path = str_replace('..', '', $path);
+        $path = str_replace('\\', '/', $path);
         $path = preg_replace('#/+#', '/', $path);
-        return ltrim($path, '/');
+        $path = ltrim($path, '/');
+
+        $segments = explode('/', $path);
+        $clean = [];
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+
+            if ($segment === '..') {
+                throw new NotFoundHttpException();
+            }
+
+            $clean[] = $segment;
+        }
+
+        return implode('/', $clean);
     }
 
     private function determineMimeType(Request $request, string $filePath): string
