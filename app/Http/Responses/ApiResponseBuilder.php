@@ -1,11 +1,9 @@
 <?php
-// app/Http/Responses/ApiResponseBuilder.php
 
 namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Str;
 
 final class ApiResponseBuilder
 {

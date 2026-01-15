@@ -23,12 +23,11 @@ class VerifyEmailController extends Controller
             $user = User::where('user_id', $id)->firstOrFail();
         } catch (ModelNotFoundException $e) {
             if ($request->expectsJson()) {
-                return ApiResponse::error(
-                    message: 'User not found',
-                    status: 404,
-                    errors: null,
+                throw new ApiException(
                     messageCode: 'resource.not_found',
-                    messageParams: ['resource' => 'user', 'id' => $id]
+                    messageParams: ['resource' => 'user', 'id' => $id],
+                    status: 404,
+                    message: 'User not found'
                 );
             }
 

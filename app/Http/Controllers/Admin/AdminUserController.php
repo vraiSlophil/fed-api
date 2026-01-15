@@ -285,10 +285,7 @@ class AdminUserController extends Controller
     public function destroy(User $user): JsonResponse
     {
         if ($user->user_id === auth()->user()->user_id) {
-            return ApiResponse::builder()
-                ->error()
-                ->messageCode('user.delete.forbidden_self')
-                ->json();
+            throw new ApiException('user.delete.forbidden_self', [], 400);
         }
 
         try {
@@ -315,10 +312,7 @@ class AdminUserController extends Controller
     public function block(User $user): JsonResponse
     {
         if ($user->blocked_at !== null) {
-            return ApiResponse::builder()
-                ->error()
-                ->messageCode('user.block.already_blocked')
-                ->json();
+            throw new ApiException('user.block.already_blocked', [], 400);
         }
 
         if ($user->user_id === auth()->user()->user_id) {
