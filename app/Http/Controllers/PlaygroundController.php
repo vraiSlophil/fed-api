@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\Theme;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Responses\ApiResponse;
@@ -36,11 +37,6 @@ class PlaygroundController extends Controller
 
     public function show(Request $request, string $playgroundId): JsonResponse
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
-
         $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id, withThemesCount: true);
 
         return ApiResponse::builder()
@@ -89,11 +85,6 @@ class PlaygroundController extends Controller
 
     public function update(Request $request, string $playgroundId): JsonResponse
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
-
         $playground = Playground::where('playground_id', $playgroundId)
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();
@@ -125,25 +116,36 @@ class PlaygroundController extends Controller
 
     public function destroy(Request $request, string $playgroundId): JsonResponse
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
+        $user = $request->user();
 
-        $playground = Playground::where('playground_id', $playgroundId)
-            ->where('user_id', $request->user()->user_id)
-            ->firstOrFail();
+        DB::transaction(function () use ($user, $playgroundId) {
+            $playgrounds = Playground::where('user_id', $user->user_id)
+                ->lockForUpdate()
+                ->get();
 
-        if ($playground->is_default) {
-            throw new ApiException(
-                messageCode: 'playground.delete.last',
-                messageParams: [],
-                status: 400,
-                message: 'Cannot delete last playground'
-            );
-        }
+            $playground = $playgrounds->firstWhere('playground_id', $playgroundId);
+            if (!$playground) {
+                $exception = new ModelNotFoundException();
+                $exception->setModel(Playground::class, [$playgroundId]);
+                throw $exception;
+            }
 
-        $playground->delete();
+            if ($playground->is_default) {
+                throw new ApiException(
+                    messageCode: 'playground.delete.default_forbidden',
+                    messageParams: [],
+                    status: 400,
+                    message: 'Cannot delete default playground'
+                );
+            }
+
+            $playground->delete();
+
+            if ($playgrounds->count() <= 1) {
+                $defaultPlayground = $this->createDefaultPlayground($user->user_id);
+                $user->update(['active_playground_id' => $defaultPlayground->playground_id]);
+            }
+        });
 
         return ApiResponse::builder()
             ->success()
@@ -153,11 +155,6 @@ class PlaygroundController extends Controller
 
     public function setAsDefault(Request $request, string $playgroundId): JsonResponse
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
-
         $playground = Playground::where('playground_id', $playgroundId)
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();
@@ -177,11 +174,6 @@ class PlaygroundController extends Controller
 
     public function stats(Request $request, string $playgroundId): JsonResponse
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
-
         $playground = Playground::where('playground_id', $playgroundId)
             ->where('user_id', $request->user()->user_id)
             ->firstOrFail();
@@ -291,6 +283,23 @@ class PlaygroundController extends Controller
             'recent_tasks' => $recentTasks,
             'recent_themes' => $recentThemes
         ];
+    }
+
+    private function createDefaultPlayground(string $userId): Playground
+    {
+        return Playground::create([
+            'user_id' => $userId,
+            'name' => 'Mon Espace Principal',
+            'slug' => 'principal',
+            'icon' => 'home',
+            'color' => $this->generateRandomColor(),
+            'is_default' => true,
+        ]);
+    }
+
+    private function generateRandomColor(): string
+    {
+        return sprintf('#%06X', mt_rand(0, 0xFFFFFF));
     }
 
     public function themes(Request $request, string $playgroundId): JsonResponse

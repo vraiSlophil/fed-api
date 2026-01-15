@@ -1,11 +1,9 @@
 <?php
-// app/Http/Responses/ApiResponseBuilder.php
 
 namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Str;
 
 final class ApiResponseBuilder
 {
@@ -161,7 +159,7 @@ final class ApiResponseBuilder
             $payload['message_params'] = $this->messageParams;
         }
 
-        if (!(empty($this->errors) && $isProd)) {
+        if (!$isProd && !empty($this->errors)) {
             $payload['errors'] = $this->errors;
         }
 
