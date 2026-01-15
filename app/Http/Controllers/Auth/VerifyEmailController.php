@@ -43,7 +43,6 @@ class VerifyEmailController extends Controller
 
         if (!hash_equals($expectedHash, $givenHash)) {
             if ($request->expectsJson()) {
-                // Erreur métier contrôlée : utilisation d'ApiException pour laisser le Handler construire la réponse JSON standardisée.
                 throw new ApiException(
                     messageCode: 'auth.verification.invalid',
                     messageParams: [],
