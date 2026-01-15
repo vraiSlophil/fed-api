@@ -47,6 +47,7 @@ final class Handler extends ExceptionHandler
                 ->error(422, 'Validation failed')
                 ->messageCode('validation.invalid')
                 ->meta(['request_id' => $requestId])
+                ->errors($e->errors())
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
