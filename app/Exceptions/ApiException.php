@@ -14,6 +14,6 @@ final class ApiException extends Exception
         string $message = 'Error',
         ?Throwable $previous = null
     ) {
-        parent::__construct($message, 0, $previous);
+        parent::__construct($message, $status, $previous);
     }
 }
