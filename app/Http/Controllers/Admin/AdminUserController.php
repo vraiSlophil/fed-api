@@ -303,19 +303,12 @@ class AdminUserController extends Controller
                 ->messageCode('user.delete.success')
                 ->json();
 
-        } catch (QueryException $e) {
-            if ($e->getCode() === '23000') {
+        } catch (Exception $e) {
+            if ($e instanceof QueryException && $e->getCode() === '23000') {
                 throw new ApiException('user.delete.failed_foreign_key', [], 409);
             }
 
-            return ApiResponse::builder()
-                ->error(500, $e->getMessage())
-                ->json();
-
-        } catch (Exception $e) {
-            return ApiResponse::builder()
-                ->error(500, $e->getMessage())
-                ->json();
+            throw new ApiException('user.delete.failed', [], 500);
         }
     }
 
@@ -361,13 +354,13 @@ class AdminUserController extends Controller
         $startDate = now()->subDays($days);
         $endDate = now();
 
-        $themeDays = \App\Models\Theme::where('owner_id', $userId)
+        $themeDays = Theme::where('owner_id', $userId)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date')
             ->distinct()
             ->pluck('date');
 
-        $taskDays = \App\Models\Task::where('user_id', $userId)
+        $taskDays = Task::where('user_id', $userId)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date')
             ->distinct()
