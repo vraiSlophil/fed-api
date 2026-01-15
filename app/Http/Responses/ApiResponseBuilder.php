@@ -151,12 +151,14 @@ final class ApiResponseBuilder
             'data' => $this->data,
         ];
 
-        if (!empty($this->messageCode)) {
-            $payload['message_code'] = $this->messageCode;
-        }
+        if (!($this->statusCode >= 500 && $isProd)) {
+            if (!empty($this->messageCode)) {
+                $payload['message_code'] = $this->messageCode;
+            }
 
-        if (!empty($this->messageParams)) {
-            $payload['message_params'] = $this->messageParams;
+            if (!empty($this->messageParams)) {
+                $payload['message_params'] = $this->messageParams;
+            }
         }
 
         if (!$isProd && !empty($this->errors)) {
