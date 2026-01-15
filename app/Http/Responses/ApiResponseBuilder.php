@@ -159,7 +159,7 @@ final class ApiResponseBuilder
             $payload['message_params'] = $this->messageParams;
         }
 
-        if (!(empty($this->errors) && $isProd)) {
+        if (!$isProd && !empty($this->errors)) {
             $payload['errors'] = $this->errors;
         }
 
