@@ -304,11 +304,6 @@ class PlaygroundController extends Controller
 
     public function themes(Request $request, string $playgroundId): JsonResponse
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
-
         $playground = $this->findPlaygroundForUserById($playgroundId, $request->user()->user_id);
         return $this->getThemesPaginated($request, $playground);
     }
@@ -358,11 +353,6 @@ class PlaygroundController extends Controller
 
     private function buildAccessibleThemesQuery(string $playgroundId, string $userId): Builder
     {
-        Validator::make(
-            ['playground' => $playgroundId],
-            ['playground' => ['required', 'uuid']]
-        )->validate();
-
         $ownedThemes = Theme::where('playground_id', $playgroundId)
             ->where('owner_id', $userId);
 
