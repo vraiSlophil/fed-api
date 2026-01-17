@@ -31,13 +31,8 @@ This project provides the backend API used by the `fed-webapp` client applicatio
 ## Installation
 
 ```bash
-git clone <repository-url>
+git clone git@github.com:vraiSlophil/fed-api.git
 cd fed-api
-```
-
-```bash
-# install dependencies (populate vendor/ on the host through the bind mount)
-docker compose run --rm laravel composer install
 ```
 
 ---
@@ -48,6 +43,12 @@ This project uses a `.env` file. Start by copying the example file:
 
 ```bash
 cp .env.example .env
+```
+
+Once your `.env` file is in place, install dependencies (populate `vendor/` on the host through the bind mount):
+
+```bash
+docker compose run --rm --remove-orphans laravel composer install
 ```
 
 Required variables (minimum):
@@ -72,9 +73,6 @@ RESEND_API_KEY=YOUR_RESEND_API_KEY
 ## Usage
 
 ```bash
-# optional cleanup if you have leftover services from older setups
-docker compose down --remove-orphans
-
 # generate APP_KEY before starting the app (required, otherwise encryption errors will happen)
 docker compose run --rm laravel php artisan key:generate
 

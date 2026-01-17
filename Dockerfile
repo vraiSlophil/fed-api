@@ -1,36 +1,25 @@
-FROM php:8.3-fpm
+FROM php:8.3-cli
 
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    postgresql-client \
-    git \
-    curl \
-    zip \
-    unzip \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev postgresql-client \
+    git curl unzip \
     libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
+    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libicu-dev \
+    libxml2-dev \
+    libonig-dev \
     && docker-php-ext-configure intl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_pgsql pgsql zip bcmath gd mbstring xml intl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-COPY composer.json composer.lock ./
-
-RUN composer install --optimize-autoloader --no-scripts --no-interaction
-
 COPY . .
 
-RUN composer dump-autoload --optimize
-
-RUN mkdir -p storage/framework/{sessions,views,cache} \
-    && mkdir -p storage/logs \
-    && mkdir -p bootstrap/cache \
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
