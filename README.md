@@ -1,195 +1,125 @@
-# fed\-api
+# fed-api
 
-API REST Laravel pour l\'application front `fed\-webapp` (voir le repo GitHub `https://github.com/vraiSlophil/fed-webapp`).  
-Cette API fournit les endpoints nécessaires au front et s\'utilise exclusivement via Docker.
-
----
-
-## 1. Contexte du projet
-
-- **Back**: API REST en Laravel 12 (PHP \>= 8\.2\)
-- **Front**: projet `fed\-webapp` (React) disponible sur le repo GitHub `https://github.com/vraiSlophil/fed-webapp`
-- **Base de données**: PostgreSQL (via `docker-compose`)
-- **Emailing**: service Resend (via `resend/resend-php`)
-- **Authentification**: Laravel Sanctum
-
-Le front doit être cloné et installé séparément en suivant le `README` du repo `fed\-webapp`.
+Laravel REST API for the `fed-webapp` frontend.
 
 ---
 
-## 2. Prérequis
+## Overview
 
-Sur la machine de développement, il faut au minimum :
-
-- Docker
-- Docker Compose
-- Accès à une clé API **Resend** (créée sur le site de Resend)
-
-Aucune exécution locale "sans Docker" n\'est supportée officiellement.
+This project provides the backend API used by the `fed-webapp` client application. It is designed to run locally via Docker (Laravel + PostgreSQL + PgAdmin).
 
 ---
 
-## 3. Installation
+## Tech Stack
 
-### 3\.1. Cloner le projet
+* Language: PHP 8.3
+* Framework: Laravel 12
+* Database: PostgreSQL 16
+* Tooling / CI: Docker Compose, Composer, Pest (via `php artisan test`)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Docker (and Docker daemon running)
+- Docker Compose v2 (`docker compose`)
+
+---
+
+## Installation
 
 ```bash
 git clone git@github.com:vraiSlophil/fed-api.git
 cd fed-api
 ```
 
-### 3\.2. Fichier d\'environnement
+---
 
-Copier le fichier `\.env.example` en `\.env` :
+## Configuration
+
+This project uses a `.env` file. Start by copying the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-Puis modifier au minimum :
-
-- `APP_ENV=development`
-- `APP_URL=http://localhost:8000`
-- `APP_FRONTEND_URL=http://localhost:3000` (ou l\'URL du front réel)
-- `RESEND_API_KEY=...` (clé d\'API Resend valide)
-
-**Recommandation** : chaque développeur doit utiliser **sa propre clé Resend** (créée sur son compte) pour éviter de partager un secret commun et pour faciliter le suivi / la révocation. Le partage d\'une clé unique d\'un lead est à éviter.
-
----
-
-## 4. Démarrage avec Docker
-
-Tout se fait via `docker-compose`.
-
-### 4\.1. Premier build
+Once your `.env` file is in place, install dependencies (populate `vendor/` on the host through the bind mount):
 
 ```bash
-docker compose build
+docker compose run --rm --remove-orphans laravel composer install
 ```
 
-### 4\.2. Lancer les conteneurs
+Required variables (minimum):
 
-```bash
-docker compose up -d
-```
+```env
+APP_URL=http://localhost:8000
+APP_FRONTEND_URL=http://localhost:3000
+APP_KEY= # must be generated (see Usage)
 
-- L\'API est exposée sur `http://localhost:8000`
-- PostgreSQL tourne dans le service `postgres`
-- PgAdmin est disponible sur `http://localhost:8080` (login/mot de passe définis dans `\.env`)
+DB_CONNECTION=pgsql
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=fed_db
+DB_USERNAME=fed_user
+DB_PASSWORD=fed_password
 
-### 4\.3. Migrations et clé d\'application
-
-Après le premier démarrage, exécuter les commandes suivantes dans le conteneur `laravel` :
-
-```bash
-# entrer dans le conteneur
-docker compose exec laravel bash
-
-# générer la clé d'application Laravel
-php artisan key:generate
-
-# exécuter les migrations
-php artisan migrate
-```
-
-Optionnellement, pour lancer les seeders :
-
-```bash
-# seed de base (DatabaseSeeder appelle RolesSeeder et CompleteDataSeeder)
-php artisan db:seed
-```
-
-Les seeders fournis (`RolesSeeder`, `CompleteDataSeeder`, `UsersSeeder`, etc.) permettent d\'avoir un jeu de données complet (utilisateurs, rôles, thèmes, tâches, permissions, métriques). Ils ne sont pas indispensables au bon fonctionnement, mais utiles pour les environnements de développement / démo.
-
----
-
-## 5. Seeders et jeu de données
-
-Les principaux seeders sont :
-
-- `DatabaseSeeder`  
-  \- appelle `RolesSeeder` (création des rôles `user`, `admin`, `superadmin`)  
-  \- appelle `CompleteDataSeeder` (jeu de données complet)
-
-- `RolesSeeder`  
-  \- insère les rôles de base dans la table `roles`
-
-- `CompleteDataSeeder`  
-  \- crée différents types d\'utilisateurs (super\-admins, admins, utilisateurs, bloqués)  
-  \- génère des métriques utilisateurs (`UserMetric`)  
-  \- crée des thèmes (`Theme`) avec un propriétaire  
-  \- crée des permissions par thème (`ThemeUserPermission`) selon le rôle de l\'utilisateur  
-  \- crée des tâches (`Task`) avec différents statuts, dates de validation et d\'archivage  
-  \- affiche un résumé en console (nombre d\'utilisateurs par type, thèmes, tâches, permissions)
-
-Pour lancer uniquement ce jeu de données complet si besoin, adapter `DatabaseSeeder` ou appeler le seeder à la main :
-
-```bash
-php artisan db:seed --class=CompleteDataSeeder
+RESEND_API_KEY=YOUR_RESEND_API_KEY
 ```
 
 ---
 
-## 6. Lancement en mode développement
-
-Il n\'y a pas aujourd\'hui de script npm / watcher spécifique documenté côté API.  
-Le flux standard est :
+## Usage
 
 ```bash
-docker compose up -d
+# generate APP_KEY before starting the app (required, otherwise encryption errors will happen)
+docker compose run --rm laravel php artisan key:generate
 
-# puis, si besoin de commandes artisan spécifiques :
-docker compose exec laravel bash
-php artisan <commande>
+# start containers (API on http://localhost:8000, PgAdmin on http://localhost:8080)
+docker compose up -d --build
+
+# run migrations (required for database-backed cache/session/queue)
+docker compose exec laravel php artisan migrate
+
+# clear caches (run this after migrations; it can fail before the cache table exists)
+docker compose exec laravel php artisan optimize:clear
 ```
 
-Le front `fed\-webapp` doit être démarré séparément en suivant son propre `README`.
+Optional seeders:
+
+```bash
+docker compose exec laravel php artisan db:seed
+```
 
 ---
 
-## 7. Emails (Resend)
+## Testing
 
-- Le driver mail est configuré pour utiliser **Resend** via la variable `MAIL_MAILER=resend`.
-- Il faut une **clé d\'API Resend** valide dans `RESEND_API_KEY`.
-- La clé s\'obtient en créant un compte sur `https://resend.com` puis en générant un token API.
-- Par bonnes pratiques de sécurité, chacun doit utiliser **sa clé personnelle** en environnement de dev.  
-  En staging / prod, les clés seront gérées par l\'équipe devops / lead et stockées dans un gestionnaire de secrets.
+```bash
+docker compose exec laravel php artisan test
+```
 
----
+Guidelines:
 
-## 8. Workflow Git et contributions
-
-- **Branche principale**: `main`
-- **Branche de développement**: `dev` (cible des PR)
-- **Branches de feature**:
-    - Format: `feat/<nom-feature>`  
-      \- ex: `feat/auth-login`, `feat/user-profile`
-- **[Conventional Commit](https://www.conventionalcommits.org/fr/v1.0.0/) obligatoires**:
-    - Exemples :  
-      \- `feat: add user metrics aggregation`  
-      \- `fix: correct theme permissions seeder`  
-      \- `chore: update dependencies`  
-      \- `refactor: split task service`
-
-Flux recommandé :
-
-1. Créer une branche à partir de `dev` :  
-   `git checkout dev` puis `git switch -C feat/<nom-feature>`
-2. Commits au format Conventional Commit.
-3. Ouvrir une Pull Request de `feat/<nom-feature>` vers `dev`.
-
-Les règles détaillées de revue, de CI/CD, de qualité de code (Pint, PHPStan, etc.) et d\'intégration continue seront définies et mises en place par l\'équipe de développement qui arrive.
+* Tests are required for behavioral changes
+* All tests must pass before opening a PR
 
 ---
 
-## 9. Tests
+## Contributing
 
-- Aucune suite de tests n\'est encore en place.
-- Les dépendances de dev incluent déjà Pest et le plugin Laravel, ce qui permet de mettre en place des tests rapidement à l\'avenir.
-- La stack de tests (Pest vs PHPUnit, e2e, etc.) reste à décider et à documenter par l\'équipe.
+Contributions are welcome.
+
+Please read the **CONTRIBUTING.md** file before opening an issue or pull request. It contains detailed guidelines on:
+
+* Branch naming
+* Commit message conventions
+* Pull request process
+* Review and merge rules
 
 ---
 
-## 10. Licence
+## License
 
-Le projet est actuellement sous licence **MIT** (voir `composer.json`).
+MIT.
