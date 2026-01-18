@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Responses\ApiResponse;
 use App\Models\Task;
 use App\Models\Theme;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
 
 class TaskController extends Controller
 {
@@ -18,7 +18,7 @@ class TaskController extends Controller
 
         $query = $this->applyFiltersAndSorting($query, $request);
 
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             return $this->handleSearchRequest($query, $request);
         }
 
@@ -147,13 +147,14 @@ class TaskController extends Controller
     private function normalizeString(string $string): string
     {
         $string = mb_strtolower($string, 'UTF-8');
+
         return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
     }
 
     private function paginateCollection($collection, $perPage, $page)
     {
         $total = $collection->count();
-        $lastPage = (int)ceil($total / $perPage);
+        $lastPage = (int) ceil($total / $perPage);
 
         $currentPage = $page <= $lastPage ? $page : 1;
         $startIndex = ($currentPage - 1) * $perPage;
@@ -237,7 +238,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -247,7 +248,7 @@ class TaskController extends Controller
         ]);
 
         if (isset($validated['status']) && $validated['status'] === 'done' && $task->status !== 'done') {
-            if (!$theme->canValidateTaskBy($userId)) {
+            if (! $theme->canValidateTaskBy($userId)) {
                 throw new AuthorizationException('Forbidden');
             }
         }
@@ -271,7 +272,7 @@ class TaskController extends Controller
             ->firstOrFail();
 
         $theme = $task->theme;
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -295,7 +296,7 @@ class TaskController extends Controller
             ->firstOrFail();
 
         $theme = $task->theme;
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -318,7 +319,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canValidateTaskBy($userId)) {
+        if (! $theme->canValidateTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -341,7 +342,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canValidateTaskBy($userId)) {
+        if (! $theme->canValidateTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -363,7 +364,7 @@ class TaskController extends Controller
         $task = Task::where('task_id', $id)->firstOrFail();
         $theme = $task->theme;
 
-        if (!$theme->canDeleteTaskBy($userId)) {
+        if (! $theme->canDeleteTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 

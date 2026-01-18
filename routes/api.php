@@ -51,7 +51,6 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
     ->name('theme.accept-invitation');
 
-
 Route::get('/media/{path}', [MediaController::class, 'show'])
     ->where('path', '.*')
     ->name('media.show');

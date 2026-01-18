@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class MediaController extends Controller
@@ -16,20 +14,20 @@ class MediaController extends Controller
         $path = $this->sanitizePath($path);
 
         $disk = Storage::disk('public');
-        if (!$disk->exists($path)) {
-            throw new NotFoundHttpException();
+        if (! $disk->exists($path)) {
+            throw new NotFoundHttpException;
         }
 
         $filePath = $disk->path($path);
         $rootPath = realpath($disk->path(''));
         $resolvedFilePath = realpath($filePath);
         if ($rootPath === false || $resolvedFilePath === false) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
-        $rootPrefix = rtrim($rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $rootPrefix = rtrim($rootPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
         if (strncmp($resolvedFilePath, $rootPrefix, strlen($rootPrefix)) !== 0) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
         $mimeType = $this->determineMimeType($request, $filePath);
@@ -55,7 +53,7 @@ class MediaController extends Controller
             }
 
             if ($segment === '..') {
-                throw new NotFoundHttpException();
+                throw new NotFoundHttpException;
             }
 
             $clean[] = $segment;
@@ -68,7 +66,7 @@ class MediaController extends Controller
     {
         $actualMimeType = mime_content_type($filePath);
 
-        if (!$request->header('Accept')) {
+        if (! $request->header('Accept')) {
             return $actualMimeType;
         }
 

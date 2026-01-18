@@ -12,6 +12,7 @@ final class ApiResponseBuilder
     private ?string $message = null;
 
     private ?string $messageCode = null;
+
     private array $messageParams = [];
 
     private int $statusCode = 200;
@@ -60,6 +61,7 @@ final class ApiResponseBuilder
     {
         $this->messageCode = $code;
         $this->messageParams = $params;
+
         return $this;
     }
 
@@ -128,7 +130,7 @@ final class ApiResponseBuilder
             $this->errors = [];
         }
 
-        if (!is_array($this->errors)) {
+        if (! is_array($this->errors)) {
             $this->errors = [$this->errors];
         }
 
@@ -171,17 +173,17 @@ final class ApiResponseBuilder
             'data' => $this->data,
         ];
 
-        if (!($this->statusCode >= 500 && $isProd)) {
-            if (!empty($this->messageCode)) {
+        if (! ($this->statusCode >= 500 && $isProd)) {
+            if (! empty($this->messageCode)) {
                 $payload['message_code'] = $this->messageCode;
             }
 
-            if (!empty($this->messageParams)) {
+            if (! empty($this->messageParams)) {
                 $payload['message_params'] = $this->messageParams;
             }
         }
 
-        if (!$isProd && !empty($this->errors)) {
+        if (! $isProd && ! empty($this->errors)) {
             $payload['errors'] = $this->errors;
         }
 

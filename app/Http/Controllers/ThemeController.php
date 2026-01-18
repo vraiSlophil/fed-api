@@ -94,7 +94,7 @@ class ThemeController extends Controller
             })
             ->firstOrFail();
 
-        if (!$theme->isOwnedBy($userId)) {
+        if (! $theme->isOwnedBy($userId)) {
             $permissions = $theme->getPermissionsFor($userId);
             $theme->permissions = $permissions;
         }
@@ -131,7 +131,7 @@ class ThemeController extends Controller
 
         $theme->update($validated);
 
-        if (!$theme->isOwnedBy($userId)) {
+        if (! $theme->isOwnedBy($userId)) {
             $permissions = $theme->getPermissionsFor($userId);
             $theme->permissions = $permissions;
         }

@@ -14,6 +14,7 @@ final class ApiMediaBuilder
     private ?string $filename = null;
 
     private array $headers = [];
+
     private string $disposition = 'inline';
 
     public function path(string $path): self

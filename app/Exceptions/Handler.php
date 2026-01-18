@@ -21,7 +21,7 @@ final class Handler extends ExceptionHandler
             $requestId = $this->getOrCreateRequestId($request);
             $this->logException($e, $requestId, $request);
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -32,6 +32,7 @@ final class Handler extends ExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -39,7 +40,7 @@ final class Handler extends ExceptionHandler
             $requestId = $this->getOrCreateRequestId($request);
             $this->logException($e, $requestId, $request);
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -51,6 +52,7 @@ final class Handler extends ExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -58,7 +60,7 @@ final class Handler extends ExceptionHandler
             $requestId = $this->getOrCreateRequestId($request);
             $this->logException($e, $requestId, $request);
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -69,6 +71,7 @@ final class Handler extends ExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -76,7 +79,7 @@ final class Handler extends ExceptionHandler
             $requestId = $this->getOrCreateRequestId($request);
             $this->logException($e, $requestId, $request);
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -87,6 +90,7 @@ final class Handler extends ExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -94,7 +98,7 @@ final class Handler extends ExceptionHandler
             $requestId = $this->getOrCreateRequestId($request);
             $this->logException($e, $requestId, $request, level: 'info');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -105,6 +109,7 @@ final class Handler extends ExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -112,7 +117,7 @@ final class Handler extends ExceptionHandler
             $requestId = $this->getOrCreateRequestId($request);
             $this->logException($e, $requestId, $request, level: 'error');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -123,6 +128,7 @@ final class Handler extends ExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
     }
@@ -137,11 +143,13 @@ final class Handler extends ExceptionHandler
         $header = $request->headers->get('X-Request-Id');
         if (is_string($header) && $header !== '') {
             $request->attributes->set('request_id', $header);
+
             return $header;
         }
 
-        $requestId = (string)Str::uuid();
+        $requestId = (string) Str::uuid();
         $request->attributes->set('request_id', $requestId);
+
         return $requestId;
     }
 

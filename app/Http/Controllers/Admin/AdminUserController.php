@@ -75,7 +75,7 @@ class AdminUserController extends Controller
             'blocked_at',
         ];
 
-        if (!in_array($sortField, $allowedSortFields)) {
+        if (! in_array($sortField, $allowedSortFields)) {
             $sortField = 'created_at';
         }
 
@@ -165,7 +165,7 @@ class AdminUserController extends Controller
     {
         $user->load([
             'role',
-            'themes'
+            'themes',
         ]);
 
         $lastActivity = null;

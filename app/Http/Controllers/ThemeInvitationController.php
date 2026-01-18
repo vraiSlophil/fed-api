@@ -13,7 +13,7 @@ class ThemeInvitationController extends Controller
 {
     public function handleInvitation(Request $request): View
     {
-        if (!$request->hasValidSignature()) {
+        if (! $request->hasValidSignature()) {
             return view('theme.invitation-result', [
                 'status' => 'error',
                 'message' => 'Le lien d\'invitation est invalide ou a expiré.',
@@ -96,7 +96,7 @@ class ThemeInvitationController extends Controller
             ->success()
             ->messageCode('theme.invitation.accepted', [
                 'theme' => $themeId,
-                'target_playground_id' => $validated['target_playground_id']
+                'target_playground_id' => $validated['target_playground_id'],
             ])
             ->data([
                 'permission' => $permission->fresh(['theme', 'targetPlayground']),
@@ -118,7 +118,7 @@ class ThemeInvitationController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.invitation.declined', [
-                'theme' => $themeId
+                'theme' => $themeId,
             ])
             ->json();
     }

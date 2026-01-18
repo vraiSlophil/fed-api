@@ -77,7 +77,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             throw new ApiException('auth.failed', [], 422, 'Authentication failed');
         }
 
