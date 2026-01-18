@@ -51,6 +51,7 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
     ->name('theme.accept-invitation');
 
+
 Route::get('/media/{path}', [MediaController::class, 'show'])
     ->where('path', '.*')
     ->name('media.show');
@@ -64,6 +65,11 @@ Route::get('/media/{path}', [MediaController::class, 'show'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', LogoutController::class)
         ->name('logout');
+    Route::get('/ping', function () {
+        return ApiResponse::builder()
+            ->success(message: 'pong')
+            ->json();
+    })->name('ping');
 });
 
 /*
@@ -72,20 +78,12 @@ Route::middleware('auth:sanctum')->group(function () {
 |----------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    Route::get('/ping', function () {
-        return ApiResponse::builder()
-            ->success(message: 'pong')
-            ->json();
-    })->name('ping');
 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 
     Route::prefix('/user')->group(function () {
-        // Données de l'utilisateur connecté
         Route::get('', UserController::class)->name('user.show');
-
-        // Métriques de l'utilisateur connecté
         Route::get('/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
     });
 
@@ -123,7 +121,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::delete('', [PlaygroundController::class, 'destroy']);
             Route::post('/set-default', [PlaygroundController::class, 'setAsDefault']);
             Route::get('/stats', [PlaygroundController::class, 'stats']);
-        });
+        })->whereUuid('playgroundId');
 
         // Accès par slug
         Route::prefix('/by-slug/{slug}')->group(function () {

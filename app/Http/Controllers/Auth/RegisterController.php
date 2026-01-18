@@ -14,16 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws ValidationException
-     */
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -40,7 +35,8 @@ class RegisterController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return ApiResponse::builder()
-            ->success(200, 'Compte créé avec succès. Veuillez vérifier votre boîte mail pour confirmer votre adresse email.')
+            ->success(201, 'Account created')
+            ->messageCode('auth.register.success')
             ->data([
                 'user' => $user,
                 'token' => $token,

@@ -13,6 +13,7 @@ class UserController extends Controller
         return ApiResponse::builder()
             ->success()
             ->data(auth()->user())
+            ->messageCode('auth.user.fetched')
             ->json();
     }
 }

@@ -5,22 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Responses\ApiResponse;
 use App\Models\Task;
 use App\Models\Theme;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class UserMetricsController extends Controller
 {
-    /**
-     * Récupère les métriques détaillées de l'utilisateur authentifié
-     */
     public function getUserMetrics(Request $request): JsonResponse
     {
         $user = $request->user();
         $userId = $user->user_id;
-
-        // Période par défaut : 12 derniers mois
         $period = $request->input('period', '12_months');
         $dateRange = $this->getDateRange($period);
 
@@ -34,44 +28,11 @@ class UserMetricsController extends Controller
 
         return ApiResponse::builder()
             ->success()
+            ->messageCode('user.metrics.retrieved', ['period' => $period])
             ->data($metrics)
             ->json();
     }
 
-    //    /**
-    //     * Métriques pour un utilisateur spécifique (admin seulement)
-    //     */
-    //    public function getAdminUserMetrics(Request $request, User $user): JsonResponse
-    //    {
-    //        // Vérifier les droits admin
-    //        if (!auth()->check() || auth()->user()->role_power < 100) {
-    //            return ApiResponse::builder()->error(403, 'Accès refusé. Privilèges administrateur requis.')->json();
-    //        }
-    //
-    //        $userId = $user->user_id;
-    //        $period = $request->input('period', '12_months');
-    //        $dateRange = $this->getDateRange($period);
-    //
-    //        $metrics = [
-    //            'overview' => $this->getOverviewMetrics($userId),
-    //            'themes_over_time' => $this->getThemeMetrics($userId, $dateRange),
-    //            'tasks_over_time' => $this->getTaskMetrics($userId, $dateRange),
-    //            'activity_metrics' => $this->getActivityMetrics($userId, $dateRange),
-    //            'productivity_trends' => $this->getProductivityTrends($userId),
-    //            'user_info' => [
-    //                'user_id' => $user->user_id,
-    //                'username' => $user->username,
-    //                'email' => $user->email,
-    //                'created_at' => $user->created_at,
-    //            ],
-    //        ];
-    //
-    //        return ApiResponse::builder()->success()->data($metrics)->json();
-    //    }
-
-    /**
-     * Métriques générales de l'utilisateur
-     */
     private function getOverviewMetrics(string $userId): array
     {
         $totalThemes = Theme::where('owner_id', $userId)->count();
@@ -93,9 +54,6 @@ class UserMetricsController extends Controller
         ];
     }
 
-    /**
-     * Métriques des thèmes créés au fil du temps
-     */
     private function getThemeMetrics(string $userId, array $dateRange): array
     {
         $themes = Theme::where('owner_id', $userId)
@@ -112,9 +70,6 @@ class UserMetricsController extends Controller
         ];
     }
 
-    /**
-     * Métriques des tâches au fil du temps
-     */
     private function getTaskMetrics(string $userId, array $dateRange): array
     {
         $tasksCreated = Task::where('user_id', $userId)
@@ -144,9 +99,6 @@ class UserMetricsController extends Controller
         ];
     }
 
-    /**
-     * Métriques d'activité générale
-     */
     private function getActivityMetrics(string $userId, array $dateRange): array
     {
         $activeDays = $this->getActiveDays($userId, $dateRange);
@@ -160,9 +112,6 @@ class UserMetricsController extends Controller
         ];
     }
 
-    /**
-     * Tendances de productivité
-     */
     private function getProductivityTrends(string $userId): array
     {
         $thisWeek = Task::where('user_id', $userId)
@@ -201,9 +150,6 @@ class UserMetricsController extends Controller
         ];
     }
 
-    /**
-     * Calcule le pourcentage de tendance
-     */
     private function calculateTrend(int $current, int $previous): float
     {
         if ($previous === 0) {
@@ -213,9 +159,6 @@ class UserMetricsController extends Controller
         return round((($current - $previous) / $previous) * 100, 2);
     }
 
-    /**
-     * Récupère les jours actifs dans une période
-     */
     private function getActiveDays(string $userId, array $dateRange): \Illuminate\Support\Collection
     {
         $themeActiveDays = Theme::where('owner_id', $userId)
@@ -233,9 +176,6 @@ class UserMetricsController extends Controller
         return $themeActiveDays->concat($taskActiveDays)->unique()->sort()->values();
     }
 
-    /**
-     * Calcule la série actuelle de jours actifs
-     */
     private function calculateCurrentStreak(string $userId): int
     {
         $streak = 0;
@@ -255,9 +195,6 @@ class UserMetricsController extends Controller
         return $streak;
     }
 
-    /**
-     * Calcule la plus longue série de jours actifs
-     */
     private function calculateLongestStreak(string $userId): int
     {
         $longestStreak = 0;
@@ -278,9 +215,6 @@ class UserMetricsController extends Controller
         return $longestStreak;
     }
 
-    /**
-     * Vérifie si l'utilisateur a eu de l'activité à une date donnée
-     */
     private function hasActivityOnDate(string $userId, Carbon $date): bool
     {
         $dateString = $date->format('Y-m-d');
@@ -299,9 +233,6 @@ class UserMetricsController extends Controller
         return $hasThemeActivity || $hasTaskActivity;
     }
 
-    /**
-     * Calcule le pourcentage d'activité sur une période
-     */
     private function calculateActivityPercentage(int $activeDays, array $dateRange): float
     {
         [$startDate, $endDate] = $dateRange;
@@ -310,9 +241,6 @@ class UserMetricsController extends Controller
         return $totalDays > 0 ? round(($activeDays / $totalDays) * 100, 2) : 0;
     }
 
-    /**
-     * Calcule la moyenne par jour
-     */
     private function calculateAveragePerDay(int $total, array $dateRange): float
     {
         [$startDate, $endDate] = $dateRange;
@@ -321,9 +249,6 @@ class UserMetricsController extends Controller
         return $totalDays > 0 ? round($total / $totalDays, 2) : 0;
     }
 
-    /**
-     * Détermine la plage de dates selon la période demandée
-     */
     private function getDateRange(string $period): array
     {
         $end = Carbon::now();
@@ -341,9 +266,6 @@ class UserMetricsController extends Controller
         return [$start, $end];
     }
 
-    /**
-     * Remplit les trous dans les données pour avoir une série continue
-     */
     private function fillDateGaps($data, array $dateRange, string $dateField, string $valueField): array
     {
         [$startDate, $endDate] = $dateRange;

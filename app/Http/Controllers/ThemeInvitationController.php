@@ -11,13 +11,9 @@ use Illuminate\View\View;
 
 class ThemeInvitationController extends Controller
 {
-    /**
-     * Gérer l'acceptation ou le refus d'une invitation via le lien email
-     */
     public function handleInvitation(Request $request): View
     {
-        // Vérifier que la requête a un lien signé valide
-        if (! $request->hasValidSignature()) {
+        if (!$request->hasValidSignature()) {
             return view('theme.invitation-result', [
                 'status' => 'error',
                 'message' => 'Le lien d\'invitation est invalide ou a expiré.',
@@ -28,7 +24,6 @@ class ThemeInvitationController extends Controller
         $userId = $request->user_id;
         $action = $request->action;
 
-        // Récupérer la permission
         $permission = ThemeUserPermission::where('theme_id', $themeId)
             ->where('user_id', $userId)
             ->where('status', 'invited')
@@ -42,9 +37,7 @@ class ThemeInvitationController extends Controller
             ]);
         }
 
-        // Traiter l'action (accepter ou refuser)
         if ($action === 'accept') {
-            // Récupérer le playground par défaut de l'utilisateur
             $defaultPlayground = Playground::where('user_id', $userId)
                 ->where('is_default', true)
                 ->first();
@@ -66,21 +59,17 @@ class ThemeInvitationController extends Controller
                 'message' => 'Vous avez refusé l\'invitation.',
                 'frontendUrl' => config('app.frontend_url', 'http://localhost:3000'),
             ]);
-        } else {
-            // Si aucune action spécifiée, afficher les options
-            return view('theme.invitation', [
-                'theme_id' => $themeId,
-                'user_id' => $userId,
-                'token' => $request->token,
-                'signature' => $request->signature,
-                'expires' => $request->expires,
-            ]);
         }
+
+        return view('theme.invitation', [
+            'theme_id' => $themeId,
+            'user_id' => $userId,
+            'token' => $request->token,
+            'signature' => $request->signature,
+            'expires' => $request->expires,
+        ]);
     }
 
-    /**
-     * Accepter une invitation (API - pour accepter depuis l'app)
-     */
     public function acceptInvitation(Request $request, string $themeId): JsonResponse
     {
         $userId = $request->user()->user_id;
@@ -89,7 +78,6 @@ class ThemeInvitationController extends Controller
             'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id',
         ]);
 
-        // Vérifier que le playground appartient à l'utilisateur
         $playground = Playground::where('playground_id', $validated['target_playground_id'])
             ->where('user_id', $userId)
             ->firstOrFail();
@@ -105,16 +93,17 @@ class ThemeInvitationController extends Controller
         ]);
 
         return ApiResponse::builder()
-            ->success(200, 'Invitation acceptée avec succès')
+            ->success()
+            ->messageCode('theme.invitation.accepted', [
+                'theme' => $themeId,
+                'target_playground_id' => $validated['target_playground_id']
+            ])
             ->data([
                 'permission' => $permission->fresh(['theme', 'targetPlayground']),
             ])
             ->json();
     }
 
-    /**
-     * Refuser une invitation (API)
-     */
     public function declineInvitation(Request $request, string $themeId): JsonResponse
     {
         $userId = $request->user()->user_id;
@@ -127,7 +116,10 @@ class ThemeInvitationController extends Controller
         $permission->delete();
 
         return ApiResponse::builder()
-            ->success(200, 'Invitation refusée avec succès')
+            ->success()
+            ->messageCode('theme.invitation.declined', [
+                'theme' => $themeId
+            ])
             ->json();
     }
 }

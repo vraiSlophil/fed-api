@@ -1,11 +1,12 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\LogHttpRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,8 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustHosts(at: fn () => config('app.trusted_hosts'));
 
+        // API = stateless : pas de cookies Sanctum stateful, seulement Bearer tokens.
         $middleware->api(prepend: [
-            EnsureFrontendRequestsAreStateful::class,
+            AttachRequestId::class,
         ]);
 
         $middleware->alias([
@@ -29,9 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
         ]);
 
-        $middleware->append(\App\Http\Middleware\LogHttpRequests::class);
+        $middleware->append(LogHttpRequests::class);
 
-        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

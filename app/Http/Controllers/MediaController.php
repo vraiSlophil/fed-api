@@ -7,32 +7,33 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class MediaController extends Controller
 {
-    /**
-     * Récupère et renvoie un fichier média.
-     *
-     * @param  string  $path  Le chemin relatif du fichier demandé
-     * @return BinaryFileResponse|Response
-     */
     public function show(Request $request, string $path)
     {
-        // Nettoyer le chemin pour éviter la traversée de répertoire
         $path = $this->sanitizePath($path);
 
-        // Vérifier si le fichier existe dans le stockage public
-        if (! Storage::disk('public')->exists($path)) {
-            return response('Fichier non trouvé', 404);
+        $disk = Storage::disk('public');
+        if (!$disk->exists($path)) {
+            throw new NotFoundHttpException();
         }
 
-        // Obtenir le chemin absolu du fichier
-        $filePath = Storage::disk('public')->path($path);
+        $filePath = $disk->path($path);
+        $rootPath = realpath($disk->path(''));
+        $resolvedFilePath = realpath($filePath);
+        if ($rootPath === false || $resolvedFilePath === false) {
+            throw new NotFoundHttpException();
+        }
 
-        // Déterminer le type MIME
+        $rootPrefix = rtrim($rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (strncmp($resolvedFilePath, $rootPrefix, strlen($rootPrefix)) !== 0) {
+            throw new NotFoundHttpException();
+        }
+
         $mimeType = $this->determineMimeType($request, $filePath);
 
-        // Retourner le fichier avec le type MIME approprié
         return ApiResponse::media()
             ->path($filePath)
             ->mimeType($mimeType)
@@ -40,41 +41,43 @@ class MediaController extends Controller
             ->build();
     }
 
-    /**
-     * Nettoie le chemin pour éviter les attaques de traversée de répertoire.
-     */
     private function sanitizePath(string $path): string
     {
-        // Supprimer les doubles points et les barres obliques multiples
-        $path = str_replace('..', '', $path);
+        $path = str_replace('\\', '/', $path);
         $path = preg_replace('#/+#', '/', $path);
         $path = ltrim($path, '/');
 
-        return $path;
+        $segments = explode('/', $path);
+        $clean = [];
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+
+            if ($segment === '..') {
+                throw new NotFoundHttpException();
+            }
+
+            $clean[] = $segment;
+        }
+
+        return implode('/', $clean);
     }
 
-    /**
-     * Détermine le type MIME à utiliser en fonction des en-têtes Accept.
-     */
     private function determineMimeType(Request $request, string $filePath): string
     {
-        // Obtenir le type MIME du fichier
         $actualMimeType = mime_content_type($filePath);
 
-        // Si pas d'en-tête Accept, retourner le type MIME actuel
-        if (! $request->header('Accept')) {
+        if (!$request->header('Accept')) {
             return $actualMimeType;
         }
 
-        // Extraire les types MIME acceptés
         $acceptHeader = $request->header('Accept');
         $acceptedTypes = explode(',', $acceptHeader);
 
-        // Vérifier si le type MIME actuel est accepté
         foreach ($acceptedTypes as $type) {
             $type = trim($type);
 
-            // Gérer les types génériques comme image/*
             if (strpos($type, '*') !== false) {
                 $generalType = substr($type, 0, strpos($type, '/'));
                 $actualGeneralType = substr($actualMimeType, 0, strpos($actualMimeType, '/'));
@@ -84,15 +87,12 @@ class MediaController extends Controller
                 }
             }
 
-            // Vérifier les types exacts (ignorer la qualité q=0.8)
             $cleanType = explode(';', $type)[0];
             if ($cleanType === $actualMimeType) {
                 return $actualMimeType;
             }
         }
 
-        // Si le type n'est pas accepté, retourner quand même le type actuel
-        // Le navigateur décidera comment le traiter
         return $actualMimeType;
     }
 }

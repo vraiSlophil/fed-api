@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
@@ -15,9 +14,8 @@ class LoginController extends Controller
      */
     public function __invoke(LoginRequest $request): JsonResponse
     {
-        $request->authenticate();
+        $user = $request->authenticate();
 
-        $user = $request->user();
         $user->last_login_at = now();
         $user->last_login_ip = $request->ip();
         $user->save();
@@ -30,6 +28,7 @@ class LoginController extends Controller
                 'user' => $user,
                 'token' => $token,
             ])
+            ->messageCode('auth.login.success')
             ->json();
     }
 }
