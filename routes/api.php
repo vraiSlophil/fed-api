@@ -33,28 +33,28 @@ use Illuminate\Support\Facades\Route;
 |----------------------------------------------------------------------
 */
 
-    Route::post('/register', RegisterController::class)
-        ->name('register');
-    Route::post('/login', LoginController::class)
-        ->name('login');
-    Route::post('/forgot-password', PasswordResetLinkController::class)
-        ->name('password.email');
-    Route::post('/reset-password', NewPasswordController::class)
-        ->name('password.store');
+Route::post('/register', RegisterController::class)
+    ->name('register');
+Route::post('/login', LoginController::class)
+    ->name('login');
+Route::post('/forgot-password', PasswordResetLinkController::class)
+    ->name('password.email');
+Route::post('/reset-password', NewPasswordController::class)
+    ->name('password.store');
 
-    // Vérification d’e-mail via URL signée
-    Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
+// Vérification d’e-mail via URL signée
+Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
-    // Gestion des invitations aux thèmes via URL signée
-    Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
-        ->name('theme.accept-invitation');
+// Gestion des invitations aux thèmes via URL signée
+Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
+    ->name('theme.accept-invitation');
 
 
-    Route::get('/media/{path}', [MediaController::class, 'show'])
-        ->where('path', '.*')
-        ->name('media.show');
+Route::get('/media/{path}', [MediaController::class, 'show'])
+    ->where('path', '.*')
+    ->name('media.show');
 
 /*
 |----------------------------------------------------------------------
@@ -65,6 +65,11 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', LogoutController::class)
         ->name('logout');
+    Route::get('/ping', function () {
+        return ApiResponse::builder()
+            ->success(message: 'pong')
+            ->json();
+    })->name('ping');
 });
 
 /*
@@ -73,20 +78,12 @@ Route::middleware('auth:sanctum')->group(function () {
 |----------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    Route::get('/ping', function () {
-        return ApiResponse::builder()
-            ->success(message: 'pong')
-            ->json();
-    })->name('ping');
 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 
     Route::prefix('/user')->group(function () {
-        // Données de l'utilisateur connecté
         Route::get('', UserController::class)->name('user.show');
-
-        // Métriques de l'utilisateur connecté
         Route::get('/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
     });
 
@@ -124,7 +121,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::delete('', [PlaygroundController::class, 'destroy']);
             Route::post('/set-default', [PlaygroundController::class, 'setAsDefault']);
             Route::get('/stats', [PlaygroundController::class, 'stats']);
-        });
+        })->whereUuid('playgroundId');
 
         // Accès par slug
         Route::prefix('/by-slug/{slug}')->group(function () {

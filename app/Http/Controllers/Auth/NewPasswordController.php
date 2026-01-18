@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Auth\Events\PasswordReset;
@@ -11,15 +12,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 
 class NewPasswordController extends Controller
 {
-    /**
-     * Handle an incoming new password request.
-     *
-     * @throws ValidationException
-     */
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
@@ -28,9 +23,6 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) use ($request) {
@@ -43,16 +35,21 @@ class NewPasswordController extends Controller
             }
         );
 
-        $isPasswordReset = $status === Password::PASSWORD_RESET;
-
-        if (!$isPasswordReset) {
-            throw ValidationException::withMessages([
-                'email' => [__($status)],
-            ]);
+        if ($status !== Password::PASSWORD_RESET) {
+            throw new ApiException(
+                messageCode: 'auth.reset.failed',
+                messageParams: ['reason' => $status],
+                status: 400,
+                message: 'Password reset failed'
+            );
         }
 
-        return $isPasswordReset
-            ? ApiResponse::builder()->success(200, __($status))->json()
-            : ApiResponse::builder()->error(400, __($status))->json();
+        return ApiResponse::success(
+            data: null,
+            message: 'Ok',
+            status: 200,
+            messageCode: 'auth.reset.success',
+            messageParams: []
+        );
     }
 }

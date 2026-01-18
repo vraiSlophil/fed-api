@@ -5,16 +5,13 @@ namespace App\Http\Responses;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-/**
- * Builder for media/file responses.
- */
 final class ApiMediaBuilder
 {
     private ?string $path = null;
     private ?string $mimeType = null;
     private ?string $filename = null;
     private array $headers = [];
-    private string $disposition = 'inline'; // 'inline' or 'attachment'
+    private string $disposition = 'inline';
 
     public function path(string $path): self
     {
@@ -60,9 +57,6 @@ final class ApiMediaBuilder
         return $this;
     }
 
-    /**
-     * Build the BinaryFileResponse or a 404 Response if the file doesn't exist.
-     */
     public function build(): BinaryFileResponse|Response
     {
         if (empty($this->path) || !file_exists($this->path)) {
@@ -79,16 +73,12 @@ final class ApiMediaBuilder
         if ($this->filename) {
             $response->setContentDisposition($this->disposition, $this->filename);
         } else {
-            // Keep disposition if requested even without a filename
             $response->headers->set('Content-Disposition', $this->disposition);
         }
 
         return $response;
     }
 
-    /**
-     * Convenience alias.
-     */
     public function toResponse(): BinaryFileResponse|Response
     {
         return $this->build();
