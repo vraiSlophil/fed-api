@@ -1,21 +1,18 @@
 name: 🎨 Linting
 
 on:
-  pull_request:
-    branches: [ main, develop ]
-  push:
-    branches: 
-      - main
-      - develop
-      - 'feat/**'  # ✅ Déclenche sur toutes les branches feat/*
-  workflow_dispatch:  # ✅ Permet de lancer manuellement
-  workflow_call:      # ✅ Permet d'être appelé par ci.yml
+  workflow_call:
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: read
 
 
 jobs:
   pint:
     name: Laravel Pint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: 📥 Checkout code

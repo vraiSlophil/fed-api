@@ -1,20 +1,17 @@
 name: 🧪 Tests Backend
 
 on:
-  pull_request:
-    branches: [ main, develop ]
-  push:
-    branches: 
-      - main
-      - develop
-      - 'feat/**'
-  workflow_dispatch:
   workflow_call:
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: read
 
 jobs:
   laravel-tests:
     name: Laravel Tests (PHP ${{ matrix.php-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     strategy:
       matrix:

@@ -1,61 +1,28 @@
-## 🎯 Objectif
+## Summary
+<!-- What does this PR change and why? Keep it short and in English. -->
 
-<!-- Décris brièvement l'objectif de cette PR -->
+## Related issue / ticket
+<!-- Example: Closes #123 -->
+Closes #
 
-## 📋 Type de changement
-
-- [ ] 🐛 Bug fix (correction non-breaking)
-- [ ] ✨ Nouvelle fonctionnalité (non-breaking)
-- [ ] 💥 Breaking change (fix ou feature qui casse la compatibilité)
-- [ ] 📚 Documentation
-- [ ] 🎨 Style (formatage, renommage)
-- [ ] ♻️ Refactoring
-- [ ] ⚡ Performance
-- [ ] ✅ Tests
-- [ ] 🔧 Configuration / CI/CD
-
-## 🔗 Issues liées
-
-Closes #(issue)
-
-## 📝 Description détaillée
-
-<!-- Décris les changements en détail -->
-
-## 🧪 Comment tester
-
+## How to test
+<!-- Commands + expected result. -->
 ```bash
-# Instructions pour tester les changements
 ```
 
-## ✅ Checklist
+## Notes for reviewers
+<!-- Anything reviewers should pay extra attention to (optional). -->
 
-- [ ] Mon code suit les conventions du projet (Laravel Pint)
-- [ ] J'ai effectué une auto-review de mon code
-- [ ] J'ai commenté les parties complexes
-- [ ] J'ai mis à jour la documentation si nécessaire
-- [ ] Mes changements ne génèrent pas de nouveaux warnings
-- [ ] J'ai ajouté des tests qui prouvent que mon fix/feature fonctionne
-- [ ] Les tests unitaires existants passent en local
-- [ ] Les tests Cypress passent en local
-- [ ] J'ai vérifié les migrations de base de données
+## Deployment notes
+<!-- If not applicable, write "None". -->
+- Breaking changes:
+- Database migrations:
+- New/updated env vars:
 
-## 📸 Captures d'écran (si applicable)
-
-<!-- Ajoute des captures d'écran pour les changements UI -->
-
-## 🔍 Points d'attention pour les reviewers
-
-<!-- Points spécifiques à vérifier -->
-
-## 📦 Dépendances
-
-<!-- Liste des nouvelles dépendances ajoutées -->
-- Aucune / Liste des packages
-
-## 🚀 Déploiement
-
-<!-- Instructions spéciales pour le déploiement si nécessaire -->
-- [ ] Nécessite une migration de BD
-- [ ] Nécessite des variables d'environnement
-- [ ] Nécessite un rebuild Docker
+## Checklist
+- [ ] PR targets `dev`
+- [ ] Branch name follows `<type>/<short-description>` (feat/fix/hotfix/refactor/docs/test/ci/chore/perf/style/build/release/revert)
+- [ ] Title/description/commits are in English (see `CONTRIBUTING.md`)
+- [ ] CI is green (lint + tests)
+- [ ] Tests added/updated when behavior changes
+- [ ] Docs updated when needed

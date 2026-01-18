@@ -2,13 +2,32 @@ name: 🚀 CI/CD Pipeline
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
   push:
-    branches: 
+    branches:
       - main
-      - develop
+      - dev
       - 'feat/**'
+      - 'fix/**'
+      - 'hotfix/**'
+      - 'refactor/**'
+      - 'docs/**'
+      - 'test/**'
+      - 'ci/**'
+      - 'chore/**'
+      - 'perf/**'
+      - 'style/**'
+      - 'build/**'
+      - 'release/**'
+      - 'revert/**'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
