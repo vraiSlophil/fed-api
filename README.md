@@ -68,6 +68,11 @@ DB_PASSWORD=fed_password
 RESEND_API_KEY=YOUR_RESEND_API_KEY
 ```
 
+Notes:
+
+- `APP_KEY` is the Laravel application encryption key (required). If you generate/change it after the `laravel` container is already running, restart the container so it picks up the new value.
+- Email verification is sent on registration. If you don’t have a Resend key locally yet, set `MAIL_MAILER=log` in `.env` to avoid failing the `/api/register` flow during setup.
+
 ---
 
 ## Usage
@@ -99,6 +104,15 @@ docker compose exec laravel php artisan db:seed
 ```bash
 docker compose exec laravel php artisan test
 ```
+
+---
+
+## Troubleshooting
+
+- `No application encryption key has been specified.`  
+  - Ensure `.env` contains a non-empty `APP_KEY=...`, then restart: `docker compose restart laravel`
+- Registration fails after creating the user (retry says “email already taken”)  
+  - This typically means the user was inserted, then an email-related step failed (e.g. missing `RESEND_API_KEY` while `MAIL_MAILER=resend`). Set `MAIL_MAILER=log` or configure `RESEND_API_KEY`, then retry with a new email or delete the created user in DB.
 
 Guidelines:
 
