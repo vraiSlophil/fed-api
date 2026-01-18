@@ -26,10 +26,18 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    public function authenticate(): void
+    /**
+     * Authentification stateless: vérifie les identifiants et retourne le User.
+     * Aucun user resolver, aucune session.
+     *
+     * @throws ApiException
+     * @throws AuthenticationException
+     */
+    public function authenticate(): User
     {
         $this->ensureIsNotRateLimited();
 
+        /** @var User|null $user */
         $user = User::where('email', $this->input('email'))->first();
 
         if (!$user || !Hash::check($this->input('password'), $user->password)) {
@@ -37,9 +45,9 @@ class LoginRequest extends FormRequest
             throw new AuthenticationException();
         }
 
-        $this->setUserResolver(fn() => $user);
-
         RateLimiter::clear($this->throttleKey());
+
+        return $user;
     }
 
     protected function ensureIsNotRateLimited(): void
