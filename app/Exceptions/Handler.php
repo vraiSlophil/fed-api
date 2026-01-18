@@ -3,9 +3,6 @@
 namespace App\Exceptions;
 
 use App\Http\Responses\ApiResponse;
-<<<<<<< HEAD
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-=======
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -14,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
->>>>>>> dev
 use Throwable;
 
 final class Handler extends ExceptionHandler
