@@ -2,7 +2,19 @@ name: 🧪 Tests Backend
 
 on:
   workflow_call:
+    inputs:
+      seed:
+        description: "Run database seeders (slower but closer to production data assumptions)"
+        required: false
+        type: boolean
+        default: true
   workflow_dispatch: # Manual trigger
+    inputs:
+      seed:
+        description: "Run database seeders (slower but closer to production data assumptions)"
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -80,6 +92,7 @@ jobs:
         run: php artisan migrate --force --env=testing
 
       - name: 🌱 Seed database
+        if: ${{ inputs.seed }}
         env:
           DB_CONNECTION: pgsql
           DB_HOST: localhost
