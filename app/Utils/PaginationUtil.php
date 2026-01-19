@@ -4,7 +4,6 @@ namespace App\Utils;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Pagination\LengthAwarePaginator;
 use InvalidArgumentException;
 
 class PaginationUtil
@@ -34,4 +33,3 @@ class PaginationUtil
         ];
     }
 }
-

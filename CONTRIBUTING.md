@@ -53,6 +53,13 @@ Thank you for contributing! To keep the repository consistent and easy to review
 - Make sure tests run locally and pass in CI.
 - For API changes, include feature tests that cover allowed and forbidden scenarios where applicable.
 
+## Git hooks (recommended)
+- This repo includes a versioned pre-commit hook to run the linter before each commit.
+- Enable it once on your machine:
+    - `git config core.hooksPath .githooks`
+- The hook runs the linter inside the `laravel` Docker Compose service (so host Composer/PHP is not required).
+- To bypass hooks (not recommended): `git commit --no-verify`
+
 ## Documentation and changelog
 - Update relevant documentation and/or README when introducing new features or changing behavior.
 - For user-facing changes, consider adding an entry to the changelog or release notes.

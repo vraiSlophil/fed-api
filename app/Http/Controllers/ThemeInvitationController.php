@@ -13,7 +13,7 @@ class ThemeInvitationController extends Controller
 {
     public function handleInvitation(Request $request): View
     {
-        if (!$request->hasValidSignature()) {
+        if (! $request->hasValidSignature()) {
             return view('theme.invitation-result', [
                 'status' => 'error',
                 'message' => 'Le lien d\'invitation est invalide ou a expiré.',
@@ -29,7 +29,7 @@ class ThemeInvitationController extends Controller
             ->where('status', 'invited')
             ->first();
 
-        if (!$permission) {
+        if (! $permission) {
             return view('theme.invitation-result', [
                 'status' => 'error',
                 'message' => 'L\'invitation n\'existe pas ou a déjà été traitée.',
@@ -75,7 +75,7 @@ class ThemeInvitationController extends Controller
         $userId = $request->user()->user_id;
 
         $validated = $request->validate([
-            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id'
+            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id',
         ]);
 
         $playground = Playground::where('playground_id', $validated['target_playground_id'])
@@ -89,17 +89,17 @@ class ThemeInvitationController extends Controller
 
         $permission->update([
             'status' => 'active',
-            'target_playground_id' => $validated['target_playground_id']
+            'target_playground_id' => $validated['target_playground_id'],
         ]);
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.invitation.accepted', [
                 'theme' => $themeId,
-                'target_playground_id' => $validated['target_playground_id']
+                'target_playground_id' => $validated['target_playground_id'],
             ])
             ->data([
-                'permission' => $permission->fresh(['theme', 'targetPlayground'])
+                'permission' => $permission->fresh(['theme', 'targetPlayground']),
             ])
             ->json();
     }
@@ -118,7 +118,7 @@ class ThemeInvitationController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.invitation.declined', [
-                'theme' => $themeId
+                'theme' => $themeId,
             ])
             ->json();
     }

@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Responses\ApiResponse;
 use App\Models\Task;
 use App\Models\Theme;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Builder;
 
 class TaskController extends Controller
 {
@@ -21,7 +18,7 @@ class TaskController extends Controller
 
         $query = $this->applyFiltersAndSorting($query, $request);
 
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             return $this->handleSearchRequest($query, $request);
         }
 
@@ -40,7 +37,7 @@ class TaskController extends Controller
                     'last_page' => $tasks->lastPage(),
                     'from' => $tasks->firstItem(),
                     'to' => $tasks->lastItem(),
-                ]
+                ],
             ])
             ->json();
     }
@@ -122,6 +119,7 @@ class TaskController extends Controller
 
         $filteredTasks = $tasks->filter(function ($task) use ($searchTerm) {
             $normalizedTitle = $this->normalizeString($task->title);
+
             return strpos($normalizedTitle, $searchTerm) !== false;
         });
 
@@ -141,7 +139,7 @@ class TaskController extends Controller
                     'last_page' => $paginatedTasks['last_page'],
                     'from' => $paginatedTasks['from'],
                     'to' => $paginatedTasks['to'],
-                ]
+                ],
             ])
             ->json();
     }
@@ -149,13 +147,14 @@ class TaskController extends Controller
     private function normalizeString(string $string): string
     {
         $string = mb_strtolower($string, 'UTF-8');
+
         return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
     }
 
     private function paginateCollection($collection, $perPage, $page)
     {
         $total = $collection->count();
-        $lastPage = (int)ceil($total / $perPage);
+        $lastPage = (int) ceil($total / $perPage);
 
         $currentPage = $page <= $lastPage ? $page : 1;
         $startIndex = ($currentPage - 1) * $perPage;
@@ -203,7 +202,7 @@ class TaskController extends Controller
             ->success(201, 'Created')
             ->messageCode('task.created', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -227,7 +226,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.show', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -239,7 +238,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -249,7 +248,7 @@ class TaskController extends Controller
         ]);
 
         if (isset($validated['status']) && $validated['status'] === 'done' && $task->status !== 'done') {
-            if (!$theme->canValidateTaskBy($userId)) {
+            if (! $theme->canValidateTaskBy($userId)) {
                 throw new AuthorizationException('Forbidden');
             }
         }
@@ -260,7 +259,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.updated', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -273,7 +272,7 @@ class TaskController extends Controller
             ->firstOrFail();
 
         $theme = $task->theme;
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -284,7 +283,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.archived', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -297,7 +296,7 @@ class TaskController extends Controller
             ->firstOrFail();
 
         $theme = $task->theme;
-        if (!$theme->canEditTaskBy($userId)) {
+        if (! $theme->canEditTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -308,7 +307,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.restored', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -320,7 +319,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canValidateTaskBy($userId)) {
+        if (! $theme->canValidateTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -331,7 +330,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.completed', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -343,7 +342,7 @@ class TaskController extends Controller
         $userId = $request->user()->user_id;
         $theme = $task->theme;
 
-        if (!$theme->canValidateTaskBy($userId)) {
+        if (! $theme->canValidateTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 
@@ -354,7 +353,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.uncompleted', ['task' => $task->task_id])
             ->data([
-                'task' => $task
+                'task' => $task,
             ])
             ->json();
     }
@@ -365,7 +364,7 @@ class TaskController extends Controller
         $task = Task::where('task_id', $id)->firstOrFail();
         $theme = $task->theme;
 
-        if (!$theme->canDeleteTaskBy($userId)) {
+        if (! $theme->canDeleteTaskBy($userId)) {
             throw new AuthorizationException('Forbidden');
         }
 

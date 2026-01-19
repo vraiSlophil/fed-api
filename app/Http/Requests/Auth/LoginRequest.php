@@ -40,9 +40,9 @@ class LoginRequest extends FormRequest
         /** @var User|null $user */
         $user = User::where('email', $this->input('email'))->first();
 
-        if (!$user || !Hash::check($this->input('password'), $user->password)) {
+        if (! $user || ! Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
-            throw new AuthenticationException();
+            throw new AuthenticationException;
         }
 
         RateLimiter::clear($this->throttleKey());
@@ -52,7 +52,7 @@ class LoginRequest extends FormRequest
 
     protected function ensureIsNotRateLimited(): void
     {
-        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -62,7 +62,7 @@ class LoginRequest extends FormRequest
 
         throw new ApiException(
             'auth.throttle',
-            ['seconds' => $seconds, 'minutes' => (int)ceil($seconds / 60)],
+            ['seconds' => $seconds, 'minutes' => (int) ceil($seconds / 60)],
             429,
             'Too many attempts'
         );
@@ -70,6 +70,6 @@ class LoginRequest extends FormRequest
 
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->input('email')) . '|' . $this->ip());
+        return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
     }
 }

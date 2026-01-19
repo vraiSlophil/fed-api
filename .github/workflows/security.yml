@@ -1,0 +1,56 @@
+name: 🔒 Security Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # Mondays at 03:00 UTC
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ dev ]
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trivy:
+    name: Trivy (fs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Trivy vulnerability scanner (SARIF)
+        # Consider pinning to a specific tag/SHA once standardized in the repo.
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,config'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '0'
+
+      - name: 📎 Upload SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sarif
+          path: trivy-results.sarif
+          if-no-files-found: warn
+
+      - name: 📊 Upload Trivy results to GitHub Security
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
