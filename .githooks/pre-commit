@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+set -eu
+
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  if docker compose version >/dev/null 2>&1; then
+    COMPOSE="docker compose"
+  elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE="docker-compose"
+  else
+    echo "docker compose not found; skipping lint." >&2
+    exit 0
+  fi
+
+  if ${COMPOSE} ps -q laravel >/dev/null 2>&1 && [ -n "$(${COMPOSE} ps -q laravel 2>/dev/null || true)" ]; then
+    echo "Running lint in container (exec: laravel)..."
+    ${COMPOSE} exec -T laravel composer lint
+    exit 0
+  fi
+
+  echo "Running lint in container (run: laravel)..."
+  ${COMPOSE} run --rm --no-deps --remove-orphans laravel composer lint
+  exit 0
+fi
+
+echo "Docker is not available/running; cannot run lint in container." >&2
+echo "Start Docker, or bypass with: git commit --no-verify" >&2
+exit 1

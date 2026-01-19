@@ -1,8 +1,6 @@
 name: 🚀 CI/CD Pipeline
 permissions:
-  actions: read
   contents: read
-  security-events: write
 
 on:
   pull_request:
