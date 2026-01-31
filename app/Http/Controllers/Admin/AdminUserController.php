@@ -6,8 +6,8 @@ use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Role;
-use App\Models\User;
 use App\Models\ThemeUserPermission;
+use App\Models\User;
 use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\QueryException;
@@ -40,10 +40,10 @@ class AdminUserController extends Controller
         if ($request->filled('status')) {
             if ($request->status === 'blocked') {
                 $query->whereNotNull('blocked_at');
-            } else if ($request->status === 'active') {
+            } elseif ($request->status === 'active') {
                 $query->whereNotNull('email_verified_at');
                 $query->whereNull('blocked_at');
-            } else if ($request->status === 'unverified') {
+            } elseif ($request->status === 'unverified') {
                 $query->whereNull('email_verified_at');
                 $query->whereNull('blocked_at');
             } else {
@@ -72,10 +72,10 @@ class AdminUserController extends Controller
             'last_name',
             'last_login_at',
             'email_verified_at',
-            'blocked_at'
+            'blocked_at',
         ];
 
-        if (!in_array($sortField, $allowedSortFields)) {
+        if (! in_array($sortField, $allowedSortFields)) {
             $sortField = 'created_at';
         }
 
@@ -136,7 +136,7 @@ class AdminUserController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
-            'avatar' => 'nullable|image|max:2048',]);
+            'avatar' => 'nullable|image|max:2048', ]);
 
         $data = $request->only([
             'username',
@@ -165,14 +165,14 @@ class AdminUserController extends Controller
     {
         $user->load([
             'role',
-            'themes'
+            'themes',
         ]);
 
         $lastActivity = null;
         if ($user->last_login_at) {
             $lastActivity = $user->last_login_at;
         }
-        if ($user->updated_at && (!$lastActivity || $user->updated_at > $lastActivity)) {
+        if ($user->updated_at && (! $lastActivity || $user->updated_at > $lastActivity)) {
             $lastActivity = $user->updated_at->toDateTimeString();
         }
 
@@ -238,14 +238,14 @@ class AdminUserController extends Controller
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
             'password' => 'nullable|string|min:8|confirmed',
-            'avatar' => 'nullable|image|max:2048',]);
+            'avatar' => 'nullable|image|max:2048', ]);
 
         $data = $request->only([
             'username',
             'email',
             'first_name',
             'last_name',
-            'role_power'
+            'role_power',
         ]);
 
         if ($request->filled('password')) {

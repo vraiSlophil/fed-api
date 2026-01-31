@@ -2,10 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\User;
 use App\Models\Playground;
+use App\Models\User;
 use App\Models\UserMetric;
-use Illuminate\Support\Str;
 
 class UserObserver
 {

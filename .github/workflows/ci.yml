@@ -1,0 +1,75 @@
+name: 🚀 CI/CD Pipeline
+permissions:
+  contents: read
+  pull-requests: read
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches:
+      - main
+      - dev
+      - 'feat/**'
+      - 'fix/**'
+      - 'hotfix/**'
+      - 'refactor/**'
+      - 'docs/**'
+      - 'test/**'
+      - 'ci/**'
+      - 'chore/**'
+      - 'perf/**'
+      - 'style/**'
+      - 'build/**'
+      - 'release/**'
+      - 'revert/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: 🧭 Gate (avoid duplicate push runs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      skip_push: ${{ steps.decide.outputs.skip_push }}
+    steps:
+      - id: decide
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventName = context.eventName;
+            if (eventName !== 'push') {
+              core.setOutput('skip_push', 'false');
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const commit_sha = context.sha;
+
+            const prs = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              { owner, repo, commit_sha, per_page: 100 }
+            );
+
+            const openPrs = prs.filter((pr) => pr.state === 'open');
+            core.info(`Open PRs associated with ${commit_sha}: ${openPrs.length}`);
+            core.setOutput('skip_push', openPrs.length > 0 ? 'true' : 'false');
+
+  lint:
+    name: 🎨 Linting
+    needs: gate
+    if: ${{ !(github.event_name == 'push' && needs.gate.outputs.skip_push == 'true') }}
+    uses: ./.github/workflows/lint.yml
+
+  test-backend:
+    name: 🧪 Backend Tests
+    needs: [gate, lint]
+    if: ${{ !(github.event_name == 'push' && needs.gate.outputs.skip_push == 'true') }}
+    uses: ./.github/workflows/tests-backend.yml
+    with:
+      # Run faster on push; run full (incl. seeders) on PR/manual.
+      seed: ${{ github.event_name != 'push' }}

@@ -15,6 +15,7 @@ class RolesSeeder extends Seeder
         // Vérifier si les rôles existent déjà
         if (DB::table('roles')->count() > 0) {
             $this->command->info('Les rôles existent déjà, ignoré.');
+
             return;
         }
 
@@ -23,19 +24,19 @@ class RolesSeeder extends Seeder
                 'power' => 10,
                 'name' => 'user',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
                 'power' => 100,
                 'name' => 'admin',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
                 'power' => 1000,
                 'name' => 'superadmin',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
         ]);
 

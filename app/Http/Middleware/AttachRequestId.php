@@ -23,7 +23,7 @@ final class AttachRequestId
             $payload = $response->getData(true);
             if (is_array($payload)) {
                 $meta = $payload['meta'] ?? [];
-                if (!is_array($meta)) {
+                if (! is_array($meta)) {
                     $meta = [];
                 }
 

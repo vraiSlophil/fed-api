@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Theme;
-use App\Models\Task;
-use App\Models\ThemeUserPermission;
-use App\Models\UserMetric;
 use App\Models\Playground;
+use App\Models\Task;
+use App\Models\Theme;
+use App\Models\ThemeUserPermission;
+use App\Models\User;
+use App\Models\UserMetric;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
@@ -118,14 +118,14 @@ class CompleteDataSeeder extends Seeder
             $defaultPlayground = Playground::where('user_id', $user->user_id)
                 ->where('is_default', true)
                 ->first();
-            
+
             if ($defaultPlayground) {
                 $playgrounds->push($defaultPlayground);
             }
 
             // Créer 0 à 2 playgrounds supplémentaires (non-défaut)
             $additionalCount = fake()->numberBetween(0, 2);
-            
+
             for ($i = 0; $i < $additionalCount; $i++) {
                 $playground = Playground::factory()->create([
                     'user_id' => $user->user_id,
@@ -146,7 +146,7 @@ class CompleteDataSeeder extends Seeder
         $users->where('blocked_at', null)->each(function (User $user) use ($themes, $playgrounds) {
             // Récupérer les playgrounds de cet utilisateur
             $userPlaygrounds = $playgrounds->where('user_id', $user->user_id);
-            
+
             if ($userPlaygrounds->isEmpty()) {
                 return;
             }
@@ -156,7 +156,7 @@ class CompleteDataSeeder extends Seeder
             for ($i = 0; $i < $themeCount; $i++) {
                 // Attribuer le thème à un playground aléatoire de l'utilisateur
                 $playground = $userPlaygrounds->random();
-                
+
                 $theme = Theme::factory()->create([
                     'owner_id' => $user->user_id,
                     'playground_id' => $playground->playground_id,
@@ -203,7 +203,7 @@ class CompleteDataSeeder extends Seeder
                     // Utilisateurs normaux avec permissions variées
                     $permissionType = fake()->randomElement(['full', 'limited', 'readonly', 'invited']);
 
-                    $factory = match($permissionType) {
+                    $factory = match ($permissionType) {
                         'full' => ThemeUserPermission::factory()->fullAccess(),
                         'readonly' => ThemeUserPermission::factory()->readOnly(),
                         'invited' => ThemeUserPermission::factory()->invited(),
@@ -221,7 +221,7 @@ class CompleteDataSeeder extends Seeder
 
     private function createTasks(Collection $themes, Collection $users): void
     {
-        $themes->each(function (Theme $theme) use ($users) {
+        $themes->each(function (Theme $theme) {
             // Récupérer les utilisateurs qui ont accès à ce thème
             $accessibleUsers = collect([$theme->owner_id]);
 

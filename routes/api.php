@@ -51,7 +51,6 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
     ->name('theme.accept-invitation');
 
-
 Route::get('/media/{path}', [MediaController::class, 'show'])
     ->where('path', '.*')
     ->name('media.show');
@@ -104,7 +103,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::delete('', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
                 Route::post('/block', [AdminUserController::class, 'block'])->name('admin.users.block');
                 Route::post('/unblock', [AdminUserController::class, 'unblock'])->name('admin.users.unblock');
-//                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
+                //                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
             });
         });
     });

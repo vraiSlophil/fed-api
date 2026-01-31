@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -13,7 +13,9 @@ class Task extends Model
     use HasFactory, HasUuids;
 
     protected $primaryKey = 'task_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -56,6 +58,7 @@ class Task extends Model
         $this->status = 'done';
         $this->validated_at = now();
         $this->completed_at = now();
+
         return $this;
     }
 
@@ -65,6 +68,7 @@ class Task extends Model
     public function invalidate(): self
     {
         $this->validated_at = null;
+
         return $this;
     }
 

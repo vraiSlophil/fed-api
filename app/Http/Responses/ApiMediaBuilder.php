@@ -8,32 +8,40 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 final class ApiMediaBuilder
 {
     private ?string $path = null;
+
     private ?string $mimeType = null;
+
     private ?string $filename = null;
+
     private array $headers = [];
+
     private string $disposition = 'inline';
 
     public function path(string $path): self
     {
         $this->path = $path;
+
         return $this;
     }
 
     public function mimeType(string $mimeType): self
     {
         $this->mimeType = $mimeType;
+
         return $this;
     }
 
     public function filename(string $filename): self
     {
         $this->filename = $filename;
+
         return $this;
     }
 
     public function header(string $name, string $value): self
     {
         $this->headers[$name] = $value;
+
         return $this;
     }
 
@@ -42,24 +50,27 @@ final class ApiMediaBuilder
         foreach ($headers as $k => $v) {
             $this->headers[$k] = $v;
         }
+
         return $this;
     }
 
     public function inline(): self
     {
         $this->disposition = 'inline';
+
         return $this;
     }
 
     public function attachment(): self
     {
         $this->disposition = 'attachment';
+
         return $this;
     }
 
     public function build(): BinaryFileResponse|Response
     {
-        if (empty($this->path) || !file_exists($this->path)) {
+        if (empty($this->path) || ! file_exists($this->path)) {
             return response('', 404);
         }
 
