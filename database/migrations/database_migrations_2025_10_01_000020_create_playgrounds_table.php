@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('playgrounds', function (Blueprint $table) {
@@ -29,21 +30,21 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
-            $table->unique(['user_id','slug']); // Garantit unicité slug par utilisateur
+            $table->unique(['user_id', 'slug']); // Garantit unicité slug par utilisateur
             $table->index('user_id');
-            $table->index(['user_id','is_default']);
+            $table->index(['user_id', 'is_default']);
         });
 
         // Index partiel (PostgreSQL) : un seul playground par défaut par utilisateur
         // Ignoré silencieusement si tu es en MySQL (à encapsuler dans un try/catch si multi-SGBD)
-        DB::statement("CREATE UNIQUE INDEX uniq_user_default_playground ON playgrounds(user_id) WHERE is_default = true;");
+        DB::statement('CREATE UNIQUE INDEX uniq_user_default_playground ON playgrounds(user_id) WHERE is_default = true;');
     }
 
     public function down(): void
     {
         // Supprimer l'index partiel explicitement si nécessaire (PostgreSQL)
         try {
-            DB::statement("DROP INDEX IF EXISTS uniq_user_default_playground;");
+            DB::statement('DROP INDEX IF EXISTS uniq_user_default_playground;');
         } catch (\Throwable $e) {
             // Ignorer si non supporté
         }

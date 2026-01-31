@@ -2,12 +2,14 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('plans', function (Blueprint $table) {
             $table->uuid('plan_id')->primary();
             $table->string('code', 50)->unique();   // freemium, pro, team...
@@ -22,7 +24,7 @@ return new class extends Migration {
             $table->uuid('subscription_id')->primary();
             $table->uuid('user_id');
             $table->uuid('plan_id');
-            $table->enum('status', ['active','trialing','canceled','expired'])->default('active');
+            $table->enum('status', ['active', 'trialing', 'canceled', 'expired'])->default('active');
             $table->timestamp('started_at');
             $table->timestamp('renews_at')->nullable();
             $table->timestamp('ends_at')->nullable();
@@ -31,7 +33,7 @@ return new class extends Migration {
 
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
             $table->foreign('plan_id')->references('plan_id')->on('plans')->restrictOnDelete();
-            $table->index(['user_id','status']);
+            $table->index(['user_id', 'status']);
         });
 
         // Seed basique
@@ -49,10 +51,10 @@ return new class extends Migration {
                     'max_reminders' => 20,
                     'dependencies' => true,
                     'templates' => true,
-                    'reminders' => true
+                    'reminders' => true,
                 ]),
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
                 'plan_id' => (string) Str::uuid(),
@@ -68,15 +70,16 @@ return new class extends Migration {
                     'dependencies' => true,
                     'templates' => true,
                     'reminders' => true,
-                    'priority_support' => true
+                    'priority_support' => true,
                 ]),
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
         ]);
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('user_subscriptions');
         Schema::dropIfExists('plans');
     }

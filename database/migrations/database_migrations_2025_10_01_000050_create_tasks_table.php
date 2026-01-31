@@ -2,11 +2,13 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('tasks', function (Blueprint $table) {
             $table->uuid('task_id')
                 ->default(DB::raw('gen_random_uuid()'));
@@ -15,7 +17,7 @@ return new class extends Migration {
             $table->uuid('user_id');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->enum('status', ['todo','in_progress','done'])->default('todo');
+            $table->enum('status', ['todo', 'in_progress', 'done'])->default('todo');
             $table->integer('position')->nullable();
             $table->smallInteger('priority')->default(0);
             $table->timestamp('due_at')->nullable();
@@ -30,13 +32,14 @@ return new class extends Migration {
             $table->foreign('user_id')->references('user_id')->on('users')->cascadeOnDelete();
             $table->foreign('parent_task_id')->references('task_id')->on('tasks')->cascadeOnDelete();
 
-            $table->index(['theme_id','status']);
-            $table->index(['theme_id','position']);
+            $table->index(['theme_id', 'status']);
+            $table->index(['theme_id', 'position']);
             $table->index('user_id');
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('tasks');
     }
 };

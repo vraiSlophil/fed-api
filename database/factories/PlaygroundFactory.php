@@ -18,7 +18,7 @@ class PlaygroundFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->words(2, true);
-        
+
         return [
             'playground_id' => (string) Str::uuid(),
             'user_id' => null, // à renseigner lors de l'utilisation

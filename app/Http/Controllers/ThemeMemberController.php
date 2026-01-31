@@ -66,7 +66,7 @@ class ThemeMemberController extends Controller
             ->success()
             ->messageCode('theme.users.search.success')
             ->data([
-                'users' => $formattedUsers
+                'users' => $formattedUsers,
             ])
             ->json();
     }
@@ -127,7 +127,7 @@ class ThemeMemberController extends Controller
             ->success()
             ->messageCode('theme.members.list.success')
             ->data([
-                'members' => $allMembers
+                'members' => $allMembers,
             ])
             ->json();
     }
@@ -178,7 +178,7 @@ class ThemeMemberController extends Controller
                 'theme_id' => $themeId,
                 'user_id' => $invitedUser->user_id,
                 'token' => Str::random(40),
-                'action' => 'accept'
+                'action' => 'accept',
             ]
         );
 
@@ -189,7 +189,7 @@ class ThemeMemberController extends Controller
                 'theme_id' => $themeId,
                 'user_id' => $invitedUser->user_id,
                 'token' => Str::random(40),
-                'action' => 'decline'
+                'action' => 'decline',
             ]
         );
 
@@ -219,7 +219,7 @@ class ThemeMemberController extends Controller
                     'last_name' => $invitedUser->last_name,
                     'status' => 'invited',
                     'invited_at' => $permission->invited_at,
-                ]
+                ],
             ])
             ->json();
     }
@@ -261,7 +261,7 @@ class ThemeMemberController extends Controller
                     'can_edit_task' => $permission->can_edit_task,
                     'can_delete_task' => $permission->can_delete_task,
                     'can_validate_task' => $permission->can_validate_task,
-                ]
+                ],
             ])
             ->json();
     }
@@ -349,7 +349,7 @@ class ThemeMemberController extends Controller
         $userId = $request->user()->user_id;
 
         $validated = $request->validate([
-            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id'
+            'target_playground_id' => 'required|uuid|exists:playgrounds,playground_id',
         ]);
 
         $playground = Playground::where('playground_id', $validated['target_playground_id'])
@@ -362,14 +362,14 @@ class ThemeMemberController extends Controller
             ->firstOrFail();
 
         $permission->update([
-            'target_playground_id' => $validated['target_playground_id']
+            'target_playground_id' => $validated['target_playground_id'],
         ]);
 
         return ApiResponse::builder()
             ->success(200)
             ->messageCode('theme.move.success', ['target_playground_id' => $validated['target_playground_id']])
             ->data([
-                'permission' => $permission->fresh(['theme', 'targetPlayground'])
+                'permission' => $permission->fresh(['theme', 'targetPlayground']),
             ])
             ->json();
     }

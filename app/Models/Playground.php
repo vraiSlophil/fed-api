@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -13,7 +13,9 @@ class Playground extends Model
     use HasFactory, HasUuids;
 
     protected $primaryKey = 'playground_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -43,7 +45,7 @@ class Playground extends Model
     public function themes(): HasMany
     {
         return $this->hasMany(Theme::class, 'playground_id', 'playground_id')
-                    ->orderBy('created_at', 'asc');
+            ->orderBy('created_at', 'asc');
     }
 
     /**
