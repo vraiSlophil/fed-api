@@ -33,8 +33,8 @@ class LoginRequest extends FormRequest
         /** @var User|null $user */
         $user = User::where('email', $this->input('email'))->first();
 
-        if (!$user || !Hash::check($this->input('password'), $user->password)) {
-            throw new AuthenticationException();
+        if (! $user || ! Hash::check($this->input('password'), $user->password)) {
+            throw new AuthenticationException;
         }
 
         return $user;

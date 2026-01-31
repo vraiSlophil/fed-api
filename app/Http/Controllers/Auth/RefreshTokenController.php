@@ -19,7 +19,7 @@ class RefreshTokenController extends Controller
     {
         $refreshToken = $this->extractRefreshToken($request);
 
-        if (!$refreshToken) {
+        if (! $refreshToken) {
             throw new ApiException('auth.refresh.missing', [], 401, 'Refresh token missing');
         }
 
@@ -27,7 +27,7 @@ class RefreshTokenController extends Controller
         if ($revoked) {
             if ($this->isWithinReuseGrace($revoked)) {
                 $user = User::query()->find($revoked->user_id);
-                if (!$user instanceof User) {
+                if (! $user instanceof User) {
                     throw new ApiException('auth.refresh.invalid', [], 401, 'Invalid refresh token');
                 }
 
@@ -56,7 +56,7 @@ class RefreshTokenController extends Controller
         return DB::transaction(function () use ($refreshToken): JsonResponse {
             $token = $this->findRefreshTokenForUpdate($refreshToken);
 
-            if (!$token) {
+            if (! $token) {
                 throw new ApiException('auth.refresh.invalid', [], 401, 'Invalid refresh token');
             }
 
@@ -71,7 +71,7 @@ class RefreshTokenController extends Controller
 
             $user = $token->tokenable;
 
-            if (!$user instanceof User) {
+            if (! $user instanceof User) {
                 $token->delete();
                 throw new ApiException('auth.refresh.invalid', [], 401, 'Invalid refresh token');
             }
@@ -138,7 +138,7 @@ class RefreshTokenController extends Controller
 
     private function isWithinReuseGrace(RevokedRefreshToken $revoked): bool
     {
-        $graceSeconds = (int)config('auth_tokens.refresh_reuse_grace_seconds', 0);
+        $graceSeconds = (int) config('auth_tokens.refresh_reuse_grace_seconds', 0);
 
         if ($graceSeconds <= 0 || $revoked->revoked_at === null) {
             return false;
@@ -155,7 +155,7 @@ class RefreshTokenController extends Controller
 
         if (str_contains($rawToken, '|')) {
             [$id, $plain] = explode('|', $rawToken, 2);
-            if (!ctype_digit($id) || $plain === '') {
+            if (! ctype_digit($id) || $plain === '') {
                 return null;
             }
 
@@ -163,7 +163,7 @@ class RefreshTokenController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$token) {
+            if (! $token) {
                 return null;
             }
 

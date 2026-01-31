@@ -82,6 +82,7 @@ it('refresh verrouille le token pour éviter les refresh concurrents', function 
 
     $matched = collect($queries)->contains(function ($sql) {
         $sql = strtolower($sql);
+
         return str_contains($sql, 'personal_access_tokens') && str_contains($sql, 'for update');
     });
 

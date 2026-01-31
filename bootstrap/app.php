@@ -1,9 +1,9 @@
 <?php
 
+use App\Exceptions\ApiExceptionHandler;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureAccessToken;
-use App\Exceptions\ApiExceptionHandler;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -32,6 +32,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        (new ApiExceptionHandler())->register($exceptions);
+        (new ApiExceptionHandler)->register($exceptions);
     })
     ->create();

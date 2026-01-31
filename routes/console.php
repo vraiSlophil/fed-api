@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\RevokedRefreshToken;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use App\Models\RevokedRefreshToken;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

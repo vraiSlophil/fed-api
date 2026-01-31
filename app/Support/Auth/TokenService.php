@@ -8,12 +8,13 @@ use Carbon\CarbonImmutable;
 class TokenService
 {
     public const ACCESS_ABILITY = 'access';
+
     public const REFRESH_ABILITY = 'refresh';
 
     public function issueTokensFor(User $user): array
     {
-        $accessTtlMinutes = (int)config('auth_tokens.access_ttl_minutes', 15);
-        $refreshTtlDays = (int)config('auth_tokens.refresh_ttl_days', 30);
+        $accessTtlMinutes = (int) config('auth_tokens.access_ttl_minutes', 15);
+        $refreshTtlDays = (int) config('auth_tokens.refresh_ttl_days', 30);
 
         $accessExpiresAt = CarbonImmutable::now()->addMinutes($accessTtlMinutes);
         $refreshExpiresAt = CarbonImmutable::now()->addDays($refreshTtlDays);

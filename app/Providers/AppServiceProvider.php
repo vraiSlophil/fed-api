@@ -23,12 +23,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('auth-login', function (Request $request) {
-            $email = (string)$request->input('email', '');
+            $email = (string) $request->input('email', '');
             $key = Str::transliterate(Str::lower($email)).'|'.$request->ip();
 
             return Limit::perMinute(5)->by($key)->response(function ($request, $headers) {
-                $seconds = (int)($headers['Retry-After'] ?? 60);
-                $minutes = (int)ceil($seconds / 60);
+                $seconds = (int) ($headers['Retry-After'] ?? 60);
+                $minutes = (int) ceil($seconds / 60);
 
                 return ApiResponse::builder()
                     ->error(429, 'Too many attempts')

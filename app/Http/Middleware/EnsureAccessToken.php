@@ -14,7 +14,7 @@ class EnsureAccessToken
     {
         $user = $request->user();
 
-        if (!$user || !$user->tokenCan(TokenService::ACCESS_ABILITY)) {
+        if (! $user || ! $user->tokenCan(TokenService::ACCESS_ABILITY)) {
             throw new AuthorizationException('Access token required');
         }
 

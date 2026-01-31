@@ -27,6 +27,7 @@ final class ApiExceptionHandler
             if ($status === 404) {
                 return 'info';
             }
+
             return 'warning';
         };
 
@@ -39,11 +40,13 @@ final class ApiExceptionHandler
             $header = $request->headers->get('X-Request-Id');
             if (is_string($header) && $header !== '') {
                 $request->attributes->set('request_id', $header);
+
                 return $header;
             }
 
             $requestId = (string) Str::uuid();
             $request->attributes->set('request_id', $requestId);
+
             return $requestId;
         };
 
@@ -89,7 +92,7 @@ final class ApiExceptionHandler
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, $levelForStatus($e->status));
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -100,6 +103,7 @@ final class ApiExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -107,7 +111,7 @@ final class ApiExceptionHandler
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -119,6 +123,7 @@ final class ApiExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -126,7 +131,7 @@ final class ApiExceptionHandler
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -137,6 +142,7 @@ final class ApiExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -144,7 +150,7 @@ final class ApiExceptionHandler
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -155,6 +161,7 @@ final class ApiExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -162,7 +169,7 @@ final class ApiExceptionHandler
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'info');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -173,6 +180,7 @@ final class ApiExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
 
@@ -180,7 +188,7 @@ final class ApiExceptionHandler
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'error');
 
-            if (!$request->expectsJson()) {
+            if (! $request->expectsJson()) {
                 return null;
             }
 
@@ -191,6 +199,7 @@ final class ApiExceptionHandler
                 ->build();
 
             $response->headers->set('X-Request-Id', $requestId);
+
             return $response;
         });
     }
