@@ -34,7 +34,7 @@ class LogHttpRequests
             }
 
             // Logger selon la sévérité
-            match(true) {
+            match (true) {
                 $statusCode >= 500 => Log::emergency('HTTP 500 Error', $logData),
                 $statusCode === 403 => Log::warning('HTTP 403 Forbidden', $logData),
                 $statusCode === 401 => Log::warning('HTTP 401 Unauthorized', $logData),

@@ -41,7 +41,7 @@ class StatsController extends Controller
         $stats['theme'] = [
             'theme_id' => $theme->theme_id,
             'title' => $theme->title,
-            'color' => $theme->color
+            'color' => $theme->color,
         ];
 
         return ApiResponse::builder()
@@ -115,7 +115,7 @@ class StatsController extends Controller
             'done' => $doneTasks,
             'recently_created' => $recentlyCreatedTasks,
             'recently_completed' => $recentlyCompletedTasks,
-            'completion_rate' => $completionRate
+            'completion_rate' => $completionRate,
         ];
     }
 }

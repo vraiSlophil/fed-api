@@ -13,12 +13,12 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
 
   if ${COMPOSE} ps -q laravel >/dev/null 2>&1 && [ -n "$(${COMPOSE} ps -q laravel 2>/dev/null || true)" ]; then
     echo "Running lint in container (exec: laravel)..."
-    ${COMPOSE} exec -T laravel composer lint
+    ${COMPOSE} exec -T laravel sh -c "git config --global --add safe.directory /app && composer lint"
     exit 0
   fi
 
   echo "Running lint in container (run: laravel)..."
-  ${COMPOSE} run --rm --no-deps --remove-orphans laravel composer lint
+  ${COMPOSE} run --rm --no-deps --remove-orphans laravel sh -c "git config --global --add safe.directory /app && composer lint"
   exit 0
 fi
 

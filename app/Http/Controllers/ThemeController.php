@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Theme;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Theme;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ThemeController extends Controller
 {
@@ -48,7 +47,7 @@ class ThemeController extends Controller
             ->success()
             ->messageCode('theme.list.success')
             ->data([
-                'themes' => $allThemes
+                'themes' => $allThemes,
             ])
             ->json();
     }
@@ -75,7 +74,7 @@ class ThemeController extends Controller
             ->success(201)
             ->messageCode('theme.create.success')
             ->data([
-                'theme' => $theme
+                'theme' => $theme,
             ])
             ->json();
     }
@@ -95,7 +94,7 @@ class ThemeController extends Controller
             })
             ->firstOrFail();
 
-        if (!$theme->isOwnedBy($userId)) {
+        if (! $theme->isOwnedBy($userId)) {
             $permissions = $theme->getPermissionsFor($userId);
             $theme->permissions = $permissions;
         }
@@ -104,7 +103,7 @@ class ThemeController extends Controller
             ->success()
             ->messageCode('theme.show.success')
             ->data([
-                'theme' => $theme
+                'theme' => $theme,
             ])
             ->json();
     }
@@ -132,7 +131,7 @@ class ThemeController extends Controller
 
         $theme->update($validated);
 
-        if (!$theme->isOwnedBy($userId)) {
+        if (! $theme->isOwnedBy($userId)) {
             $permissions = $theme->getPermissionsFor($userId);
             $theme->permissions = $permissions;
         }
@@ -141,7 +140,7 @@ class ThemeController extends Controller
             ->success()
             ->messageCode('theme.update.success')
             ->data([
-                'theme' => $theme
+                'theme' => $theme,
             ])
             ->json();
     }

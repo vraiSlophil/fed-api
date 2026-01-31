@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ThemeTemplateItem extends Model
@@ -12,7 +12,9 @@ class ThemeTemplateItem extends Model
     use HasFactory, HasUuids;
 
     protected $primaryKey = 'item_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [

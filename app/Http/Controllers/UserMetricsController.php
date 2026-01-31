@@ -121,7 +121,7 @@ class UserMetricsController extends Controller
         $lastWeek = Task::where('user_id', $userId)
             ->whereBetween('created_at', [
                 now()->subWeek()->startOfWeek(),
-                now()->subWeek()->endOfWeek()
+                now()->subWeek()->endOfWeek(),
             ])
             ->count();
 
@@ -132,7 +132,7 @@ class UserMetricsController extends Controller
         $lastMonth = Task::where('user_id', $userId)
             ->whereBetween('created_at', [
                 now()->subMonth()->startOfMonth(),
-                now()->subMonth()->endOfMonth()
+                now()->subMonth()->endOfMonth(),
             ])
             ->count();
 
@@ -155,6 +155,7 @@ class UserMetricsController extends Controller
         if ($previous === 0) {
             return $current > 0 ? 100 : 0;
         }
+
         return round((($current - $previous) / $previous) * 100, 2);
     }
 
@@ -236,6 +237,7 @@ class UserMetricsController extends Controller
     {
         [$startDate, $endDate] = $dateRange;
         $totalDays = $startDate->diffInDays($endDate) + 1;
+
         return $totalDays > 0 ? round(($activeDays / $totalDays) * 100, 2) : 0;
     }
 
@@ -243,6 +245,7 @@ class UserMetricsController extends Controller
     {
         [$startDate, $endDate] = $dateRange;
         $totalDays = $startDate->diffInDays($endDate) + 1;
+
         return $totalDays > 0 ? round($total / $totalDays, 2) : 0;
     }
 

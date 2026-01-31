@@ -8,17 +8,16 @@ final class ApiResponse
 {
     public static function builder(): ApiResponseBuilder
     {
-        return new ApiResponseBuilder();
+        return new ApiResponseBuilder;
     }
 
     public static function success(
-        mixed   $data = null,
+        mixed $data = null,
         ?string $message = null,
-        int     $status = 200,
+        int $status = 200,
         ?string $messageCode = 'common.ok',
-        array   $messageParams = []
-    ): JsonResponse
-    {
+        array $messageParams = []
+    ): JsonResponse {
         return self::builder()
             ->success($status, $message ?? 'Ok')
             ->messageCode($messageCode, $messageParams)
@@ -28,12 +27,11 @@ final class ApiResponse
 
     public static function error(
         ?string $message = null,
-        int     $status = 400,
-        mixed   $errors = null,
+        int $status = 400,
+        mixed $errors = null,
         ?string $messageCode = 'common.error',
-        array   $messageParams = []
-    ): JsonResponse
-    {
+        array $messageParams = []
+    ): JsonResponse {
         return self::builder()
             ->error($status, $message)
             ->messageCode($messageCode, $messageParams)
@@ -43,6 +41,6 @@ final class ApiResponse
 
     public static function media(): ApiMediaBuilder
     {
-        return new ApiMediaBuilder();
+        return new ApiMediaBuilder;
     }
 }

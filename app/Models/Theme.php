@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Theme extends Model
 {
     use HasFactory, HasUuids;
 
     protected $primaryKey = 'theme_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -56,6 +58,7 @@ class Theme extends Model
         }
 
         $permissions = $this->getPermissionsFor($userId);
+
         return $permissions && $permissions->canView();
     }
 
@@ -69,6 +72,7 @@ class Theme extends Model
         }
 
         $permissions = $this->getPermissionsFor($userId);
+
         return $permissions && $permissions->canUpdateTheme();
     }
 
@@ -82,6 +86,7 @@ class Theme extends Model
         }
 
         $permissions = $this->getPermissionsFor($userId);
+
         return $permissions && $permissions->canAddTask();
     }
 
@@ -95,6 +100,7 @@ class Theme extends Model
         }
 
         $permissions = $this->getPermissionsFor($userId);
+
         return $permissions && $permissions->canEditTask();
     }
 
@@ -108,6 +114,7 @@ class Theme extends Model
         }
 
         $permissions = $this->getPermissionsFor($userId);
+
         return $permissions && $permissions->canDeleteTask();
     }
 
@@ -121,6 +128,7 @@ class Theme extends Model
         }
 
         $permissions = $this->getPermissionsFor($userId);
+
         return $permissions && $permissions->canValidateTask();
     }
 

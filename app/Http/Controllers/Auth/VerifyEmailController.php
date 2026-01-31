@@ -8,10 +8,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
 
 class VerifyEmailController extends Controller
 {
@@ -33,14 +30,14 @@ class VerifyEmailController extends Controller
 
             return view('auth.verify-email-result', [
                 'status' => 'error',
-                'message' => 'Utilisateur non trouvé'
+                'message' => 'Utilisateur non trouvé',
             ]);
         }
 
         $expectedHash = sha1($user->getEmailForVerification());
-        $givenHash = (string)$request->route('hash');
+        $givenHash = (string) $request->route('hash');
 
-        if (!hash_equals($expectedHash, $givenHash)) {
+        if (! hash_equals($expectedHash, $givenHash)) {
             if ($request->expectsJson()) {
                 throw new ApiException(
                     messageCode: 'auth.verification.invalid',
@@ -52,7 +49,7 @@ class VerifyEmailController extends Controller
 
             return view('auth.verify-email-result', [
                 'status' => 'error',
-                'message' => 'Lien de vérification invalide'
+                'message' => 'Lien de vérification invalide',
             ]);
         }
 
@@ -72,7 +69,7 @@ class VerifyEmailController extends Controller
             return view('auth.verify-email-result', [
                 'status' => 'info',
                 'message' => 'Votre email a déjà été vérifié',
-                'frontendUrl' => $frontendUrl
+                'frontendUrl' => $frontendUrl,
             ]);
         }
 
@@ -95,7 +92,7 @@ class VerifyEmailController extends Controller
         return view('auth.verify-email-result', [
             'status' => 'success',
             'message' => 'Votre email a été vérifié avec succès',
-            'frontendUrl' => $frontendUrl
+            'frontendUrl' => $frontendUrl,
         ]);
     }
 }
