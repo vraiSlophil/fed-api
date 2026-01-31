@@ -16,3 +16,5 @@ Artisan::command('auth:prune-revoked-refresh', function () {
 
     $this->info("Pruned {$deleted} revoked refresh tokens.");
 })->purpose('Prune revoked refresh tokens');
+
+Schedule::command('auth:prune-revoked-refresh')->daily();

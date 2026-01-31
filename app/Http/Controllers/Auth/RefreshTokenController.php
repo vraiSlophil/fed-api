@@ -23,16 +23,40 @@ class RefreshTokenController extends Controller
             throw new ApiException('auth.refresh.missing', [], 401, 'Refresh token missing');
         }
 
+        $revoked = $this->findRevokedRefreshToken($refreshToken);
+        if ($revoked) {
+            if ($this->isWithinReuseGrace($revoked)) {
+                $user = User::query()->find($revoked->user_id);
+                if (!$user instanceof User) {
+                    throw new ApiException('auth.refresh.invalid', [], 401, 'Invalid refresh token');
+                }
+
+                if ($user->isBlocked()) {
+                    throw new ApiException('auth.blocked', [], 403, 'User blocked');
+                }
+
+                $tokens = app(TokenService::class)->issueTokensFor($user);
+
+                return ApiResponse::builder()
+                    ->success()
+                    ->messageCode('auth.refresh.success')
+                    ->data([
+                        'access_token' => $tokens['access_token'],
+                        'refresh_token' => $tokens['refresh_token'],
+                        'access_expires_at' => $tokens['access_expires_at'],
+                        'refresh_expires_at' => $tokens['refresh_expires_at'],
+                    ])
+                    ->json();
+            }
+
+            $this->revokeAllTokensForUser($revoked->user_id);
+            throw new ApiException('auth.refresh.reused', [], 401, 'Refresh token reused');
+        }
+
         return DB::transaction(function () use ($refreshToken): JsonResponse {
             $token = $this->findRefreshTokenForUpdate($refreshToken);
 
             if (!$token) {
-                $revoked = $this->findRevokedRefreshToken($refreshToken);
-                if ($revoked) {
-                    $this->revokeAllTokensForUser($revoked->user_id);
-                    throw new ApiException('auth.refresh.reused', [], 401, 'Refresh token reused');
-                }
-
                 throw new ApiException('auth.refresh.invalid', [], 401, 'Invalid refresh token');
             }
 
@@ -110,6 +134,17 @@ class RefreshTokenController extends Controller
         }
 
         return RevokedRefreshToken::where('token_hash', $hash)->first();
+    }
+
+    private function isWithinReuseGrace(RevokedRefreshToken $revoked): bool
+    {
+        $graceSeconds = (int)config('auth_tokens.refresh_reuse_grace_seconds', 0);
+
+        if ($graceSeconds <= 0 || $revoked->revoked_at === null) {
+            return false;
+        }
+
+        return $revoked->revoked_at->addSeconds($graceSeconds)->isFuture();
     }
 
     private function findRefreshTokenForUpdate(string $rawToken): ?PersonalAccessToken

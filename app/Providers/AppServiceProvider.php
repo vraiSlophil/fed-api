@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\ApiResponse;
 use App\Models\Task;
 use App\Models\Theme;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +24,22 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        RateLimiter::for('auth-login', function (Request $request) {
+            $email = (string)$request->input('email', '');
+            $key = Str::transliterate(Str::lower($email)).'|'.$request->ip();
+
+            return Limit::perMinute(5)->by($key)->response(function ($request, $headers) {
+                $seconds = (int)($headers['Retry-After'] ?? 60);
+                $minutes = (int)ceil($seconds / 60);
+
+                return ApiResponse::builder()
+                    ->error(429, 'Too many attempts')
+                    ->messageCode('auth.throttle', ['seconds' => $seconds, 'minutes' => $minutes])
+                    ->headers($headers)
+                    ->json();
+            });
+        });
+
         RateLimiter::for('auth-refresh', function (Request $request) {
             $token = $request->header('X-Refresh-Token') ?: $request->bearerToken();
             $key = $request->ip();

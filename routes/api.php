@@ -36,7 +36,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix("/auth")->group(function () {
     Route::post('/register', RegisterController::class)->name('auth.register');
-    Route::post('/login', LoginController::class)->name('auth.login');
+    Route::post('/login', LoginController::class)
+        ->middleware('throttle:auth-login')
+        ->name('auth.login');
     Route::post('/refresh', RefreshTokenController::class)
         ->middleware('throttle:auth-refresh')
         ->name('auth.refresh');
