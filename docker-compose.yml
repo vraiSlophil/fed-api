@@ -32,7 +32,6 @@ services:
             - DB_PASSWORD=${DB_PASSWORD}
         volumes:
             - ./:/app
-            - laravel_logs:/app/storage/logs
         depends_on:
             postgres:
                 condition: service_healthy

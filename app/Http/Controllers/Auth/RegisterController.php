@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
+use App\Support\Auth\TokenService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,14 +36,17 @@ class RegisterController extends Controller
 
         event(new Registered($user));
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $tokens = app(TokenService::class)->issueTokensFor($user);
 
         return ApiResponse::builder()
             ->success(201, 'Account created')
             ->messageCode('auth.register.success')
             ->data([
                 'user' => $user,
-                'token' => $token,
+                'access_token' => $tokens['access_token'],
+                'refresh_token' => $tokens['refresh_token'],
+                'access_expires_at' => $tokens['access_expires_at'],
+                'refresh_expires_at' => $tokens['refresh_expires_at'],
             ])
             ->json();
     }

@@ -2,8 +2,8 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AttachRequestId;
-use App\Http\Middleware\EnsureEmailIsVerified;
-use App\Http\Middleware\LogHttpRequests;
+use App\Http\Middleware\EnsureAccessToken;
+use App\Exceptions\ApiExceptionHandler;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,19 +24,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            EnsureEmailIsVerified::class,
-        ]);
-
-        $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'access-token' => EnsureAccessToken::class,
         ]);
-
-        $middleware->append(LogHttpRequests::class);
 
         // IMPORTANT: ne pas activer statefulApi() (cookies/session) pour une API REST stateless.
         // $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        (new ApiExceptionHandler())->register($exceptions);
     })
     ->create();

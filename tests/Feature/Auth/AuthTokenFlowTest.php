@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\Auth\TokenService;
 use Laravel\Sanctum\PersonalAccessToken;
 
 it('login renvoie un token et permet d\'appeler une route protégée', function () {
@@ -9,17 +10,17 @@ it('login renvoie un token et permet d\'appeler une route protégée', function 
         'email_verified_at' => now(),
     ]);
 
-    $login = $this->postJson('/api/login', [
+    $login = $this->postJson('/api/auth/login', [
         'email' => $user->email,
         'password' => 'secret-password',
     ]);
 
     $login->assertStatus(200);
-    expect($login->json('data.token'))->toBeString();
+    expect($login->json('data.access_token'))->toBeString();
 
-    $token = $login->json('data.token');
+    $token = $login->json('data.access_token');
 
-    $this->withHeader('Authorization', 'Bearer '.$token)
+    $this->withHeader('Authorization', 'Bearer ' . $token)
         ->getJson('/api/ping')
         ->assertStatus(200);
 });
@@ -39,11 +40,27 @@ it('logout révoque le token courant (suppression en base)', function () {
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBeGreaterThan(0);
 
-    $this->withHeader('Authorization', 'Bearer '.$token)
+    $this->withHeader('Authorization', 'Bearer ' . $token)
         ->postJson('/api/logout')
         ->assertStatus(200);
 
     // Le token doit être supprimé en base (source de vérité)
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBe(0);
+});
+
+it('un refresh token ne peut pas accéder aux routes protégées', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $refreshToken = $user->createToken(
+        'refresh-token',
+        [TokenService::REFRESH_ABILITY],
+        now()->addDays(30)
+    )->plainTextToken;
+
+    $this->withHeader('Authorization', 'Bearer '.$refreshToken)
+        ->getJson('/api/ping')
+        ->assertStatus(403);
 });

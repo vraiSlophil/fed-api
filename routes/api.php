@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\MediaController;
@@ -33,14 +34,15 @@ use Illuminate\Support\Facades\Route;
 |----------------------------------------------------------------------
 */
 
-Route::post('/register', RegisterController::class)
-    ->name('register');
-Route::post('/login', LoginController::class)
-    ->name('login');
-Route::post('/forgot-password', PasswordResetLinkController::class)
-    ->name('password.email');
-Route::post('/reset-password', NewPasswordController::class)
-    ->name('password.store');
+Route::prefix("/auth")->group(function () {
+    Route::post('/register', RegisterController::class)->name('auth.register');
+    Route::post('/login', LoginController::class)->name('auth.login');
+    Route::post('/refresh', RefreshTokenController::class)
+        ->middleware('throttle:auth-refresh')
+        ->name('auth.refresh');
+    Route::post('/forgot-password', PasswordResetLinkController::class)->name('auth.password.email');
+    Route::post('/reset-password', NewPasswordController::class)->name('auth.password.store');
+});
 
 // Vérification d’e-mail via URL signée
 Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
@@ -62,7 +64,7 @@ Route::get('/media/{path}', [MediaController::class, 'show'])
 |----------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
     Route::post('/logout', LogoutController::class)
         ->name('logout');
     Route::get('/ping', function () {
@@ -77,7 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
 | Routes protégées par jeton Sanctum et vérification d’e-mail
 |----------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function () {
 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
@@ -104,7 +106,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::delete('', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
                 Route::post('/block', [AdminUserController::class, 'block'])->name('admin.users.block');
                 Route::post('/unblock', [AdminUserController::class, 'unblock'])->name('admin.users.unblock');
-//                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
+                //                Route::get('/metrics', [UserMetricsController::class, 'getAdminUserMetrics'])->name('admin.users.metrics');
             });
         });
     });
