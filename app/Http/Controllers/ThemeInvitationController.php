@@ -8,8 +8,8 @@ use App\Models\Playground;
 use App\Models\ThemeUserPermission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ThemeInvitationController extends Controller
 {
