@@ -11,14 +11,25 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     exit 0
   fi
 
-  if ${COMPOSE} ps -q laravel >/dev/null 2>&1 && [ -n "$(${COMPOSE} ps -q laravel 2>/dev/null || true)" ]; then
-    echo "Running lint in container (exec: laravel)..."
-    ${COMPOSE} exec -T laravel sh -c "git config --global --add safe.directory /app && composer lint"
-    exit 0
-  fi
+  run_in_container() {
+    if ${COMPOSE} ps -q laravel >/dev/null 2>&1 && [ -n "$(${COMPOSE} ps -q laravel 2>/dev/null || true)" ]; then
+      ${COMPOSE} exec -T laravel sh -c "git config --global --add safe.directory /app && $1"
+    else
+      ${COMPOSE} run --rm --no-deps --remove-orphans laravel sh -c "git config --global --add safe.directory /app && $1"
+    fi
+  }
 
-  echo "Running lint in container (run: laravel)..."
-  ${COMPOSE} run --rm --no-deps --remove-orphans laravel sh -c "git config --global --add safe.directory /app && composer lint"
+  # Fichiers PHP déjà stagés
+  STAGED_PHP=$(git diff --name-only --cached --diff-filter=ACM -- '*.php' | tr '\n' ' ')
+
+  if [ -n "$STAGED_PHP" ]; then
+    echo "Running composer lint on staged PHP files..."
+    run_in_container "composer lint -- $STAGED_PHP"
+    # Ré‑ajoute les modifs de Pint au commit courant
+    git add $STAGED_PHP
+  else
+    echo "No staged PHP files; skipping lint."
+  fi
   exit 0
 fi
 
