@@ -39,6 +39,44 @@ it('refuse un lien de verification sans signature', function () {
     ])->assertStatus(403);
 });
 
+it('refuse un lien de verification expire', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => null,
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->subMinutes(10),
+        [
+            'id' => $user->getKey(),
+            'hash' => sha1($user->getEmailForVerification()),
+        ],
+        false
+    );
+
+    $this->postJson($url)->assertStatus(403);
+});
+
+it('refuse un lien de verification avec hash invalide', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => null,
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        [
+            'id' => $user->getKey(),
+            'hash' => 'invalid-hash',
+        ],
+        false
+    );
+
+    $this->postJson($url)
+        ->assertStatus(400)
+        ->assertJsonPath('message_code', 'auth.verification.invalid');
+});
+
 it('renvoie une notification de verification par email', function () {
     Notification::fake();
 
@@ -53,4 +91,10 @@ it('renvoie une notification de verification par email', function () {
         ->assertJsonPath('message_code', 'email.verification.sent');
 
     Notification::assertSentTo($user, QueuedVerifyEmail::class);
+});
+
+it('refuse la notification de verification sans auth', function () {
+    $this->postJson('/api/email-verification-notifications')
+        ->assertStatus(401)
+        ->assertJsonPath('message_code', 'auth.failed');
 });

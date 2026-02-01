@@ -87,7 +87,7 @@ class ThemeMemberController extends Controller
                 'last_name' => $permission->user->last_name,
                 'avatar_path' => $permission->user->avatar_path,
                 'status' => $permission->status,
-                'invited_at' => $permission->invited_at,
+                'invited_at' => $permission->created_at,
                 'permissions' => [
                     'can_view' => $permission->can_view,
                     'can_update_theme' => $permission->can_update_theme,
@@ -192,7 +192,6 @@ class ThemeMemberController extends Controller
         $invitedUser = User::findOrFail($validated['user_id']);
         $expiresAt = now()->addDays((int) config('invitations.expires_days', 7));
         $payload = [
-            'model' => 'theme',
             'permissions' => [
                 'can_view' => $validated['can_view'],
                 'can_update_theme' => $validated['can_update_theme'],

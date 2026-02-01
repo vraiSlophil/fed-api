@@ -17,6 +17,9 @@ return new class extends Migration
             $table->json('payload')->nullable();
             $table->enum('status', ['pending', 'accepted', 'declined', 'expired'])->default('pending');
             $table->timestamp('expires_at')->nullable();
+            $table->unsignedTinyInteger('expiration_notification_attempts')->default(0);
+            $table->timestamp('expiration_notification_last_attempt_at')->nullable();
+            $table->timestamp('expiration_notified_at')->nullable();
             $table->timestamps();
 
             $table->unique(['invitee_user_id', 'invitable_type', 'invitable_id']);

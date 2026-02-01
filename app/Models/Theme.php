@@ -157,7 +157,6 @@ class Theme extends Model implements Invitable
             'can_delete_task' => (bool) ($permissions['can_delete_task'] ?? false),
             'can_validate_task' => (bool) ($permissions['can_validate_task'] ?? false),
             'status' => 'active',
-            'invited_at' => $invitation->created_at,
             'target_playground_id' => $targetPlaygroundId,
         ]);
     }

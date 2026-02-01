@@ -27,8 +27,7 @@ class ThemeUserPermissionFactory extends Factory
             'can_edit_task' => $this->faker->boolean(60), // 60% de chance
             'can_delete_task' => $this->faker->boolean(40), // 40% de chance
             'can_validate_task' => $this->faker->boolean(50), // 50% de chance
-            'status' => $this->faker->randomElement(['invited', 'active', 'revoked']),
-            'invited_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
+            'status' => $this->faker->randomElement(['active', 'revoked']),
         ];
     }
 
@@ -61,17 +60,6 @@ class ThemeUserPermissionFactory extends Factory
             'can_delete_task' => false,
             'can_validate_task' => false,
             'status' => 'active',
-        ]);
-    }
-
-    /**
-     * État pour un utilisateur invité
-     */
-    public function invited(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'status' => 'invited',
-            'invited_at' => now(),
         ]);
     }
 

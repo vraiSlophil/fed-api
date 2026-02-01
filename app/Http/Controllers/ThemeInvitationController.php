@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Http\Responses\ApiResponse;
 use App\Invitations\Invitable;
 use App\Models\Invitation;
+use App\Services\InvitationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +14,7 @@ use Illuminate\Validation\Rule;
 
 class ThemeInvitationController extends Controller
 {
-    public function respond(Request $request, string $invitationId): JsonResponse
+    public function respond(Request $request, string $invitationId, InvitationService $invitationService): JsonResponse
     {
         $query = Validator::make($request->query(), [
             'status' => ['nullable', 'string', Rule::in(['accepted', 'declined']), 'required_without:action'],
@@ -29,17 +30,23 @@ class ThemeInvitationController extends Controller
             'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id'],
         ]);
 
-        $invitation = Invitation::where('invitation_id', $invitationId)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        $invitation = Invitation::where('invitation_id', $invitationId)->firstOrFail();
 
         if (! $request->user() || $invitation->invitee_user_id !== $request->user()->user_id) {
             throw new ApiException('permission.denied', [], 403, 'Permission denied');
         }
 
+        if ($invitation->status === 'accepted' || $invitation->status === 'declined') {
+            throw new ApiException('invitation.already_responded', [], 409, 'Invitation already responded');
+        }
+
+        if ($invitation->status === 'expired') {
+            throw new ApiException('invitation.expired', [], 410, 'Invitation expired');
+        }
+
         if ($invitation->expires_at && $invitation->expires_at->isPast()) {
-            $invitation->markExpired();
-            throw new ApiException('invitation.expired', [], 403, 'Invitation expired');
+            $invitationService->expireInvitation($invitation);
+            throw new ApiException('invitation.expired', [], 410, 'Invitation expired');
         }
 
         if ($status === 'accepted') {
@@ -54,7 +61,7 @@ class ThemeInvitationController extends Controller
                 $validated['target_playground_id'] ?? null
             );
 
-            $invitation->markAccepted();
+            $invitationService->markAccepted($invitation);
 
             return ApiResponse::builder()
                 ->success()
@@ -68,7 +75,7 @@ class ThemeInvitationController extends Controller
                 ->json();
         }
 
-        $invitation->markDeclined();
+        $invitationService->markDeclined($invitation);
 
         return ApiResponse::builder()
             ->success()

@@ -2,15 +2,11 @@
 
 namespace App\Models;
 
-use App\Mail\InvitationAccepted;
-use App\Mail\InvitationDeclined;
-use App\Mail\InvitationExpired;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Facades\Mail;
 
 class Invitation extends Model
 {
@@ -31,11 +27,17 @@ class Invitation extends Model
         'payload',
         'status',
         'expires_at',
+        'expiration_notification_attempts',
+        'expiration_notification_last_attempt_at',
+        'expiration_notified_at',
     ];
 
     protected $casts = [
         'payload' => 'array',
         'expires_at' => 'datetime',
+        'expiration_notification_attempts' => 'integer',
+        'expiration_notification_last_attempt_at' => 'datetime',
+        'expiration_notified_at' => 'datetime',
     ];
 
     public function inviter(): BelongsTo
@@ -53,43 +55,4 @@ class Invitation extends Model
         return $this->morphTo();
     }
 
-    public function markAccepted(): void
-    {
-        $this->update(['status' => 'accepted']);
-        $this->sendStatusEmail('accepted');
-    }
-
-    public function markDeclined(): void
-    {
-        $this->update(['status' => 'declined']);
-        $this->sendStatusEmail('declined');
-    }
-
-    public function markExpired(): void
-    {
-        $this->update(['status' => 'expired']);
-        $this->sendStatusEmail('expired');
-    }
-
-    private function sendStatusEmail(string $status): void
-    {
-        $this->loadMissing(['inviter', 'invitee', 'invitable']);
-
-        if (! $this->inviter) {
-            return;
-        }
-
-        $queue = config('queue.mail_queues.invitation', 'emails-invitation');
-
-        $mailable = match ($status) {
-            'accepted' => new InvitationAccepted($this),
-            'declined' => new InvitationDeclined($this),
-            'expired' => new InvitationExpired($this),
-            default => null,
-        };
-
-        if ($mailable) {
-            Mail::to($this->inviter->email)->queue($mailable->onQueue($queue));
-        }
-    }
 }
