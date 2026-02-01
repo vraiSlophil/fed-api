@@ -54,5 +54,4 @@ class Invitation extends Model
     {
         return $this->morphTo();
     }
-
 }

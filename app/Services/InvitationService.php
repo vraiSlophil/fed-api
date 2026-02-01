@@ -68,6 +68,7 @@ class InvitationService
 
         if ($invitation->expiration_notification_attempts >= $maxAttempts) {
             $invitation->update(['status' => 'expired']);
+
             return false;
         }
 
