@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Invitations\Invitable;
+use App\Models\Concerns\HasInvitations;
+use App\Exceptions\ApiException;
 
-class Theme extends Model
+class Theme extends Model implements Invitable
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, HasInvitations;
 
     protected $primaryKey = 'theme_id';
 
@@ -116,6 +119,47 @@ class Theme extends Model
         $permissions = $this->getPermissionsFor($userId);
 
         return $permissions && $permissions->canDeleteTask();
+    }
+
+    public function acceptInvitation(Invitation $invitation, ?string $targetPlaygroundId): ThemeUserPermission
+    {
+        if ($invitation->invitable_type !== self::class || $invitation->invitable_id !== $this->theme_id) {
+            throw new ApiException('invitation.invalid', [], 400, 'Invalid invitation target');
+        }
+
+        if (ThemeUserPermission::where('theme_id', $this->theme_id)
+            ->where('user_id', $invitation->invitee_user_id)
+            ->exists()) {
+            throw new ApiException('theme.member.already_exists', ['user_id' => $invitation->invitee_user_id], 409, 'User is already a member of this theme');
+        }
+
+        if ($targetPlaygroundId) {
+            Playground::where('playground_id', $targetPlaygroundId)
+                ->where('user_id', $invitation->invitee_user_id)
+                ->firstOrFail();
+        } else {
+            $defaultPlayground = Playground::where('user_id', $invitation->invitee_user_id)
+                ->where('is_default', true)
+                ->first();
+
+            $targetPlaygroundId = $defaultPlayground?->playground_id;
+        }
+
+        $permissions = $invitation->payload['permissions'] ?? [];
+
+        return ThemeUserPermission::create([
+            'theme_id' => $this->theme_id,
+            'user_id' => $invitation->invitee_user_id,
+            'can_view' => (bool) ($permissions['can_view'] ?? false),
+            'can_update_theme' => (bool) ($permissions['can_update_theme'] ?? false),
+            'can_add_task' => (bool) ($permissions['can_add_task'] ?? false),
+            'can_edit_task' => (bool) ($permissions['can_edit_task'] ?? false),
+            'can_delete_task' => (bool) ($permissions['can_delete_task'] ?? false),
+            'can_validate_task' => (bool) ($permissions['can_validate_task'] ?? false),
+            'status' => 'active',
+            'invited_at' => $invitation->created_at,
+            'target_playground_id' => $targetPlaygroundId,
+        ]);
     }
 
     /**

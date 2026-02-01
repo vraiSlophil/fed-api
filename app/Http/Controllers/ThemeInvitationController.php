@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
 use App\Http\Responses\ApiResponse;
-use App\Models\Playground;
-use App\Models\ThemeUserPermission;
+use App\Invitations\Invitable;
+use App\Models\Invitation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 class ThemeInvitationController extends Controller
 {
-    public function respond(Request $request, string $invitation): JsonResponse
+    public function respond(Request $request, string $invitationId): JsonResponse
     {
         $query = Validator::make($request->query(), [
             'status' => ['nullable', 'string', Rule::in(['accepted', 'declined']), 'required_without:action'],
@@ -29,39 +29,38 @@ class ThemeInvitationController extends Controller
             'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id'],
         ]);
 
-        $permission = ThemeUserPermission::where('permission_id', $invitation)
-            ->where('status', 'invited')
+        $invitation = Invitation::where('invitation_id', $invitationId)
+            ->where('status', 'pending')
             ->firstOrFail();
 
-        if (! $request->user() || $permission->user_id !== $request->user()->user_id) {
+        if (! $request->user() || $invitation->invitee_user_id !== $request->user()->user_id) {
             throw new ApiException('permission.denied', [], 403, 'Permission denied');
         }
 
+        if ($invitation->expires_at && $invitation->expires_at->isPast()) {
+            $invitation->markExpired();
+            throw new ApiException('invitation.expired', [], 403, 'Invitation expired');
+        }
+
         if ($status === 'accepted') {
-            $targetPlaygroundId = $validated['target_playground_id'] ?? null;
+            $invitable = $invitation->invitable;
 
-            if ($targetPlaygroundId) {
-                Playground::where('playground_id', $targetPlaygroundId)
-                    ->where('user_id', $permission->user_id)
-                    ->firstOrFail();
-            } else {
-                $defaultPlayground = Playground::where('user_id', $permission->user_id)
-                    ->where('is_default', true)
-                    ->first();
-
-                $targetPlaygroundId = $defaultPlayground?->playground_id;
+            if (! $invitable instanceof Invitable) {
+                throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
             }
 
-            $permission->update([
-                'status' => 'active',
-                'target_playground_id' => $targetPlaygroundId,
-            ]);
+            $permission = $invitable->acceptInvitation(
+                $invitation,
+                $validated['target_playground_id'] ?? null
+            );
+
+            $invitation->markAccepted();
 
             return ApiResponse::builder()
                 ->success()
                 ->messageCode('theme.invitation.accepted', [
                     'theme' => $permission->theme_id,
-                    'target_playground_id' => $targetPlaygroundId,
+                    'target_playground_id' => $permission->target_playground_id,
                 ])
                 ->data([
                     'permission' => $permission->fresh(['theme', 'targetPlayground']),
@@ -69,12 +68,12 @@ class ThemeInvitationController extends Controller
                 ->json();
         }
 
-        $permission->delete();
+        $invitation->markDeclined();
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.invitation.declined', [
-                'theme' => $permission->theme_id,
+                'theme' => $invitation->invitable_id,
             ])
             ->json();
     }

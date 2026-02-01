@@ -231,7 +231,7 @@ Notes:
 - If already verified: `email.verification.already_verified`
 - Else: `email.verification.sent`
 
-#### PATCH `/invitations/{invitation}`
+#### PATCH `/invitations/{invitationId}`
 Accept or decline an invitation using **auth + signed query params**.
 
 Query params (signed):
@@ -241,6 +241,17 @@ Query params (signed):
 
 Body (optional):
 - `target_playground_id` (required only if you want to override the default playground)
+
+Notes:
+- Invitations are stored in the `invitations` table with a JSON `payload`
+  (e.g. permissions for the invitee).
+- Payload example:
+  ```json
+  {
+    "model": "theme",
+    "permissions": { "can_view": true }
+  }
+  ```
 
 Success:
 - `200 theme.invitation.accepted`

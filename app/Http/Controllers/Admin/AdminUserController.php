@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
+use App\Models\Invitation;
 use App\Models\Role;
+use App\Models\Task;
+use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
 use Exception;
@@ -75,7 +78,7 @@ class AdminUserController extends Controller
             'blocked_at',
         ];
 
-        if (! in_array($sortField, $allowedSortFields)) {
+        if (!in_array($sortField, $allowedSortFields)) {
             $sortField = 'created_at';
         }
 
@@ -136,14 +139,16 @@ class AdminUserController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
-            'avatar' => 'nullable|image|max:2048', ]);
+            'avatar' => 'nullable|image|max:2048',
+        ]);
 
         $data = $request->only([
             'username',
             'email',
             'first_name',
             'last_name',
-            'role_power']);
+            'role_power'
+        ]);
         $data['password'] = Hash::make($request->password);
 
         if ($request->hasFile('avatar')) {
@@ -172,7 +177,7 @@ class AdminUserController extends Controller
         if ($user->last_login_at) {
             $lastActivity = $user->last_login_at;
         }
-        if ($user->updated_at && (! $lastActivity || $user->updated_at > $lastActivity)) {
+        if ($user->updated_at && (!$lastActivity || $user->updated_at > $lastActivity)) {
             $lastActivity = $user->updated_at->toDateTimeString();
         }
 
@@ -199,8 +204,8 @@ class AdminUserController extends Controller
 
             'themes_as_member' => ThemeUserPermission::where('user_id', $user->user_id)
                 ->where('status', 'active')->count(),
-            'pending_invitations' => ThemeUserPermission::where('user_id', $user->user_id)
-                ->where('status', 'invited')->count(),
+            'pending_invitations' => Invitation::where('invitee_user_id', $user->user_id)
+                ->where('status', 'pending')->count(),
 
             'recent_activity' => [
                 'tasks_last_7_days' => $recentTasksCount,
@@ -238,7 +243,8 @@ class AdminUserController extends Controller
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
             'password' => 'nullable|string|min:8|confirmed',
-            'avatar' => 'nullable|image|max:2048', ]);
+            'avatar' => 'nullable|image|max:2048',
+        ]);
 
         $data = $request->only([
             'username',

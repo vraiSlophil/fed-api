@@ -74,7 +74,8 @@ Notes:
 - Email verification is sent on registration. If you don’t have a Resend key locally yet, set `MAIL_MAILER=log` in `.env` to avoid failing the `/api/register` flow during setup.
 - Frontend URLs for email flows are configured via:
   - `APP_FRONTEND_VERIFY_EMAIL_PATH` (default `/verify-email`)
-  - `APP_FRONTEND_INVITATION_PATH` (default `/invite/{invitation}`)
+  - `APP_FRONTEND_INVITATION_PATH` (default `/invite/{invitationId}`)
+- Invitation expiry (days): `INVITATION_EXPIRES_DAYS` (default `7`)
 - Email queues can be customized via:
   - `MAIL_QUEUE_VERIFICATION`
   - `MAIL_QUEUE_PASSWORD_RESET`
