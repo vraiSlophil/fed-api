@@ -7,6 +7,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -84,6 +85,10 @@ final class ApiExceptionHandler
             return false;
         });
 
+        $exceptions->reportable(function (InvalidSignatureException $e): bool {
+            return false;
+        });
+
         $exceptions->reportable(function (ModelNotFoundException|NotFoundHttpException $e): bool {
             return false;
         });
@@ -157,6 +162,25 @@ final class ApiExceptionHandler
             $response = ApiResponse::builder()
                 ->error(403, 'Forbidden')
                 ->messageCode('permission.denied')
+                ->meta(['request_id' => $requestId])
+                ->build();
+
+            $response->headers->set('X-Request-Id', $requestId);
+
+            return $response;
+        });
+
+        $exceptions->renderable(function (InvalidSignatureException $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+            $requestId = $getRequestId($request);
+            $logException($e, $requestId, $request, 'warning');
+
+            if (! $request->expectsJson()) {
+                return null;
+            }
+
+            $response = ApiResponse::builder()
+                ->error(403, 'Invalid signature')
+                ->messageCode('signature.invalid')
                 ->meta(['request_id' => $requestId])
                 ->build();
 

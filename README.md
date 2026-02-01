@@ -72,6 +72,13 @@ Notes:
 
 - `APP_KEY` is the Laravel application encryption key (required). If you generate/change it after the `laravel` container is already running, restart the container so it picks up the new value.
 - Email verification is sent on registration. If you don’t have a Resend key locally yet, set `MAIL_MAILER=log` in `.env` to avoid failing the `/api/register` flow during setup.
+- Frontend URLs for email flows are configured via:
+  - `APP_FRONTEND_VERIFY_EMAIL_PATH` (default `/verify-email`)
+  - `APP_FRONTEND_INVITATION_PATH` (default `/invite/{invitation}`)
+- Email queues can be customized via:
+  - `MAIL_QUEUE_VERIFICATION`
+  - `MAIL_QUEUE_PASSWORD_RESET`
+  - `MAIL_QUEUE_INVITATION`
 
 ---
 
@@ -90,8 +97,8 @@ docker compose exec laravel php artisan migrate
 # clear caches (run this after migrations; it can fail before the cache table exists)
 docker compose exec laravel php artisan optimize:clear
 
-# start workers
-docker compose exec laravel php artisan queue:work --queue=emails-verification,emails-reset,emails-invitation,default
+# start workers (priority order)
+docker compose exec laravel php artisan queue:work --queue=emails-verification,emails-password-reset,emails-invitation,default
 
 ```
 

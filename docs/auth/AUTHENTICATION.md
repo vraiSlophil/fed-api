@@ -190,18 +190,21 @@ Errors:
 - `400 auth.reset.failed`
 - `422 validation.invalid`
 
-#### GET `/verify-email/{id}/{hash}`
-Verify email via signed URL.
+#### POST `/email-verifications`
+Verify email via a **signed URL** (relative signature).
 
-- If `Accept: application/json` is sent, returns JSON responses.
-- Otherwise returns an HTML view.
+How it works:
+- The email contains a frontend URL (e.g. `/verify-email`) with query params:
+  `id`, `hash`, `expires`, `signature`.
+- The frontend calls this API endpoint with **the same query params**.
 
-JSON Success:
+Success:
 - `200 auth.verification.success`
 - `200 auth.verification.already_verified`
 
-JSON Errors:
+Errors:
 - `400 auth.verification.invalid`
+- `403 invalid signature`
 - `404 resource.not_found`
 
 ### Protected (access token required)
@@ -218,17 +221,35 @@ Errors:
 - `401 auth.failed`
 - `403 permission.denied` (refresh token used on access-only route)
 
-#### POST `/email/verification-notification`
+#### POST `/email-verification-notifications`
 Send a verification email.
 
 Headers:
 - `Authorization: Bearer <access_token>`
 
 Notes:
-- This route is currently behind the `verified` middleware (see `routes/api.php`),
-  so it only works for already-verified users.
 - If already verified: `email.verification.already_verified`
 - Else: `email.verification.sent`
+
+#### PATCH `/invitations/{invitation}`
+Accept or decline an invitation using **auth + signed query params**.
+
+Query params (signed):
+- `status=accepted|declined`
+- `expires`
+- `signature`
+
+Body (optional):
+- `target_playground_id` (required only if you want to override the default playground)
+
+Success:
+- `200 theme.invitation.accepted`
+- `200 theme.invitation.declined`
+
+Errors:
+- `401 auth.failed`
+- `403 invalid signature`
+- `404 resource.not_found`
 
 #### GET `/ping`
 Simple authenticated ping (used for tests).
