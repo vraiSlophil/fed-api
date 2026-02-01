@@ -20,7 +20,7 @@ it('login renvoie un token et permet d\'appeler une route protégée', function 
 
     $token = $login->json('data.access_token');
 
-    $this->withHeader('Authorization', 'Bearer ' . $token)
+    $this->withHeader('Authorization', 'Bearer '.$token)
         ->getJson('/api/auth/ping')
         ->assertStatus(200);
 });
@@ -40,7 +40,7 @@ it('logout révoque le token courant (suppression en base)', function () {
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBeGreaterThan(0);
 
-    $this->withHeader('Authorization', 'Bearer ' . $token)
+    $this->withHeader('Authorization', 'Bearer '.$token)
         ->postJson('/api/auth/logout')
         ->assertStatus(200);
 
@@ -60,7 +60,7 @@ it('un refresh token ne peut pas accéder aux routes protégées', function () {
         now()->addDays(30)
     )->plainTextToken;
 
-    $this->withHeader('Authorization', 'Bearer ' . $refreshToken)
+    $this->withHeader('Authorization', 'Bearer '.$refreshToken)
         ->getJson('/api/auth/ping')
         ->assertStatus(403);
 });
