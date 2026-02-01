@@ -15,6 +15,6 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
      */
     public function viaQueues(): array
     {
-        return ['mail' => config('queue.mail_queue', 'emails')];
+        return ['mail' => config('queue.mail_queues.verification', 'emails-verification')];
     }
 }

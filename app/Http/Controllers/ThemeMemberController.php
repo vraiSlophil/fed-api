@@ -14,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 class ThemeMemberController extends Controller
 {
@@ -171,27 +170,28 @@ class ThemeMemberController extends Controller
 
         $invitedUser = User::findOrFail($validated['user_id']);
 
-        $acceptLink = URL::temporarySignedRoute(
-            'theme.accept-invitation',
+        $acceptSignedUrl = URL::temporarySignedRoute(
+            'invitations.respond',
             now()->addDays(7),
             [
-                'theme_id' => $themeId,
-                'user_id' => $invitedUser->user_id,
-                'token' => Str::random(40),
-                'action' => 'accept',
-            ]
+                'invitation' => $permission->permission_id,
+                'status' => 'accepted',
+            ],
+            false
         );
 
-        $declineLink = URL::temporarySignedRoute(
-            'theme.accept-invitation',
+        $declineSignedUrl = URL::temporarySignedRoute(
+            'invitations.respond',
             now()->addDays(7),
             [
-                'theme_id' => $themeId,
-                'user_id' => $invitedUser->user_id,
-                'token' => Str::random(40),
-                'action' => 'decline',
-            ]
+                'invitation' => $permission->permission_id,
+                'status' => 'declined',
+            ],
+            false
         );
+
+        $acceptLink = $this->buildFrontendInvitationUrl($acceptSignedUrl, $permission->permission_id);
+        $declineLink = $this->buildFrontendInvitationUrl($declineSignedUrl, $permission->permission_id);
 
         try {
             Mail::to($invitedUser->email)
@@ -201,7 +201,7 @@ class ThemeMemberController extends Controller
                     $invitedUser,
                     $acceptLink,
                     $declineLink
-                ))->onQueue(config('queue.mail_queue', 'emails')));
+                ))->onQueue(config('queue.mail_queues.invitation', 'emails-invitation')));
         } catch (Exception $e) {
             $permission->delete();
             throw new ApiException('common.error', [], 500, 'Error sending invitation email');
@@ -264,6 +264,20 @@ class ThemeMemberController extends Controller
                 ],
             ])
             ->json();
+    }
+
+    private function buildFrontendInvitationUrl(string $signedApiUrl, string $invitationId): string
+    {
+        $frontendBase = rtrim(config('app.frontend_url'), '/');
+        $pathTemplate = (string) config('app.frontend_invitation_path', '/invite/{invitation}');
+        $frontendPath = str_contains($pathTemplate, '{invitation}')
+            ? str_replace('{invitation}', $invitationId, $pathTemplate)
+            : $pathTemplate;
+
+        $frontendPath = '/'.ltrim($frontendPath, '/');
+        $query = parse_url($signedApiUrl, PHP_URL_QUERY);
+
+        return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
     }
 
     public function deactivateMember(string $themeId, string $userId): JsonResponse

@@ -46,14 +46,10 @@ Route::prefix('/auth')->group(function () {
     Route::post('/reset-password', NewPasswordController::class)->name('auth.password.store');
 });
 
-// Vérification d’e-mail via URL signée
-Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-    ->middleware(['signed', 'throttle:6,1'])
+// Vérification d’e-mail via URL signée (stateless, JSON only)
+Route::post('/email-verifications', VerifyEmailController::class)
+    ->middleware(['signed:relative', 'throttle:6,1'])
     ->name('verification.verify');
-
-// Gestion des invitations aux thèmes via URL signée
-Route::get('/themes/invitation', [ThemeInvitationController::class, 'handleInvitation'])
-    ->name('theme.accept-invitation');
 
 Route::get('/media/{path}', [MediaController::class, 'show'])
     ->where('path', '.*')
@@ -76,7 +72,14 @@ Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
                 ->json();
         })->name('ping');
     });
+    Route::post('/email-verification-notifications', EmailVerificationNotificationController::class)
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
 
+    // Invitations via URL signée (auth + signature)
+    Route::patch('/invitations/{invitation}', [ThemeInvitationController::class, 'respond'])
+        ->middleware(['signed:relative', 'throttle:6,1'])
+        ->name('invitations.respond');
 });
 
 /*
@@ -144,10 +147,6 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
             Route::get('', [ThemeController::class, 'show'])->name('themes.show');
             Route::patch('', [ThemeController::class, 'update'])->name('themes.update');
             Route::delete('', [ThemeController::class, 'destroy'])->name('themes.destroy');
-            Route::prefix('/invitations')->group(function () {
-                Route::post('/accept', [ThemeInvitationController::class, 'acceptInvitation'])->name('themes.invitations.accept');
-                Route::post('/decline', [ThemeInvitationController::class, 'declineInvitation'])->name('themes.invitations.decline');
-            });
             Route::get('/stats', [StatsController::class, 'themeStats'])->name('stats.theme');
             Route::prefix('/members')->group(function () {
                 Route::get('', [ThemeMemberController::class, 'listMembers'])->name('theme.members.list');
@@ -176,7 +175,4 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
             Route::post('/uncomplete', [TaskController::class, 'uncomplete'])->name('tasks.uncomplete');
         });
     });
-    Route::post('/email/verification-notification', EmailVerificationNotificationController::class)
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
 });

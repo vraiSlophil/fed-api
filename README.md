@@ -12,10 +12,10 @@ This project provides the backend API used by the `fed-webapp` client applicatio
 
 ## Tech Stack
 
-* Language: PHP 8.3
-* Framework: Laravel 12
-* Database: PostgreSQL 16
-* Tooling / CI: Docker Compose, Composer, Pest (via `php artisan test`)
+- Language: PHP 8.3
+- Framework: Laravel 12
+- Database: PostgreSQL 16
+- Tooling / CI: Docker Compose, Composer, Pest (via `php artisan test`)
 
 ---
 
@@ -89,6 +89,10 @@ docker compose exec laravel php artisan migrate
 
 # clear caches (run this after migrations; it can fail before the cache table exists)
 docker compose exec laravel php artisan optimize:clear
+
+# start workers
+docker compose exec laravel php artisan queue:work --queue=emails-verification,emails-reset,emails-invitation,default
+
 ```
 
 Optional seeders:
@@ -109,15 +113,15 @@ docker compose exec laravel php artisan test
 
 ## Troubleshooting
 
-- `No application encryption key has been specified.`  
-  - Ensure `.env` contains a non-empty `APP_KEY=...`, then restart: `docker compose restart laravel`
-- Registration fails after creating the user (retry says “email already taken”)  
-  - This typically means the user was inserted, then an email-related step failed (e.g. missing `RESEND_API_KEY` while `MAIL_MAILER=resend`). Set `MAIL_MAILER=log` or configure `RESEND_API_KEY`, then retry with a new email or delete the created user in DB.
+- `No application encryption key has been specified.`
+    - Ensure `.env` contains a non-empty `APP_KEY=...`, then restart: `docker compose restart laravel`
+- Registration fails after creating the user (retry says “email already taken”)
+    - This typically means the user was inserted, then an email-related step failed (e.g. missing `RESEND_API_KEY` while `MAIL_MAILER=resend`). Set `MAIL_MAILER=log` or configure `RESEND_API_KEY`, then retry with a new email or delete the created user in DB.
 
 Guidelines:
 
-* Tests are required for behavioral changes
-* All tests must pass before opening a PR
+- Tests are required for behavioral changes
+- All tests must pass before opening a PR
 
 ---
 
@@ -127,10 +131,10 @@ Contributions are welcome.
 
 Please read the **CONTRIBUTING.md** file before opening an issue or pull request. It contains detailed guidelines on:
 
-* Branch naming
-* Commit message conventions
-* Pull request process
-* Review and merge rules
+- Branch naming
+- Commit message conventions
+- Pull request process
+- Review and merge rules
 
 ---
 

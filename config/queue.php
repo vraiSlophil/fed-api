@@ -17,14 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Dedicated Mail Queue Name
+    | Dedicated Mail Queues
     |--------------------------------------------------------------------------
     |
-    | Used to isolate email jobs from other queued work.
+    | Separate queues allow prioritizing critical emails (verification/reset)
+    | over lower-priority ones (invitations).
     |
     */
 
-    'mail_queue' => env('MAIL_QUEUE', 'emails'),
+    'mail_queues' => [
+        'verification' => env('MAIL_QUEUE_VERIFICATION', 'emails-verification'),
+        'reset' => env('MAIL_QUEUE_PASSWORD_RESET', 'emails-password-reset'),
+        'invitation' => env('MAIL_QUEUE_INVITATION', 'emails-invitation'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
