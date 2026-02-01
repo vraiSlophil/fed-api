@@ -40,6 +40,12 @@ Notes:
   - If reuse is detected **within the grace window**, a new token pair is issued.
   - If reuse is detected **outside the grace window**, all tokens for the user are revoked and the request fails.
 
+### Storage model
+- Tokens are stored in `personal_access_tokens` (Sanctum).
+- Refresh tokens are regular Sanctum tokens tagged with ability `refresh`.
+- When a refresh token is used, it is deleted and its hash is stored in `revoked_refresh_tokens`.
+- Reuse detection checks `revoked_refresh_tokens` for the incoming token hash.
+
 ## Rate Limiting
 - `POST /api/auth/login` uses the `auth-login` limiter: **5/min per email + IP** with a custom `auth.throttle` response.
 - `POST /api/auth/refresh` uses the `auth-refresh` limiter: **10/min per IP + token hash**.
@@ -124,6 +130,11 @@ Rotate refresh token and issue a new pair.
 
 Headers:
 - `X-Refresh-Token: <refresh_token>` (preferred)
+- `Authorization: Bearer <refresh_token>` (supported as fallback)
+
+Notes:
+- Refresh tokens are `id|plain` tokens issued by Sanctum.
+- On success, the old refresh token becomes invalid immediately.
 
 Success (200) - `auth.refresh.success`:
 ```json
@@ -214,7 +225,8 @@ Headers:
 - `Authorization: Bearer <access_token>`
 
 Notes:
-- This route is currently behind the `verified` middleware (see `routes/api.php`).
+- This route is currently behind the `verified` middleware (see `routes/api.php`),
+  so it only works for already-verified users.
 - If already verified: `email.verification.already_verified`
 - Else: `email.verification.sent`
 
