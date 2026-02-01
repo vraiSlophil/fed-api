@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\QueuedVerifyEmail;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -103,6 +104,14 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('status', 'active')
             ->orWhere('status', 'trialing')
             ->latest('started_at');
+    }
+
+    /**
+     * Send the email verification notification on the email queue.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new QueuedVerifyEmail);
     }
 
     /**

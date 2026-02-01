@@ -195,13 +195,13 @@ class ThemeMemberController extends Controller
 
         try {
             Mail::to($invitedUser->email)
-                ->send(new ThemeInvitation(
+                ->queue((new ThemeInvitation(
                     $theme,
                     $this->user,
                     $invitedUser,
                     $acceptLink,
                     $declineLink
-                ));
+                ))->onQueue(config('queue.mail_queue', 'emails')));
         } catch (Exception $e) {
             $permission->delete();
             throw new ApiException('common.error', [], 500, 'Error sending invitation email');

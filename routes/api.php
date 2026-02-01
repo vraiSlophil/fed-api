@@ -66,13 +66,17 @@ Route::get('/media/{path}', [MediaController::class, 'show'])
 */
 
 Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
-    Route::post('/logout', LogoutController::class)
-        ->name('logout');
-    Route::get('/ping', function () {
-        return ApiResponse::builder()
-            ->success(message: 'pong')
-            ->json();
-    })->name('ping');
+    Route::prefix('/auth')->group(function () {
+
+        Route::post('/logout', LogoutController::class)
+            ->name('logout');
+        Route::get('/ping', function () {
+            return ApiResponse::builder()
+                ->success(message: 'pong')
+                ->json();
+        })->name('ping');
+    });
+
 });
 
 /*
