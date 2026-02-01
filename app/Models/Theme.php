@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use App\Exceptions\ApiException;
+use App\Invitations\Invitable;
+use App\Models\Concerns\HasInvitations;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Invitations\Invitable;
-use App\Models\Concerns\HasInvitations;
-use App\Exceptions\ApiException;
 
 class Theme extends Model implements Invitable
 {
-    use HasFactory, HasUuids, HasInvitations;
+    use HasFactory, HasInvitations, HasUuids;
 
     protected $primaryKey = 'theme_id';
 

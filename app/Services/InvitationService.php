@@ -11,9 +11,7 @@ use Throwable;
 
 class InvitationService
 {
-    public function __construct(private readonly InvitationLinkGenerator $linkGenerator)
-    {
-    }
+    public function __construct(private readonly InvitationLinkGenerator $linkGenerator) {}
 
     public function sendCreatedEmail(Invitation $invitation): void
     {

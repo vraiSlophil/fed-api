@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Mail\InvitationAccepted;
+use App\Mail\InvitationDeclined;
+use App\Mail\InvitationExpired;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\InvitationAccepted;
-use App\Mail\InvitationDeclined;
-use App\Mail\InvitationExpired;
 
 class Invitation extends Model
 {

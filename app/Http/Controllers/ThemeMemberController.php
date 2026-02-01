@@ -275,7 +275,6 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
-
     public function deactivateMember(string $themeId, string $userId): JsonResponse
     {
         $theme = $this->getThemeOrFail($themeId);
