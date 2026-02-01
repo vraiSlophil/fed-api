@@ -87,7 +87,7 @@ class ThemeMemberController extends Controller
                 'last_name' => $permission->user->last_name,
                 'avatar_path' => $permission->user->avatar_path,
                 'status' => $permission->status,
-                'invited_at' => $permission->created_at,
+                'joined_at' => $permission->created_at,
                 'permissions' => [
                     'can_view' => $permission->can_view,
                     'can_update_theme' => $permission->can_update_theme,
@@ -107,7 +107,7 @@ class ThemeMemberController extends Controller
             'last_name' => $owner->last_name,
             'avatar_path' => $owner->avatar_path,
             'status' => 'owner',
-            'invited_at' => null,
+            'joined_at' => null,
             'permissions' => [
                 'can_view' => true,
                 'can_update_theme' => true,
@@ -135,7 +135,7 @@ class ThemeMemberController extends Controller
                     'last_name' => $invitation->invitee?->last_name,
                     'avatar_path' => $invitation->invitee?->avatar_path,
                     'status' => 'invited',
-                    'invited_at' => $invitation->created_at,
+                    'joined_at' => $invitation->created_at,
                     'permissions' => [
                         'can_view' => (bool) ($permissions['can_view'] ?? false),
                         'can_update_theme' => (bool) ($permissions['can_update_theme'] ?? false),
@@ -226,7 +226,7 @@ class ThemeMemberController extends Controller
                     'first_name' => $invitedUser->first_name,
                     'last_name' => $invitedUser->last_name,
                     'status' => $invitation->status,
-                    'invited_at' => $invitation->created_at,
+                    'joined_at' => $invitation->created_at,
                 ],
             ])
             ->json();
