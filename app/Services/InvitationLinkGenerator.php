@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\URL;
 
 class InvitationLinkGenerator
 {
+    /**
+     * @return array{accept:string, decline:string}
+     */
     public function buildSignedLinks(Invitation $invitation): array
     {
         $expiresAt = $invitation->expires_at;
@@ -39,7 +42,7 @@ class InvitationLinkGenerator
 
     private function buildFrontendInvitationUrl(string $signedApiUrl, string $invitationId): string
     {
-        $frontendBase = rtrim(config('app.frontend_url'), '/');
+        $frontendBase = rtrim((string) config('app.frontend_url'), '/');
         $pathTemplate = (string) config('app.frontend_invitation_path', '/invite/{invitationId}');
         $frontendPath = str_contains($pathTemplate, '{invitationId}')
             ? str_replace('{invitationId}', $invitationId, $pathTemplate)
@@ -47,9 +50,9 @@ class InvitationLinkGenerator
                 ? str_replace('{invitation}', $invitationId, $pathTemplate)
                 : $pathTemplate);
 
-        $frontendPath = '/'.ltrim($frontendPath, '/');
+        $frontendPath = '/' . ltrim($frontendPath, '/');
         $query = parse_url($signedApiUrl, PHP_URL_QUERY);
 
-        return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
+        return $query ? $frontendBase . $frontendPath . '?' . $query : $frontendBase . $frontendPath;
     }
 }

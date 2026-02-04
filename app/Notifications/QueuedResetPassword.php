@@ -3,23 +3,22 @@
 namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class QueuedResetPassword extends ResetPassword implements ShouldQueue
 {
-    use Queueable;
-
-    public function __construct(string $token)
-    {
-        parent::__construct($token);
-    }
-
-    /**
-     * Route the mail channel to the dedicated reset queue.
-     */
     public function viaQueues(): array
     {
         return ['mail' => config('queue.mail_queues.reset', 'emails-password-reset')];
+    }
+
+    public function failed($notifiable, Throwable $e): void
+    {
+        Log::error('Password reset notification failed', [
+            'user_id' => $notifiable?->getKey(),
+            'error' => $e->getMessage(),
+        ]);
     }
 }

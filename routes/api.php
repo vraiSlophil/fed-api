@@ -46,7 +46,7 @@ Route::prefix('/auth')->group(function () {
     Route::post('/reset-password', NewPasswordController::class)->name('auth.password.store');
 });
 
-// Vérification d’e-mail via URL signée (stateless, JSON only)
+// Verification d’e-mail via URL signee (stateless, JSON only)
 Route::post('/email-verifications', VerifyEmailController::class)
     ->middleware(['signed:relative', 'throttle:6,1'])
     ->name('verification.verify');

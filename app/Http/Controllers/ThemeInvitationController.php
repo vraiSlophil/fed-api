@@ -17,14 +17,8 @@ class ThemeInvitationController extends Controller
     public function respond(Request $request, string $invitationId, InvitationService $invitationService): JsonResponse
     {
         $query = Validator::make($request->query(), [
-            'status' => ['nullable', 'string', Rule::in(['accepted', 'declined']), 'required_without:action'],
-            'action' => ['nullable', 'string', Rule::in(['accept', 'decline']), 'required_without:status'],
+            'status' => ['required', 'string', Rule::in(['accepted', 'declined'])],
         ])->validate();
-
-        $status = $query['status'] ?? null;
-        if (! $status && isset($query['action'])) {
-            $status = $query['action'] === 'accept' ? 'accepted' : 'declined';
-        }
 
         $validated = $request->validate([
             'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id'],
@@ -32,7 +26,7 @@ class ThemeInvitationController extends Controller
 
         $invitation = Invitation::where('invitation_id', $invitationId)->firstOrFail();
 
-        if (! $request->user() || $invitation->invitee_user_id !== $request->user()->user_id) {
+        if (!$request->user() || $invitation->invitee_user_id !== $request->user()->user_id) {
             throw new ApiException('permission.denied', [], 403, 'Permission denied');
         }
 
@@ -49,10 +43,12 @@ class ThemeInvitationController extends Controller
             throw new ApiException('invitation.expired', [], 410, 'Invitation expired');
         }
 
+        $status = $query['status'];
+
         if ($status === 'accepted') {
             $invitable = $invitation->invitable;
 
-            if (! $invitable instanceof Invitable) {
+            if (!$invitable instanceof Invitable) {
                 throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
             }
 

@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
 it('accepte une invitation via signature et auth', function () {
+    Mail::fake();
+
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -70,6 +72,8 @@ it('accepte une invitation via signature et auth', function () {
 });
 
 it('refuse une invitation via signature et auth', function () {
+    Mail::fake();
+
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)

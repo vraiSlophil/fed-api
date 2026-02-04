@@ -17,8 +17,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class AdminUserController extends Controller
 {
@@ -272,7 +274,14 @@ class AdminUserController extends Controller
         if ($emailChanged) {
             $user->email_verified_at = null;
             $user->save();
-            $user->sendEmailVerificationNotification();
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (Throwable $e) {
+                Log::error('Email verification notification failed to dispatch', [
+                    'user_id' => $user->user_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return ApiResponse::builder()
                 ->success()

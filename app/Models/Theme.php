@@ -127,9 +127,11 @@ class Theme extends Model implements Invitable
             throw new ApiException('invitation.invalid', [], 400, 'Invalid invitation target');
         }
 
-        if (ThemeUserPermission::where('theme_id', $this->theme_id)
-            ->where('user_id', $invitation->invitee_user_id)
-            ->exists()) {
+        if (
+            ThemeUserPermission::where('theme_id', $this->theme_id)
+                ->where('user_id', $invitation->invitee_user_id)
+                ->exists()
+        ) {
             throw new ApiException('theme.member.already_exists', ['user_id' => $invitation->invitee_user_id], 409, 'User is already a member of this theme');
         }
 
@@ -145,7 +147,8 @@ class Theme extends Model implements Invitable
             $targetPlaygroundId = $defaultPlayground?->playground_id;
         }
 
-        $permissions = $invitation->payload['permissions'] ?? [];
+        $payload = $invitation->payload;
+        $permissions = is_array($payload) ? ($payload['permissions'] ?? []) : [];
 
         return ThemeUserPermission::create([
             'theme_id' => $this->theme_id,

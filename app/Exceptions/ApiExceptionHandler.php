@@ -93,6 +93,10 @@ final class ApiExceptionHandler
             return false;
         });
 
+        $exceptions->reportable(function (InvalidSignatureException $e): bool {
+            return false;
+        });
+
         $exceptions->renderable(function (ApiException $e, $request) use ($getRequestId, $logException, $levelForStatus) {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, $levelForStatus($e->status));

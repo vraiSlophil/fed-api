@@ -87,7 +87,7 @@ class ThemeMemberController extends Controller
                 'last_name' => $permission->user->last_name,
                 'avatar_path' => $permission->user->avatar_path,
                 'status' => $permission->status,
-                'joined_at' => $permission->created_at,
+                'created_at' => $permission->created_at,
                 'permissions' => [
                     'can_view' => $permission->can_view,
                     'can_update_theme' => $permission->can_update_theme,
@@ -107,7 +107,7 @@ class ThemeMemberController extends Controller
             'last_name' => $owner->last_name,
             'avatar_path' => $owner->avatar_path,
             'status' => 'owner',
-            'joined_at' => null,
+            'created_at' => null,
             'permissions' => [
                 'can_view' => true,
                 'can_update_theme' => true,
@@ -124,7 +124,8 @@ class ThemeMemberController extends Controller
             ->with('invitee')
             ->get()
             ->map(function (Invitation $invitation) {
-                $permissions = $invitation->payload['permissions'] ?? [];
+                $payload = $invitation->payload;
+                $permissions = is_array($payload) ? ($payload['permissions'] ?? []) : [];
 
                 return [
                     'invitation_id' => $invitation->invitation_id,
@@ -135,7 +136,7 @@ class ThemeMemberController extends Controller
                     'last_name' => $invitation->invitee?->last_name,
                     'avatar_path' => $invitation->invitee?->avatar_path,
                     'status' => 'invited',
-                    'joined_at' => $invitation->created_at,
+                    'created_at' => $invitation->created_at,
                     'permissions' => [
                         'can_view' => (bool) ($permissions['can_view'] ?? false),
                         'can_update_theme' => (bool) ($permissions['can_update_theme'] ?? false),
@@ -158,7 +159,7 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
-    public function inviteUser(Request $request, string $themeId): JsonResponse
+    public function inviteUser(Request $request, string $themeId, InvitationService $invitationService): JsonResponse
     {
         $theme = $this->getThemeOrFail($themeId);
 
@@ -176,43 +177,47 @@ class ThemeMemberController extends Controller
             throw new ApiException('permission.denied', [], 403, 'Cannot invite theme owner');
         }
 
-        if (ThemeUserPermission::where('theme_id', $themeId)
-            ->where('user_id', $validated['user_id'])
-            ->first()) {
+        if (
+            ThemeUserPermission::where('theme_id', $themeId)
+                ->where('user_id', $validated['user_id'])
+                ->first()
+        ) {
             throw new ApiException('theme.member.already_exists', ['user_id' => $validated['user_id']], 409, 'User is already a member of this theme');
         }
 
-        if (Invitation::where('invitee_user_id', $validated['user_id'])
-            ->where('invitable_type', Theme::class)
-            ->where('invitable_id', $themeId)
-            ->exists()) {
+        if (
+            Invitation::where('invitee_user_id', $validated['user_id'])
+                ->where('invitable_type', Theme::class)
+                ->where('invitable_id', $themeId)
+                ->where('status', 'pending')
+                ->exists()
+        ) {
             throw new ApiException('theme.invitation.already_exists', ['user_id' => $validated['user_id']], 409, 'User has already been invited to this theme');
         }
 
         $invitedUser = User::findOrFail($validated['user_id']);
         $expiresAt = now()->addDays((int) config('invitations.expires_days', 7));
-        $payload = [
-            'permissions' => [
-                'can_view' => $validated['can_view'],
-                'can_update_theme' => $validated['can_update_theme'],
-                'can_add_task' => $validated['can_add_task'],
-                'can_edit_task' => $validated['can_edit_task'],
-                'can_delete_task' => $validated['can_delete_task'],
-                'can_validate_task' => $validated['can_validate_task'],
-            ],
-        ];
 
         $invitation = Invitation::create([
             'inviter_user_id' => $this->user->user_id,
             'invitee_user_id' => $invitedUser->user_id,
             'invitable_type' => Theme::class,
             'invitable_id' => $themeId,
-            'payload' => $payload,
+            'payload' => [
+                'permissions' => [
+                    'can_view' => $validated['can_view'],
+                    'can_update_theme' => $validated['can_update_theme'],
+                    'can_add_task' => $validated['can_add_task'],
+                    'can_edit_task' => $validated['can_edit_task'],
+                    'can_delete_task' => $validated['can_delete_task'],
+                    'can_validate_task' => $validated['can_validate_task'],
+                ],
+            ],
             'status' => 'pending',
             'expires_at' => $expiresAt,
         ]);
 
-        app(InvitationService::class)->sendCreatedEmail($invitation);
+        $invitationService->sendCreatedEmail($invitation);
 
         return ApiResponse::builder()
             ->success(201)
@@ -226,7 +231,7 @@ class ThemeMemberController extends Controller
                     'first_name' => $invitedUser->first_name,
                     'last_name' => $invitedUser->last_name,
                     'status' => $invitation->status,
-                    'joined_at' => $invitation->created_at,
+                    'created_at' => $invitation->created_at,
                 ],
             ])
             ->json();

@@ -27,17 +27,11 @@ class Invitation extends Model
         'payload',
         'status',
         'expires_at',
-        'expiration_notification_attempts',
-        'expiration_notification_last_attempt_at',
-        'expiration_notified_at',
     ];
 
     protected $casts = [
         'payload' => 'array',
         'expires_at' => 'datetime',
-        'expiration_notification_attempts' => 'integer',
-        'expiration_notification_last_attempt_at' => 'datetime',
-        'expiration_notified_at' => 'datetime',
     ];
 
     public function inviter(): BelongsTo

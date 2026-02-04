@@ -7,9 +7,11 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -48,7 +50,14 @@ class ProfileController extends Controller
         if ($user->wasChanged('email')) {
             $user->email_verified_at = null;
             $user->save();
-            $user->sendEmailVerificationNotification();
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (Throwable $e) {
+                Log::error('Email verification notification failed to dispatch', [
+                    'user_id' => $user->user_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return ApiResponse::builder()
                 ->success()

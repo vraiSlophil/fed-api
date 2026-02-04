@@ -6,6 +6,8 @@ use App\Models\Invitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class InvitationExpired extends Mailable
 {
@@ -18,9 +20,18 @@ class InvitationExpired extends Mailable
         $this->invitation = $invitation;
     }
 
-    public function build()
+    public function build(): self
     {
-        return $this->subject('Invitation expirée')
+        return $this->subject('Invitation expiree')
             ->markdown('emails.invitations.expired');
+    }
+
+    public function failed(Throwable $e): void
+    {
+        Log::error('Invitation expired email failed', [
+            'invitation_id' => $this->invitation->invitation_id ?? null,
+            'inviter_user_id' => $this->invitation->inviter_user_id ?? null,
+            'error' => $e->getMessage(),
+        ]);
     }
 }
