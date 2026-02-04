@@ -76,7 +76,7 @@ Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
-    // Invitations via URL signée (auth + signature)
+    // Invitations via URL signee (auth + signature)
     Route::patch('/invitations/{invitationId}', [ThemeInvitationController::class, 'respond'])
         ->middleware(['signed:relative', 'throttle:6,1'])
         ->name('invitations.respond');
