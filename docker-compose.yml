@@ -1,7 +1,27 @@
+x-laravel-common: &laravel-common
+    build:
+        context: .
+        dockerfile: Dockerfile
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    env_file:
+        - .env
+    environment:
+        HOME: /tmp
+        COMPOSER_HOME: /tmp/composer
+        COMPOSER_CACHE_DIR: /tmp/composer/cache
+    volumes:
+        - ./:/app
+    depends_on:
+        postgres:
+            condition: service_healthy
+    networks:
+        - app-network
+    restart: unless-stopped
+
 services:
     # Service de base de données PostgreSQL
     postgres:
-        image: postgres:16.4
+        image: postgres:18.1
         environment:
             - POSTGRES_USER=${DB_USERNAME}
             - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -14,44 +34,63 @@ services:
             timeout: 5s
             retries: 5
 
+    bootstrap:
+        <<: *laravel-common
+        command: sh -c "php artisan migrate --force && php artisan optimize:clear"
+        restart: "no"
+
     # Service Laravel (application web)
     laravel:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        ports:
-            - "8000:8000"
-        env_file:
-            - .env
-        environment:
-            - DB_CONNECTION=pgsql
-            - DB_HOST=postgres
-            - DB_PORT=5432
-            - DB_USERNAME=${DB_USERNAME}
-            - DB_DATABASE=${DB_DATABASE}
-            - DB_PASSWORD=${DB_PASSWORD}
-        volumes:
-            - ./:/app
+        <<: *laravel-common
         depends_on:
             postgres:
                 condition: service_healthy
-        networks:
-            - app-network
+            bootstrap:
+                condition: service_completed_successfully
+        ports:
+            - "8000:8000"
         command: sh -c "php artisan config:cache && php artisan route:cache && php artisan serve --host=0.0.0.0 --port=8000"
 
+    queue-high:
+        <<: *laravel-common
+        depends_on:
+            postgres:
+                condition: service_healthy
+            bootstrap:
+                condition: service_completed_successfully
+        command: sh -c "php artisan queue:work --queue=emails-verification,emails-password-reset --tries=3 --sleep=1 --timeout=120"
+
+    queue-low:
+        <<: *laravel-common
+        depends_on:
+            postgres:
+                condition: service_healthy
+            bootstrap:
+                condition: service_completed_successfully
+        command: sh -c "php artisan queue:work --queue=emails-invitation,default --tries=3 --sleep=3 --timeout=120"
+
+    scheduler:
+        <<: *laravel-common
+        depends_on:
+            postgres:
+                condition: service_healthy
+            bootstrap:
+                condition: service_completed_successfully
+        command: sh -c "php artisan schedule:work"
+
     # Service de rotation et analyse des logs
-    logrotate:
-        build:
-            context: .
-            dockerfile: Dockerfile.logrotate
-        volumes:
-            - laravel_logs:/var/log/laravel
-        networks:
-            - app-network
-        restart: unless-stopped
+    # logrotate:
+    #     build:
+    #         context: .
+    #         dockerfile: Dockerfile.logrotate
+    #     volumes:
+    #         - laravel_logs:/var/log/laravel
+    #     networks:
+    #         - app-network
+        # restart: unless-stopped
 
     pgadmin:
-        image: dpage/pgadmin4:9.8.0
+        image: dpage/pgadmin4:9
         depends_on:
             - postgres
         environment:
@@ -67,7 +106,5 @@ networks:
         driver: bridge
 
 volumes:
-    postgres_data:
-        driver: local
     laravel_logs:
         driver: local
