@@ -2,8 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\Theme;
-use App\Models\User;
+use App\Models\Invitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -16,39 +15,36 @@ class InvitationCreated extends Mailable
 
     public $tries = 3;
 
-    public Theme $invitedTheme;
-
-    public User $inviter;
-
-    public User $invitee;
+    public Invitation $invitation;
 
     public string $acceptLink;
 
     public string $declineLink;
 
-    public function __construct(Theme $theme, User $inviter, User $invitee, string $acceptLink, string $declineLink)
+    public function __construct(Invitation $invitation, string $acceptLink, string $declineLink)
     {
-        $this->invitedTheme = $theme;
-        $this->inviter = $inviter;
-        $this->invitee = $invitee;
+        $this->invitation = $invitation;
         $this->acceptLink = $acceptLink;
         $this->declineLink = $declineLink;
     }
 
     public function build(): self
     {
-        return $this->subject('Invitation a rejoindre un theme')
-            ->markdown('emails.theme.invitation')
+        $resource = class_basename($this->invitation->invitable_type);
+
+        return $this->subject("Invitation a rejoindre {$resource}")
+            ->markdown('emails.invitations.created')
             ->with([
-                'theme' => $this->invitedTheme,
+                'invitation' => $this->invitation,
             ]);
     }
 
     public function failed(Throwable $e): void
     {
         Log::error('Invitation created email failed', [
-            'inviter_user_id' => $this->inviter->user_id ?? null,
-            'invitee_user_id' => $this->invitee->user_id ?? null,
+            'invitation_id' => $this->invitation->invitation_id ?? null,
+            'inviter_user_id' => $this->invitation->inviter_user_id ?? null,
+            'invitee_user_id' => $this->invitation->invitee_user_id ?? null,
             'error' => $e->getMessage(),
         ]);
     }

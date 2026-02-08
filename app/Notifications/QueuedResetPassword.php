@@ -14,10 +14,9 @@ class QueuedResetPassword extends ResetPassword implements ShouldQueue
         return ['mail' => config('queue.mail_queues.reset', 'emails-password-reset')];
     }
 
-    public function failed($notifiable, Throwable $e): void
+    public function failed(Throwable $e): void
     {
         Log::error('Password reset notification failed', [
-            'user_id' => $notifiable?->getKey(),
             'error' => $e->getMessage(),
         ]);
     }

@@ -33,6 +33,10 @@ class ThemeMemberController extends Controller
         $themeId = $request->theme_id;
 
         $theme = Theme::findOrFail($themeId);
+        if ($theme->owner_id !== $this->user->user_id) {
+            throw new ApiException('permission.denied', [], 403, 'Permission denied');
+        }
+
         $ownerId = $theme->owner_id;
 
         $normalizedSearch = $this->normalizeString($search);
@@ -204,6 +208,7 @@ class ThemeMemberController extends Controller
             'invitable_type' => Theme::class,
             'invitable_id' => $themeId,
             'payload' => [
+                'model' => 'theme',
                 'permissions' => [
                     'can_view' => $validated['can_view'],
                     'can_update_theme' => $validated['can_update_theme'],

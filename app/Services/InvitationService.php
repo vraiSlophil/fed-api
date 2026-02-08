@@ -8,7 +8,6 @@ use App\Mail\InvitationCreated;
 use App\Mail\InvitationDeclined;
 use App\Mail\InvitationExpired;
 use App\Models\Invitation;
-use App\Models\Theme;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -27,7 +26,7 @@ class InvitationService
             throw new ApiException('invitation.invalid', [], 400, 'Invalid invitation users');
         }
 
-        if (! $invitation->invitable instanceof Theme) {
+        if (! $invitation->invitable) {
             throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
         }
 
@@ -36,9 +35,7 @@ class InvitationService
         try {
             Mail::to($invitation->invitee->email)
                 ->queue((new InvitationCreated(
-                    $invitation->invitable,
-                    $invitation->inviter,
-                    $invitation->invitee,
+                    $invitation,
                     $links['accept'],
                     $links['decline']
                 ))->onQueue(config('queue.mail_queues.invitation', 'emails-invitation')));

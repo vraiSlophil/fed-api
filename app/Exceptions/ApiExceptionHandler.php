@@ -68,6 +68,11 @@ final class ApiExceptionHandler
             ]);
         };
 
+        // Always return the API envelope for /api/* routes, even without Accept: application/json.
+        $shouldRenderJson = static function ($request): bool {
+            return $request->expectsJson() || $request->is('api/*');
+        };
+
         // Stop Laravel's default reporter for known 4xx/expected cases.
         $exceptions->reportable(function (ApiException $e): bool {
             return false;
@@ -93,15 +98,11 @@ final class ApiExceptionHandler
             return false;
         });
 
-        $exceptions->reportable(function (InvalidSignatureException $e): bool {
-            return false;
-        });
-
-        $exceptions->renderable(function (ApiException $e, $request) use ($getRequestId, $logException, $levelForStatus) {
+        $exceptions->renderable(function (ApiException $e, $request) use ($getRequestId, $logException, $levelForStatus, $shouldRenderJson) {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, $levelForStatus($e->status));
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 
@@ -116,11 +117,11 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (ValidationException $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (ValidationException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 
@@ -136,11 +137,11 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (AuthenticationException $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (AuthenticationException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 
@@ -155,11 +156,11 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (AuthorizationException|AccessDeniedHttpException $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (AuthorizationException|AccessDeniedHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 
@@ -174,11 +175,11 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (InvalidSignatureException $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (InvalidSignatureException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'warning');
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 
@@ -193,11 +194,11 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (ModelNotFoundException|NotFoundHttpException $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (ModelNotFoundException|NotFoundHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'info');
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 
@@ -212,11 +213,11 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (\Throwable $e, $request) use ($getRequestId, $logException): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (\Throwable $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'error');
 
-            if (! $request->expectsJson()) {
+            if (! $shouldRenderJson($request)) {
                 return null;
             }
 

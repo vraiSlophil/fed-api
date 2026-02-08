@@ -204,12 +204,12 @@ Success:
 
 Errors:
 - `400 auth.verification.invalid`
-- `403 invalid signature`
+- `403 signature.invalid`
 - `404 resource.not_found`
 
 ### Protected (access token required)
 
-#### POST `/logout`
+#### POST `/auth/logout`
 Revokes **all** tokens for the current user.
 
 Headers:
@@ -259,10 +259,10 @@ Success:
 
 Errors:
 - `401 auth.failed`
-- `403 invalid signature`
+- `403 signature.invalid`
 - `404 resource.not_found`
 
-#### GET `/ping`
+#### GET `/auth/ping`
 Simple authenticated ping (used for tests).
 
 Headers:

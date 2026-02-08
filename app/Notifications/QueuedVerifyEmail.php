@@ -49,10 +49,9 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
         return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
     }
 
-    public function failed($notifiable, Throwable $e): void
+    public function failed(Throwable $e): void
     {
         Log::error('Email verification notification failed', [
-            'user_id' => $notifiable?->getKey(),
             'error' => $e->getMessage(),
         ]);
     }
