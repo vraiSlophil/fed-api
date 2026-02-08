@@ -20,8 +20,7 @@ return new class extends Migration
             $table->boolean('can_edit_task')->default(false);
             $table->boolean('can_delete_task')->default(false);
             $table->boolean('can_validate_task')->default(false);
-            $table->enum('status', ['invited', 'active', 'revoked'])->default('invited');
-            $table->timestamp('invited_at')->nullable();
+            $table->enum('status', ['active', 'revoked'])->default('active');
             $table->timestamps();
 
             $table->unique(['theme_id', 'user_id']);

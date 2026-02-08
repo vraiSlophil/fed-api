@@ -21,12 +21,12 @@ it('login renvoie un token et permet d\'appeler une route protégée', function 
     $token = $login->json('data.access_token');
 
     $this->withHeader('Authorization', 'Bearer '.$token)
-        ->getJson('/api/ping')
+        ->getJson('/api/auth/ping')
         ->assertStatus(200);
 });
 
 it('une route protégée renvoie 401 sans token', function () {
-    $this->getJson('/api/ping')->assertStatus(401);
+    $this->getJson('/api/auth/ping')->assertStatus(401);
 });
 
 it('logout révoque le token courant (suppression en base)', function () {
@@ -41,7 +41,7 @@ it('logout révoque le token courant (suppression en base)', function () {
         ->toBeGreaterThan(0);
 
     $this->withHeader('Authorization', 'Bearer '.$token)
-        ->postJson('/api/logout')
+        ->postJson('/api/auth/logout')
         ->assertStatus(200);
 
     // Le token doit être supprimé en base (source de vérité)
@@ -61,6 +61,6 @@ it('un refresh token ne peut pas accéder aux routes protégées', function () {
     )->plainTextToken;
 
     $this->withHeader('Authorization', 'Bearer '.$refreshToken)
-        ->getJson('/api/ping')
+        ->getJson('/api/auth/ping')
         ->assertStatus(403);
 });

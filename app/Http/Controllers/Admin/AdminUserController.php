@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
+use App\Models\Invitation;
 use App\Models\Role;
+use App\Models\Task;
+use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
 use Exception;
@@ -14,8 +17,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class AdminUserController extends Controller
 {
@@ -136,14 +141,16 @@ class AdminUserController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
-            'avatar' => 'nullable|image|max:2048', ]);
+            'avatar' => 'nullable|image|max:2048',
+        ]);
 
         $data = $request->only([
             'username',
             'email',
             'first_name',
             'last_name',
-            'role_power']);
+            'role_power',
+        ]);
         $data['password'] = Hash::make($request->password);
 
         if ($request->hasFile('avatar')) {
@@ -199,8 +206,8 @@ class AdminUserController extends Controller
 
             'themes_as_member' => ThemeUserPermission::where('user_id', $user->user_id)
                 ->where('status', 'active')->count(),
-            'pending_invitations' => ThemeUserPermission::where('user_id', $user->user_id)
-                ->where('status', 'invited')->count(),
+            'pending_invitations' => Invitation::where('invitee_user_id', $user->user_id)
+                ->where('status', 'pending')->count(),
 
             'recent_activity' => [
                 'tasks_last_7_days' => $recentTasksCount,
@@ -238,7 +245,8 @@ class AdminUserController extends Controller
             'last_name' => 'nullable|string|max:255',
             'role_power' => 'required|exists:roles,power',
             'password' => 'nullable|string|min:8|confirmed',
-            'avatar' => 'nullable|image|max:2048', ]);
+            'avatar' => 'nullable|image|max:2048',
+        ]);
 
         $data = $request->only([
             'username',
@@ -266,7 +274,14 @@ class AdminUserController extends Controller
         if ($emailChanged) {
             $user->email_verified_at = null;
             $user->save();
-            $user->sendEmailVerificationNotification();
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (Throwable $e) {
+                Log::error('Email verification notification failed to dispatch', [
+                    'user_id' => $user->user_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return ApiResponse::builder()
                 ->success()

@@ -40,7 +40,6 @@ class ThemeUserPermission extends Model
         'can_delete_task',
         'can_validate_task',
         'status',
-        'invited_at',
     ];
 
     /**
@@ -53,16 +52,7 @@ class ThemeUserPermission extends Model
         'can_edit_task' => 'boolean',
         'can_delete_task' => 'boolean',
         'can_validate_task' => 'boolean',
-        'invited_at' => 'datetime',
     ];
-
-    /**
-     * Vérifie si l'utilisateur est invité (pas encore actif)
-     */
-    public function isInvited(): bool
-    {
-        return $this->status === 'invited';
-    }
 
     /**
      * Vérifie si le statut est actif

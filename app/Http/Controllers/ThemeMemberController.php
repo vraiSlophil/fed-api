@@ -4,17 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
 use App\Http\Responses\ApiResponse;
-use App\Mail\ThemeInvitation;
+use App\Models\Invitation;
 use App\Models\Playground;
 use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
-use Exception;
+use App\Services\InvitationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 class ThemeMemberController extends Controller
 {
@@ -36,6 +33,10 @@ class ThemeMemberController extends Controller
         $themeId = $request->theme_id;
 
         $theme = Theme::findOrFail($themeId);
+        if ($theme->owner_id !== $this->user->user_id) {
+            throw new ApiException('permission.denied', [], 403, 'Permission denied');
+        }
+
         $ownerId = $theme->owner_id;
 
         $normalizedSearch = $this->normalizeString($search);
@@ -90,7 +91,7 @@ class ThemeMemberController extends Controller
                 'last_name' => $permission->user->last_name,
                 'avatar_path' => $permission->user->avatar_path,
                 'status' => $permission->status,
-                'invited_at' => $permission->invited_at,
+                'created_at' => $permission->created_at,
                 'permissions' => [
                     'can_view' => $permission->can_view,
                     'can_update_theme' => $permission->can_update_theme,
@@ -110,7 +111,7 @@ class ThemeMemberController extends Controller
             'last_name' => $owner->last_name,
             'avatar_path' => $owner->avatar_path,
             'status' => 'owner',
-            'invited_at' => null,
+            'created_at' => null,
             'permissions' => [
                 'can_view' => true,
                 'can_update_theme' => true,
@@ -121,7 +122,37 @@ class ThemeMemberController extends Controller
             ],
         ];
 
-        $allMembers = collect([$ownerData])->merge($members);
+        $pendingInvitations = Invitation::where('invitable_type', Theme::class)
+            ->where('invitable_id', $themeId)
+            ->where('status', 'pending')
+            ->with('invitee')
+            ->get()
+            ->map(function (Invitation $invitation) {
+                $payload = $invitation->payload;
+                $permissions = is_array($payload) ? ($payload['permissions'] ?? []) : [];
+
+                return [
+                    'invitation_id' => $invitation->invitation_id,
+                    'user_id' => $invitation->invitee?->user_id,
+                    'username' => $invitation->invitee?->username,
+                    'email' => $invitation->invitee?->email,
+                    'first_name' => $invitation->invitee?->first_name,
+                    'last_name' => $invitation->invitee?->last_name,
+                    'avatar_path' => $invitation->invitee?->avatar_path,
+                    'status' => 'invited',
+                    'created_at' => $invitation->created_at,
+                    'permissions' => [
+                        'can_view' => (bool) ($permissions['can_view'] ?? false),
+                        'can_update_theme' => (bool) ($permissions['can_update_theme'] ?? false),
+                        'can_add_task' => (bool) ($permissions['can_add_task'] ?? false),
+                        'can_edit_task' => (bool) ($permissions['can_edit_task'] ?? false),
+                        'can_delete_task' => (bool) ($permissions['can_delete_task'] ?? false),
+                        'can_validate_task' => (bool) ($permissions['can_validate_task'] ?? false),
+                    ],
+                ];
+            });
+
+        $allMembers = collect([$ownerData])->merge($members)->merge($pendingInvitations);
 
         return ApiResponse::builder()
             ->success()
@@ -132,7 +163,7 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
-    public function inviteUser(Request $request, string $themeId): JsonResponse
+    public function inviteUser(Request $request, string $themeId, InvitationService $invitationService): JsonResponse
     {
         $theme = $this->getThemeOrFail($themeId);
 
@@ -150,75 +181,62 @@ class ThemeMemberController extends Controller
             throw new ApiException('permission.denied', [], 403, 'Cannot invite theme owner');
         }
 
-        if (ThemeUserPermission::where('theme_id', $themeId)
-            ->where('user_id', $validated['user_id'])
-            ->first()) {
+        if (
+            ThemeUserPermission::where('theme_id', $themeId)
+                ->where('user_id', $validated['user_id'])
+                ->first()
+        ) {
             throw new ApiException('theme.member.already_exists', ['user_id' => $validated['user_id']], 409, 'User is already a member of this theme');
         }
 
-        $permission = ThemeUserPermission::create([
-            'theme_id' => $themeId,
-            'user_id' => $validated['user_id'],
-            'can_view' => $validated['can_view'],
-            'can_update_theme' => $validated['can_update_theme'],
-            'can_add_task' => $validated['can_add_task'],
-            'can_edit_task' => $validated['can_edit_task'],
-            'can_delete_task' => $validated['can_delete_task'],
-            'can_validate_task' => $validated['can_validate_task'],
-            'status' => 'invited',
-            'invited_at' => now(),
-        ]);
+        if (
+            Invitation::where('invitee_user_id', $validated['user_id'])
+                ->where('invitable_type', Theme::class)
+                ->where('invitable_id', $themeId)
+                ->where('status', 'pending')
+                ->exists()
+        ) {
+            throw new ApiException('theme.invitation.already_exists', ['user_id' => $validated['user_id']], 409, 'User has already been invited to this theme');
+        }
 
         $invitedUser = User::findOrFail($validated['user_id']);
+        $expiresAt = now()->addDays((int) config('invitations.expires_days', 7));
 
-        $acceptLink = URL::temporarySignedRoute(
-            'theme.accept-invitation',
-            now()->addDays(7),
-            [
-                'theme_id' => $themeId,
-                'user_id' => $invitedUser->user_id,
-                'token' => Str::random(40),
-                'action' => 'accept',
-            ]
-        );
+        $invitation = Invitation::create([
+            'inviter_user_id' => $this->user->user_id,
+            'invitee_user_id' => $invitedUser->user_id,
+            'invitable_type' => Theme::class,
+            'invitable_id' => $themeId,
+            'payload' => [
+                'model' => 'theme',
+                'permissions' => [
+                    'can_view' => $validated['can_view'],
+                    'can_update_theme' => $validated['can_update_theme'],
+                    'can_add_task' => $validated['can_add_task'],
+                    'can_edit_task' => $validated['can_edit_task'],
+                    'can_delete_task' => $validated['can_delete_task'],
+                    'can_validate_task' => $validated['can_validate_task'],
+                ],
+            ],
+            'status' => 'pending',
+            'expires_at' => $expiresAt,
+        ]);
 
-        $declineLink = URL::temporarySignedRoute(
-            'theme.accept-invitation',
-            now()->addDays(7),
-            [
-                'theme_id' => $themeId,
-                'user_id' => $invitedUser->user_id,
-                'token' => Str::random(40),
-                'action' => 'decline',
-            ]
-        );
-
-        try {
-            Mail::to($invitedUser->email)
-                ->send(new ThemeInvitation(
-                    $theme,
-                    $this->user,
-                    $invitedUser,
-                    $acceptLink,
-                    $declineLink
-                ));
-        } catch (Exception $e) {
-            $permission->delete();
-            throw new ApiException('common.error', [], 500, 'Error sending invitation email');
-        }
+        $invitationService->sendCreatedEmail($invitation);
 
         return ApiResponse::builder()
             ->success(201)
             ->messageCode('theme.invite.sent', ['email' => $invitedUser->email])
             ->data([
                 'invitation' => [
+                    'invitation_id' => $invitation->invitation_id,
                     'user_id' => $invitedUser->user_id,
                     'username' => $invitedUser->username,
                     'email' => $invitedUser->email,
                     'first_name' => $invitedUser->first_name,
                     'last_name' => $invitedUser->last_name,
-                    'status' => 'invited',
-                    'invited_at' => $permission->invited_at,
+                    'status' => $invitation->status,
+                    'created_at' => $invitation->created_at,
                 ],
             ])
             ->json();

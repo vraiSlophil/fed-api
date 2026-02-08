@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Notifications\QueuedResetPassword;
+use App\Notifications\QueuedVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -103,6 +105,22 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('status', 'active')
             ->orWhere('status', 'trialing')
             ->latest('started_at');
+    }
+
+    /**
+     * Send the email verification notification on the email queue.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new QueuedVerifyEmail);
+    }
+
+    /**
+     * Send the password reset notification on the reset queue.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
     }
 
     /**

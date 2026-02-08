@@ -201,12 +201,11 @@ class CompleteDataSeeder extends Seeder
                     ]);
                 } else {
                     // Utilisateurs normaux avec permissions variées
-                    $permissionType = fake()->randomElement(['full', 'limited', 'readonly', 'invited']);
+                    $permissionType = fake()->randomElement(['full', 'limited', 'readonly']);
 
                     $factory = match ($permissionType) {
                         'full' => ThemeUserPermission::factory()->fullAccess(),
                         'readonly' => ThemeUserPermission::factory()->readOnly(),
-                        'invited' => ThemeUserPermission::factory()->invited(),
                         default => ThemeUserPermission::factory()->active(),
                     };
 

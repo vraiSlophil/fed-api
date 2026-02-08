@@ -17,6 +17,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dedicated Mail Queues
+    |--------------------------------------------------------------------------
+    |
+    | Separate queues allow prioritizing critical emails (verification/reset)
+    | over lower-priority ones (invitations).
+    |
+    */
+
+    'mail_queues' => [
+        'verification' => env('MAIL_QUEUE_VERIFICATION', 'emails-verification'),
+        'reset' => env('MAIL_QUEUE_PASSWORD_RESET', 'emails-password-reset'),
+        'invitation' => env('MAIL_QUEUE_INVITATION', 'emails-invitation'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Connections
     |--------------------------------------------------------------------------
     |
