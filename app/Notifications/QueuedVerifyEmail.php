@@ -43,10 +43,10 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
 
         $frontendBase = rtrim((string) config('app.frontend_url'), '/');
         $path = (string) config('app.frontend_verify_email_path', '/verify-email');
-        $frontendPath = '/' . ltrim($path, '/');
+        $frontendPath = '/'.ltrim($path, '/');
         $query = parse_url($signedUrl, PHP_URL_QUERY);
 
-        return $query ? $frontendBase . $frontendPath . '?' . $query : $frontendBase . $frontendPath;
+        return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
     }
 
     public function failed($notifiable, Throwable $e): void

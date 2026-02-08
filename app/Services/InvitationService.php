@@ -17,18 +17,17 @@ class InvitationService
 {
     public function __construct(
         private readonly InvitationLinkGenerator $linkGenerator
-    ) {
-    }
+    ) {}
 
     public function sendCreatedEmail(Invitation $invitation): void
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
 
-        if (!$invitation->invitee || !$invitation->inviter) {
+        if (! $invitation->invitee || ! $invitation->inviter) {
             throw new ApiException('invitation.invalid', [], 400, 'Invalid invitation users');
         }
 
-        if (!$invitation->invitable instanceof Theme) {
+        if (! $invitation->invitable instanceof Theme) {
             throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
         }
 
@@ -72,7 +71,7 @@ class InvitationService
             return false;
         }
 
-        if (!$invitation->expires_at || $invitation->expires_at->isFuture()) {
+        if (! $invitation->expires_at || $invitation->expires_at->isFuture()) {
             return false;
         }
 
@@ -86,7 +85,7 @@ class InvitationService
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
 
-        if (!$invitation->inviter) {
+        if (! $invitation->inviter) {
             return;
         }
 
@@ -107,7 +106,7 @@ class InvitationService
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
 
-        if (!$invitation->inviter) {
+        if (! $invitation->inviter) {
             return;
         }
 
@@ -128,7 +127,7 @@ class InvitationService
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
 
-        if (!$invitation->inviter) {
+        if (! $invitation->inviter) {
             return;
         }
 

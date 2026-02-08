@@ -26,7 +26,7 @@ class ThemeInvitationController extends Controller
 
         $invitation = Invitation::where('invitation_id', $invitationId)->firstOrFail();
 
-        if (!$request->user() || $invitation->invitee_user_id !== $request->user()->user_id) {
+        if (! $request->user() || $invitation->invitee_user_id !== $request->user()->user_id) {
             throw new ApiException('permission.denied', [], 403, 'Permission denied');
         }
 
@@ -48,7 +48,7 @@ class ThemeInvitationController extends Controller
         if ($status === 'accepted') {
             $invitable = $invitation->invitable;
 
-            if (!$invitable instanceof Invitable) {
+            if (! $invitable instanceof Invitable) {
                 throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
             }
 

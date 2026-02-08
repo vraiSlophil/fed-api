@@ -50,9 +50,9 @@ class InvitationLinkGenerator
                 ? str_replace('{invitation}', $invitationId, $pathTemplate)
                 : $pathTemplate);
 
-        $frontendPath = '/' . ltrim($frontendPath, '/');
+        $frontendPath = '/'.ltrim($frontendPath, '/');
         $query = parse_url($signedApiUrl, PHP_URL_QUERY);
 
-        return $query ? $frontendBase . $frontendPath . '?' . $query : $frontendBase . $frontendPath;
+        return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
     }
 }
