@@ -1,8 +1,8 @@
-FROM php:8.3-cli
+FROM php:8.5-cli
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev postgresql-client \
-    git curl unzip \
+    curl unzip \
     libzip-dev \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libicu-dev \
