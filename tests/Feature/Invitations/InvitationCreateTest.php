@@ -81,3 +81,98 @@ it('refuse une double invitation pending', function () {
         ->assertStatus(409)
         ->assertJsonPath('message_code', 'theme.invitation.already_exists');
 });
+
+it('refuse de creer une invitation sans authentification', function () {
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+
+    $this->postJson("/api/themes/{$theme->theme_id}/members", [
+        'user_id' => $invitee->user_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => false,
+        'can_edit_task' => false,
+        'can_delete_task' => false,
+        'can_validate_task' => false,
+    ])->assertStatus(401)
+        ->assertJsonPath('message_code', 'auth.failed');
+});
+
+it('refuse d inviter le proprietaire du theme', function () {
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    Sanctum::actingAs($owner, ['access']);
+
+    $this->postJson("/api/themes/{$theme->theme_id}/members", [
+        'user_id' => $owner->user_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => false,
+        'can_edit_task' => false,
+        'can_delete_task' => false,
+        'can_validate_task' => false,
+    ])->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+});
+
+it('refuse d inviter un utilisateur deja membre du theme', function () {
+    Mail::fake();
+
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+    $inviteePlayground = Playground::where('user_id', $invitee->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    \App\Models\ThemeUserPermission::create([
+        'theme_id' => $theme->theme_id,
+        'user_id' => $invitee->user_id,
+        'target_playground_id' => $inviteePlayground->playground_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => false,
+        'can_edit_task' => false,
+        'can_delete_task' => false,
+        'can_validate_task' => false,
+        'status' => 'active',
+    ]);
+
+    Sanctum::actingAs($owner, ['access']);
+
+    $this->postJson("/api/themes/{$theme->theme_id}/members", [
+        'user_id' => $invitee->user_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => false,
+        'can_edit_task' => false,
+        'can_delete_task' => false,
+        'can_validate_task' => false,
+    ])->assertStatus(409)
+        ->assertJsonPath('message_code', 'theme.member.already_exists');
+});

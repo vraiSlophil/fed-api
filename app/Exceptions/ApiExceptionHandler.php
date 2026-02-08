@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 final class ApiExceptionHandler
 {
@@ -55,17 +56,27 @@ final class ApiExceptionHandler
             return $level === 'error' ? 'errors' : 'warnings';
         };
 
-        $logException = static function (\Throwable $e, string $requestId, $request, string $level) use ($channelForLevel): void {
-            Log::channel($channelForLevel($level))->log($level, 'API exception', [
-                'request_id' => $requestId,
-                'exception_class' => get_class($e),
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'url' => $request->fullUrl(),
-                'method' => $request->method(),
-            ]);
+        $logException = static function (Throwable $e, string $requestId, $request, string $level) use ($channelForLevel): void {
+            try {
+                Log::channel($channelForLevel($level))->log($level, 'API exception', [
+                    'request_id' => $requestId,
+                    'exception_class' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'url' => $request->fullUrl(),
+                    'method' => $request->method(),
+                ]);
+            } catch (Throwable $logFailure) {
+                // Never throw from exception logging to avoid recursive failure loops.
+                error_log(sprintf(
+                    '[api-exception-log-failure] request_id=%s original=%s logger_error=%s',
+                    $requestId,
+                    get_class($e),
+                    $logFailure->getMessage()
+                ));
+            }
         };
 
         // Always return the API envelope for /api/* routes, even without Accept: application/json.
@@ -213,7 +224,7 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (\Throwable $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (Throwable $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'error');
 

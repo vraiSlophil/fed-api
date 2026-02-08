@@ -51,3 +51,19 @@ it('refuse la recherche utilisateur si le demandeur n est pas proprietaire du th
         ->assertStatus(403)
         ->assertJsonPath('message_code', 'permission.denied');
 });
+
+it('refuse la recherche utilisateur sans authentification', function () {
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $this->getJson('/api/users/search?search=sea&theme_id='.$theme->theme_id)
+        ->assertStatus(401)
+        ->assertJsonPath('message_code', 'auth.failed');
+});

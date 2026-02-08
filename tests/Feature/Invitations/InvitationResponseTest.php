@@ -354,3 +354,213 @@ it('rejette une invitation expiree meme avec signature valide', function () {
         ->assertStatus(410)
         ->assertJsonPath('message_code', 'invitation.expired');
 });
+
+it('rejette une invitation si status est manquant', function () {
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+
+    $invitation = Invitation::create([
+        'inviter_user_id' => $owner->user_id,
+        'invitee_user_id' => $invitee->user_id,
+        'invitable_type' => Theme::class,
+        'invitable_id' => $theme->theme_id,
+        'payload' => ['permissions' => ['can_view' => true]],
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(60),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'invitations.respond',
+        now()->addMinutes(60),
+        ['invitationId' => $invitation->invitation_id],
+        false
+    );
+
+    Sanctum::actingAs($invitee, ['access']);
+
+    $this->patchJson($url)
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
+});
+
+it('rejette une invitation si status est invalide', function () {
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+
+    $invitation = Invitation::create([
+        'inviter_user_id' => $owner->user_id,
+        'invitee_user_id' => $invitee->user_id,
+        'invitable_type' => Theme::class,
+        'invitable_id' => $theme->theme_id,
+        'payload' => ['permissions' => ['can_view' => true]],
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(60),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'invitations.respond',
+        now()->addMinutes(60),
+        [
+            'invitationId' => $invitation->invitation_id,
+            'status' => 'wrong-status',
+        ],
+        false
+    );
+
+    Sanctum::actingAs($invitee, ['access']);
+
+    $this->patchJson($url)
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
+});
+
+it('accepte une invitation avec target playground explicite', function () {
+    Mail::fake();
+
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+    $customPlayground = Playground::factory()->create([
+        'user_id' => $invitee->user_id,
+        'is_default' => false,
+    ]);
+
+    $invitation = Invitation::create([
+        'inviter_user_id' => $owner->user_id,
+        'invitee_user_id' => $invitee->user_id,
+        'invitable_type' => Theme::class,
+        'invitable_id' => $theme->theme_id,
+        'payload' => ['permissions' => ['can_view' => true]],
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(60),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'invitations.respond',
+        now()->addMinutes(60),
+        [
+            'invitationId' => $invitation->invitation_id,
+            'status' => 'accepted',
+        ],
+        false
+    );
+
+    Sanctum::actingAs($invitee, ['access']);
+
+    $this->patchJson($url, ['target_playground_id' => $customPlayground->playground_id])
+        ->assertStatus(200)
+        ->assertJsonPath('message_code', 'theme.invitation.accepted');
+
+    $permission = ThemeUserPermission::where('theme_id', $theme->theme_id)
+        ->where('user_id', $invitee->user_id)
+        ->firstOrFail();
+
+    expect($permission->target_playground_id)->toBe($customPlayground->playground_id);
+});
+
+it('rejette target playground qui ne appartient pas a invite', function () {
+    Mail::fake();
+
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $foreignPlayground = Playground::factory()->create([
+        'user_id' => $otherUser->user_id,
+        'is_default' => false,
+    ]);
+
+    $invitation = Invitation::create([
+        'inviter_user_id' => $owner->user_id,
+        'invitee_user_id' => $invitee->user_id,
+        'invitable_type' => Theme::class,
+        'invitable_id' => $theme->theme_id,
+        'payload' => ['permissions' => ['can_view' => true]],
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(60),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'invitations.respond',
+        now()->addMinutes(60),
+        [
+            'invitationId' => $invitation->invitation_id,
+            'status' => 'accepted',
+        ],
+        false
+    );
+
+    Sanctum::actingAs($invitee, ['access']);
+
+    $this->patchJson($url, ['target_playground_id' => $foreignPlayground->playground_id])
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
+
+it('rejette une invitation avec invitable non supporte', function () {
+    $owner = User::factory()->create();
+    $invitee = User::factory()->create();
+    $playground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $invitation = Invitation::create([
+        'inviter_user_id' => $owner->user_id,
+        'invitee_user_id' => $invitee->user_id,
+        'invitable_type' => Playground::class,
+        'invitable_id' => $playground->playground_id,
+        'payload' => ['permissions' => ['can_view' => true]],
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(60),
+    ]);
+
+    $url = URL::temporarySignedRoute(
+        'invitations.respond',
+        now()->addMinutes(60),
+        [
+            'invitationId' => $invitation->invitation_id,
+            'status' => 'accepted',
+        ],
+        false
+    );
+
+    Sanctum::actingAs($invitee, ['access']);
+
+    $this->patchJson($url)
+        ->assertStatus(400)
+        ->assertJsonPath('message_code', 'invitation.invalid');
+});
