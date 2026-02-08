@@ -13,9 +13,9 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
 
   run_in_container() {
     if ${COMPOSE} ps -q laravel >/dev/null 2>&1 && [ -n "$(${COMPOSE} ps -q laravel 2>/dev/null || true)" ]; then
-      ${COMPOSE} exec -T laravel sh -c "git config --global --add safe.directory /app && $1"
+      ${COMPOSE} exec -T laravel sh -c "$1"
     else
-      ${COMPOSE} run --rm --no-deps --remove-orphans laravel sh -c "git config --global --add safe.directory /app && $1"
+      ${COMPOSE} run --rm --no-deps --remove-orphans laravel sh -c "$1"
     fi
   }
 
