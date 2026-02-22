@@ -30,6 +30,10 @@ Artisan::command('invitations:expire', function (InvitationService $invitationSe
         ->orderBy('expires_at')
         ->chunk(100, function ($invitations) use ($invitationService, &$processed) {
             foreach ($invitations as $invitation) {
+                if (! $invitation instanceof Invitation) {
+                    continue;
+                }
+
                 $invitationService->expireInvitation($invitation);
                 $processed++;
             }
