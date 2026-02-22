@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\Theme;
-use App\Models\UserMetric;
+use App\Models\Metrics\UserMetric;
+use App\Models\Themes\Theme;
 
 class ThemeObserver
 {

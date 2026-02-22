@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Invitation;
-use App\Models\Playground;
-use App\Models\Theme;
-use App\Models\ThemeUserPermission;
-use App\Models\User;
+use App\Models\Auth\User;
+use App\Models\Invitations\Invitation;
+use App\Models\Playgrounds\Playground;
+use App\Models\Themes\Theme;
+use App\Models\Themes\ThemeUserPermission;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -51,7 +51,7 @@ it('accepte une invitation via signature et auth', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false
@@ -104,7 +104,7 @@ it('refuse une invitation via signature et auth', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'declined',
         ],
         false
@@ -155,7 +155,7 @@ it('rejette une invitation sans authentification', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false
@@ -232,7 +232,7 @@ it('rejette une invitation pour un utilisateur different', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false
@@ -252,7 +252,7 @@ it('rejette une invitation inexistante', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => (string) Str::uuid(),
+            'invitation' => (string) Str::uuid(),
             'status' => 'accepted',
         ],
         false
@@ -296,7 +296,7 @@ it('rejette une invitation deja traitee', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'declined',
         ],
         false
@@ -342,7 +342,7 @@ it('rejette une invitation expiree meme avec signature valide', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false
@@ -381,7 +381,7 @@ it('rejette une invitation si status est manquant', function () {
     $url = URL::temporarySignedRoute(
         'invitations.respond',
         now()->addMinutes(60),
-        ['invitationId' => $invitation->invitation_id],
+        ['invitation' => $invitation->invitation_id],
         false
     );
 
@@ -419,7 +419,7 @@ it('rejette une invitation si status est invalide', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'wrong-status',
         ],
         false
@@ -465,7 +465,7 @@ it('accepte une invitation avec target playground explicite', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false
@@ -518,7 +518,7 @@ it('rejette target playground qui ne appartient pas a invite', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false
@@ -552,7 +552,7 @@ it('rejette une invitation avec invitable non supporte', function () {
         'invitations.respond',
         now()->addMinutes(60),
         [
-            'invitationId' => $invitation->invitation_id,
+            'invitation' => $invitation->invitation_id,
             'status' => 'accepted',
         ],
         false

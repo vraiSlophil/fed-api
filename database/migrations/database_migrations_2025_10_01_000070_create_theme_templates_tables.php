@@ -8,6 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $taskStatuses = ['todo', 'in_progress', 'done'];
+
         Schema::create('theme_templates', function (Blueprint $table) {
             $table->uuid('template_id')->primary();
             $table->uuid('user_id');
@@ -20,13 +22,13 @@ return new class extends Migration
             $table->index(['user_id', 'visibility']);
         });
 
-        Schema::create('theme_template_items', function (Blueprint $table) {
+        Schema::create('theme_template_items', function (Blueprint $table) use ($taskStatuses) {
             $table->uuid('item_id')->primary();
             $table->uuid('template_id');
             $table->integer('position');
             $table->string('title', 200);
             $table->text('default_description')->nullable();
-            $table->enum('default_status', ['todo', 'in_progress', 'done'])->nullable();
+            $table->enum('default_status', $taskStatuses)->nullable();
             $table->json('default_metadata')->nullable();
             $table->timestamps();
 

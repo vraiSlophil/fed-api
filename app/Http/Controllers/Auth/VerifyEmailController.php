@@ -2,50 +2,22 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Exceptions\ApiException;
+use App\Domain\Auth\Actions\AuthActionService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Responses\ApiResponse;
-use App\Models\User;
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
 
 class VerifyEmailController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __construct(private readonly AuthActionService $actionService) {}
+
+    public function __invoke(VerifyEmailRequest $request): JsonResponse
     {
-        $validated = Validator::make($request->query(), [
-            'id' => ['required', 'string'],
-            'hash' => ['required', 'string'],
-        ])->validate();
+        $validated = $request->validated();
+        $result = $this->actionService->verifyEmail($validated['id'], (string) $validated['hash']);
 
-        $id = $validated['id'];
-        $givenHash = (string) $validated['hash'];
-
-        try {
-            $user = User::where('user_id', $id)->firstOrFail();
-        } catch (ModelNotFoundException $e) {
-            throw new ApiException(
-                messageCode: 'resource.not_found',
-                messageParams: ['resource' => 'user', 'id' => $id],
-                status: 404,
-                message: 'User not found'
-            );
-        }
-
-        $expectedHash = sha1($user->getEmailForVerification());
-
-        if (! hash_equals($expectedHash, $givenHash)) {
-            throw new ApiException(
-                messageCode: 'auth.verification.invalid',
-                messageParams: [],
-                status: 400,
-                message: 'Invalid verification link'
-            );
-        }
-
-        if ($user->hasVerifiedEmail()) {
+        if ($result['already_verified']) {
             return ApiResponse::success(
                 data: null,
                 message: 'Email already verified',
@@ -55,14 +27,10 @@ class VerifyEmailController extends Controller
             );
         }
 
-        if ($user->markEmailAsVerified()) {
-            event(new Verified($user));
-        }
-
         return ApiResponse::success(
+            data: null,
             message: 'Email verified',
             status: 200,
-            data: null,
             messageCode: 'auth.verification.success',
             messageParams: []
         );

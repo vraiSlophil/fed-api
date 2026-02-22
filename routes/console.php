@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Invitation;
-use App\Models\RevokedRefreshToken;
-use App\Services\InvitationService;
+use App\Domain\Invitations\Services\InvitationService;
+use App\Models\Auth\RevokedRefreshToken;
+use App\Models\Invitations\Invitation;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;

@@ -9,7 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tasks', function (Blueprint $table) {
+        $taskStatuses = ['todo', 'in_progress', 'done'];
+
+        Schema::create('tasks', function (Blueprint $table) use ($taskStatuses) {
             $table->uuid('task_id')
                 ->default(DB::raw('gen_random_uuid()'));
             $table->primary('task_id'); // Séparé explicitement
@@ -17,7 +19,7 @@ return new class extends Migration
             $table->uuid('user_id');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->enum('status', ['todo', 'in_progress', 'done'])->default('todo');
+            $table->enum('status', $taskStatuses)->default($taskStatuses[0]);
             $table->integer('position')->nullable();
             $table->smallInteger('priority')->default(0);
             $table->timestamp('due_at')->nullable();

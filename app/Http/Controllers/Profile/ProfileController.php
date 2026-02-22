@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers\Profile;
+
+use App\Domain\Profile\Actions\ProfileActionService;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Profile\UpdateProfileAvatarRequest;
+use App\Http\Requests\Profile\UpdateProfilePasswordRequest;
+use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Responses\ApiResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class ProfileController extends Controller
+{
+    public function __construct(private readonly ProfileActionService $actionService) {}
+
+    public function show(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('profile.show.success')
+            ->data([
+                'user' => [
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'avatar_path' => $user->avatar_path,
+                ],
+            ])
+            ->json();
+    }
+
+    public function update(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $this->actionService->update($request->user(), $request->validated());
+
+        if ($user->email_verified_at === null && array_key_exists('email', $request->validated())) {
+            return ApiResponse::builder()
+                ->success()
+                ->messageCode('profile.update.email_changed', ['email_verification_sent' => true])
+                ->data([
+                    'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at']),
+                ])
+                ->json();
+        }
+
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('profile.update.success')
+            ->data([
+                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at']),
+            ])
+            ->json();
+    }
+
+    public function updatePassword(UpdateProfilePasswordRequest $request): JsonResponse
+    {
+        $this->actionService->updatePassword($request->user(), $request->validated());
+
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('auth.password.updated')
+            ->json();
+    }
+
+    public function updateAvatar(UpdateProfileAvatarRequest $request): JsonResponse
+    {
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $user = $this->actionService->updateAvatar($request->user(), $path);
+
+        return ApiResponse::builder()
+            ->success()
+            ->messageCode('profile.avatar.updated')
+            ->data([
+                'avatar_path' => $user->avatar_path,
+            ])
+            ->json();
+    }
+}

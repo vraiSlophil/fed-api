@@ -2,53 +2,19 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Exceptions\ApiException;
+use App\Domain\Auth\Actions\AuthActionService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Responses\ApiResponse;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Password;
-use Throwable;
 
 class PasswordResetLinkController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __construct(private readonly AuthActionService $actionService) {}
+
+    public function __invoke(ForgotPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
-        $status = null;
-        $user = User::where('email', $request->input('email'))->first();
-
-        try {
-            $status = Password::sendResetLink($request->only('email'));
-        } catch (Throwable $e) {
-            if ($user) {
-                Log::error('Password reset email failed to dispatch', [
-                    'user_id' => $user->user_id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            throw new ApiException(
-                messageCode: 'auth.reset_link.failed',
-                messageParams: ['reason' => 'dispatch_failed'],
-                status: 500,
-                message: 'Reset link could not be sent'
-            );
-        }
-
-        if ($status !== Password::RESET_LINK_SENT) {
-            throw new ApiException(
-                messageCode: 'auth.reset_link.failed',
-                messageParams: ['reason' => $status],
-                status: 400,
-                message: 'Reset link could not be sent'
-            );
-        }
+        $this->actionService->sendPasswordResetLink($request->validated('email'));
 
         return ApiResponse::success(
             data: null,

@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\Playground;
-use App\Models\User;
-use App\Models\UserMetric;
+use App\Models\Auth\User;
+use App\Models\Metrics\UserMetric;
+use App\Models\Playgrounds\Playground;
 
 class UserObserver
 {
