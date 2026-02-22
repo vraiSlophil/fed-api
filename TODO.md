@@ -3,6 +3,7 @@ AuthN (authentification) – backend d’abord
 #35 (backend) – Refresh token flow Sanctum pour BFF
 (cookie HttpOnly, rotation, TTL, tests)
 #21 (Backend)
+#43 (Backend)
 #30 (backend) – Blocage utilisateur + auth.blocked + revoke tokens
 #32 (backend) – Expiration tokens + revoke sur reset/change password
 AuthN – frontend

@@ -4,21 +4,15 @@ namespace App\Support\Pagination;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class OffsetPagination
+final class OffsetPagination
 {
-    public const DEFAULT_PAGE = 1;
-
-    public const DEFAULT_PER_PAGE = 15;
-
-    public const MAX_PER_PAGE = 100;
-
     public static function queryRules(): array
     {
         return [
             'page' => ['sometimes', 'integer', 'min:1'],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_PER_PAGE],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:'.self::maxPerPage()],
             'offset' => ['sometimes', 'integer', 'min:0'],
-            'limit' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_PER_PAGE],
+            'limit' => ['sometimes', 'integer', 'min:1', 'max:'.self::maxPerPage()],
         ];
     }
 
@@ -32,8 +26,8 @@ class OffsetPagination
         $offset = isset($validated['offset']) ? (int) $validated['offset'] : null;
 
         if ($limit !== null) {
-            $perPage = max(1, min(self::MAX_PER_PAGE, $limit));
-            $page = $offset !== null ? (int) floor($offset / $perPage) + 1 : self::DEFAULT_PAGE;
+            $perPage = min(max(1, $limit), self::maxPerPage());
+            $page = $offset !== null ? (int) floor($offset / $perPage) + 1 : self::defaultPage();
 
             return [
                 'page' => max(1, $page),
@@ -41,25 +35,43 @@ class OffsetPagination
             ];
         }
 
+        $page = (int) ($validated['page'] ?? self::defaultPage());
+        $perPage = (int) ($validated['per_page'] ?? self::defaultPerPage());
+
         return [
-            'page' => max(1, (int) ($validated['page'] ?? self::DEFAULT_PAGE)),
-            'per_page' => max(1, min(self::MAX_PER_PAGE, (int) ($validated['per_page'] ?? self::DEFAULT_PER_PAGE))),
+            'page' => max(1, $page),
+            'per_page' => min(max(1, $perPage), self::maxPerPage()),
         ];
     }
 
     /**
-     * @return array<string, int|bool|null>
+     * @return array{current_page:int, per_page:int, total:int, last_page:int, from:int|null, to:int|null, has_next:bool}
      */
     public static function meta(LengthAwarePaginator $paginator): array
     {
         return [
-            'current_page' => $paginator->currentPage(),
-            'last_page' => $paginator->lastPage(),
-            'per_page' => $paginator->perPage(),
-            'total' => $paginator->total(),
-            'from' => $paginator->firstItem(),
-            'to' => $paginator->lastItem(),
-            'has_more' => $paginator->hasMorePages(),
+            'current_page' => (int) $paginator->currentPage(),
+            'per_page' => (int) $paginator->perPage(),
+            'total' => (int) $paginator->total(),
+            'last_page' => (int) $paginator->lastPage(),
+            'from' => $paginator->firstItem() === null ? null : (int) $paginator->firstItem(),
+            'to' => $paginator->lastItem() === null ? null : (int) $paginator->lastItem(),
+            'has_next' => $paginator->hasMorePages(),
         ];
+    }
+
+    private static function defaultPage(): int
+    {
+        return max(1, (int) config('api_pagination.default_page', 1));
+    }
+
+    private static function defaultPerPage(): int
+    {
+        return min(max(1, (int) config('api_pagination.default_per_page', 15)), self::maxPerPage());
+    }
+
+    private static function maxPerPage(): int
+    {
+        return max(1, (int) config('api_pagination.max_per_page', 100));
     }
 }
