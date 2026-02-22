@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
-use App\Support\Auth\TokenService;
+use App\Domain\Auth\Services\TokenService;
+use App\Models\Auth\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
 it('login renvoie un token et permet d\'appeler une route protégée', function () {

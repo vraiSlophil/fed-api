@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Invitation;
-use App\Models\Playground;
-use App\Models\Theme;
-use App\Models\User;
+use App\Models\Auth\User;
+use App\Models\Invitations\Invitation;
+use App\Models\Playgrounds\Playground;
+use App\Models\Themes\Theme;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 
@@ -150,7 +150,7 @@ it('refuse d inviter un utilisateur deja membre du theme', function () {
         ->where('is_default', true)
         ->firstOrFail();
 
-    \App\Models\ThemeUserPermission::create([
+    \App\Models\Themes\ThemeUserPermission::create([
         'theme_id' => $theme->theme_id,
         'user_id' => $invitee->user_id,
         'target_playground_id' => $inviteePlayground->playground_id,

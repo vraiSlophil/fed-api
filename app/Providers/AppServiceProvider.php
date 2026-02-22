@@ -3,15 +3,16 @@
 namespace App\Providers;
 
 use App\Http\Responses\ApiResponse;
-use App\Models\Task;
-use App\Models\Theme;
-use App\Models\User;
+use App\Models\Auth\User;
+use App\Models\Tasks\Task;
+use App\Models\Themes\Theme;
 use App\Observers\TaskObserver;
 use App\Observers\ThemeObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\RateLimiter;
@@ -25,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Factory::guessFactoryNamesUsing(
+            static fn (string $modelName) => 'Database\\Factories\\'.class_basename($modelName).'Factory'
+        );
+
         RateLimiter::for('auth-login', function (Request $request) {
             $email = (string) $request->input('email', '');
             $key = Str::transliterate(Str::lower($email)).'|'.$request->ip();

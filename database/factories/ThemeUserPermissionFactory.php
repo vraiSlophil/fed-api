@@ -2,14 +2,17 @@
 
 namespace Database\Factories;
 
+use App\Models\Themes\ThemeUserPermission;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ThemeUserPermission>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Themes\ThemeUserPermission>
  */
 class ThemeUserPermissionFactory extends Factory
 {
+    protected $model = ThemeUserPermission::class;
+
     /**
      * Define the model's default state.
      *

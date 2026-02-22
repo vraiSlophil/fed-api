@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Invitation;
-use App\Models\RevokedRefreshToken;
-use App\Services\InvitationService;
+use App\Domain\Invitations\Services\InvitationService;
+use App\Models\Auth\RevokedRefreshToken;
+use App\Models\Invitations\Invitation;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -30,6 +30,10 @@ Artisan::command('invitations:expire', function (InvitationService $invitationSe
         ->orderBy('expires_at')
         ->chunk(100, function ($invitations) use ($invitationService, &$processed) {
             foreach ($invitations as $invitation) {
+                if (! $invitation instanceof Invitation) {
+                    continue;
+                }
+
                 $invitationService->expireInvitation($invitation);
                 $processed++;
             }

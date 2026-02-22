@@ -2,8 +2,8 @@
 
 namespace App\Invitations;
 
-use App\Models\Invitation;
-use App\Models\ThemeUserPermission;
+use App\Models\Invitations\Invitation;
+use App\Models\Themes\ThemeUserPermission;
 
 interface Invitable
 {

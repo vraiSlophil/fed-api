@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Playground;
-use App\Models\Theme;
-use App\Models\User;
+use App\Models\Auth\User;
+use App\Models\Playgrounds\Playground;
+use App\Models\Themes\Theme;
 use Laravel\Sanctum\Sanctum;
 
 it('autorise le proprietaire du theme a rechercher des utilisateurs', function () {
