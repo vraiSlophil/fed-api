@@ -2,13 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\Metrics\UserMetric;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\UserMetric>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Metrics\UserMetric>
  */
 class UserMetricFactory extends Factory
 {
+    protected $model = UserMetric::class;
+
     /**
      * Define the model's default state.
      *

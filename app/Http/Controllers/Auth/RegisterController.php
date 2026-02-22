@@ -2,48 +2,24 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Domain\Auth\Actions\AuthActionService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Responses\ApiResponse;
-use App\Models\User;
-use App\Support\Auth\TokenService;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class RegisterController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __construct(private readonly AuthActionService $actionService) {}
+
+    public function __invoke(RegisterRequest $request): JsonResponse
     {
-        $request->validate([
-            'username' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        $user = User::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->string('password')),
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-        ]);
-
-        event(new Registered($user));
-
-        $tokens = app(TokenService::class)->issueTokensFor($user);
+        $payload = $this->actionService->register($request->validated(), $request);
 
         return ApiResponse::builder()
             ->success(201, 'Account created')
             ->messageCode('auth.register.success')
-            ->data([
-                'user' => $user,
-                'access_token' => $tokens['access_token'],
-                'refresh_token' => $tokens['refresh_token'],
-                'access_expires_at' => $tokens['access_expires_at'],
-                'refresh_expires_at' => $tokens['refresh_expires_at'],
-            ])
+            ->data($payload)
             ->json();
     }
 }

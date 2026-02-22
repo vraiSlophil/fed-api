@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Playground;
-use App\Models\Task;
-use App\Models\Theme;
-use App\Models\ThemeUserPermission;
-use App\Models\User;
-use App\Models\UserMetric;
+use App\Models\Auth\User;
+use App\Models\Metrics\UserMetric;
+use App\Models\Playgrounds\Playground;
+use App\Models\Tasks\Task;
+use App\Models\Themes\Theme;
+use App\Models\Themes\ThemeUserPermission;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 

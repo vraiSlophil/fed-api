@@ -8,7 +8,7 @@ It reflects the code in `routes/api.php` and current controllers/services.
 Goal of this implementation:
 - keep flows stateless (Bearer token + signed URLs, no session/cookies)
 - expose JSON-only endpoints under `/api/*`
-- keep invitation routes REST-like (`PATCH /api/invitations/{invitationId}`)
+- keep invitation routes REST-like (`PATCH /api/invitations/{invitation}`)
 - make frontend responsible for reading query params from email links, then calling API
 
 ## 2) Common response format
@@ -235,7 +235,7 @@ Out-of-bounds page behavior:
 ### 4.3 Accept/decline invitation from signed link
 
 Endpoint:
-- `PATCH /api/invitations/{invitationId}`
+- `PATCH /api/invitations/{invitation}`
 - middleware: `auth:sanctum`, `access-token`, `signed:relative`, `throttle:6,1`
 
 Signed query params:
@@ -329,9 +329,9 @@ Invitation expiration:
 
 ## 7) Front integration checklist
 
-1. Parse query params from `/verify-email` and `/invite/{invitationId}` pages.
+1. Parse query params from `/verify-email` and the configured invitation page (`/invite/{invitationId}` by default).
 2. Use `GET /api/invitations` (paginated) to populate invitation center.
-3. Call signed invitation response endpoint with the exact signed query params.
+3. Call API endpoints with the exact signed query params.
 4. For invitation response, always send access token and `PATCH` with `status` in query.
 5. Handle business codes (`message_code`) in UI, not only HTTP status.
 6. Handle `410 invitation.expired` as terminal state (show expired UI).

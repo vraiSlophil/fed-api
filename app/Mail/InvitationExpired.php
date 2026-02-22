@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\Invitation;
+use App\Models\Invitations\Invitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;

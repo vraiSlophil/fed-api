@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Invitation;
-use App\Models\Playground;
-use App\Models\Theme;
-use App\Models\User;
+use App\Models\Auth\User;
+use App\Models\Invitations\Invitation;
+use App\Models\Playgrounds\Playground;
+use App\Models\Themes\Theme;
 use Laravel\Sanctum\Sanctum;
 
 function createPaginatedInvitationForInvitee(User $inviter, string $inviterPlaygroundId, User $invitee, string $status = 'pending'): Invitation

@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
-use App\Support\Auth\TokenService;
+use App\Domain\Auth\Services\TokenService;
+use App\Models\Auth\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;

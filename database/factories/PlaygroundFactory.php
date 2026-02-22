@@ -2,14 +2,17 @@
 
 namespace Database\Factories;
 
+use App\Models\Playgrounds\Playground;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Playground>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Playgrounds\Playground>
  */
 class PlaygroundFactory extends Factory
 {
+    protected $model = Playground::class;
+
     /**
      * Define the model's default state.
      *

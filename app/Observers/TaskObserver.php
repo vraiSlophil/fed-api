@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\Task;
-use App\Models\UserMetric;
+use App\Models\Metrics\UserMetric;
+use App\Models\Tasks\Task;
 
 class TaskObserver
 {

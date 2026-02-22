@@ -2,7 +2,7 @@
 
 namespace App\Models\Concerns;
 
-use App\Models\Invitation;
+use App\Models\Invitations\Invitation;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait HasInvitations
