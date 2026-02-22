@@ -162,7 +162,77 @@ Re-invite rule:
 - allowed after `declined` or `expired`
 - blocked only if another `pending` exists for same invitee + invitable
 
-### 4.2 Accept/decline invitation from signed link
+### 4.2 List invitations for invitation center (paginated)
+
+Endpoint:
+- `GET /api/invitations`
+- middleware: `auth:sanctum`, `access-token`, `verified`
+
+Query params:
+- `page` (default `1`)
+- `per_page` (default `15`, max `100`)
+- `status` (`pending|accepted|declined|expired`, default `pending`)
+
+Example request:
+
+```http
+GET /api/invitations?page=1&per_page=15&status=pending
+Authorization: Bearer <access_token>
+```
+
+Success:
+- `200 invitation.list.success`
+
+Example success payload:
+
+```json
+{
+  "status": "success",
+  "message_code": "invitation.list.success",
+  "data": [
+    {
+      "invitation_id": "uuid",
+      "status": "pending",
+      "created_at": "2026-02-22T10:00:00.000000Z",
+      "expires_at": "2026-03-01T10:00:00.000000Z",
+      "inviter": {
+        "user_id": "uuid",
+        "username": "owner",
+        "email": "owner@example.com",
+        "first_name": "Owner",
+        "last_name": "User",
+        "avatar_path": null
+      },
+      "invitable": {
+        "type": "theme",
+        "id": "uuid",
+        "title": "Theme title",
+        "color": "#0099ff"
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 15,
+    "total": 24,
+    "last_page": 2,
+    "from": 1,
+    "to": 15,
+    "has_next": true
+  }
+}
+```
+
+Errors:
+- `401 auth.failed`
+- `422 validation.invalid` (invalid `page`, `per_page`, or `status`)
+
+Out-of-bounds page behavior:
+- returns `200` with `data = []`
+- keeps `meta.current_page` equal to requested page
+- sets `meta.has_next = false`
+
+### 4.3 Accept/decline invitation from signed link
 
 Endpoint:
 - `PATCH /api/invitations/{invitationId}`
@@ -231,6 +301,10 @@ Errors:
 Important front rule:
 - do not mutate signed query params (`status`, `expires`, `signature`), otherwise signature fails.
 
+Important compatibility note:
+- issue #43 introduces pagination standardization and `GET /api/invitations`.
+- it does **not** change the signed response endpoint contract (`PATCH /api/invitations/{invitationId}`).
+
 ## 5) Email links and frontend paths
 
 Frontend URLs used in emails are configured by env:
@@ -256,7 +330,8 @@ Invitation expiration:
 ## 7) Front integration checklist
 
 1. Parse query params from `/verify-email` and `/invite/{invitationId}` pages.
-2. Call API endpoints with the exact signed query params.
-3. For invitation response, always send access token and `PATCH` with `status` in query.
-4. Handle business codes (`message_code`) in UI, not only HTTP status.
-5. Handle `410 invitation.expired` as terminal state (show expired UI).
+2. Use `GET /api/invitations` (paginated) to populate invitation center.
+3. Call signed invitation response endpoint with the exact signed query params.
+4. For invitation response, always send access token and `PATCH` with `status` in query.
+5. Handle business codes (`message_code`) in UI, not only HTTP status.
+6. Handle `410 invitation.expired` as terminal state (show expired UI).

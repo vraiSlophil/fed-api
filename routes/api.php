@@ -89,6 +89,8 @@ Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
 */
 Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function () {
 
+    Route::get('/invitations', [ThemeInvitationController::class, 'index'])->name('invitations.index');
+
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
 

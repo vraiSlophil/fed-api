@@ -5,52 +5,47 @@ namespace App\Http\Controllers;
 use App\Http\Responses\ApiResponse;
 use App\Models\Task;
 use App\Models\Theme;
+use App\Support\Pagination\OffsetPagination;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class TaskController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $userId = $request->user()->user_id;
+        $validatedPagination = Validator::make($request->query(), OffsetPagination::queryRules())->validate();
+        $pagination = OffsetPagination::extract($validatedPagination);
 
         $query = $this->buildTasksQueryForUser($userId, $request);
 
         $query = $this->applyFiltersAndSorting($query, $request);
 
         if ($request->has('search') && ! empty($request->search)) {
-            return $this->handleSearchRequest($query, $request);
+            return $this->handleSearchRequest($query, (string) $request->search, $pagination);
         }
 
-        $perPage = $request->has('per_page') ? intval($request->per_page) : 15;
-        $tasks = $query->paginate($perPage);
+        $tasks = $query->paginate($pagination['per_page'], ['*'], 'page', $pagination['page']);
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('task.list', [])
-            ->data([
-                'tasks' => $tasks->items(),
-                'pagination' => [
-                    'total' => $tasks->total(),
-                    'per_page' => $tasks->perPage(),
-                    'current_page' => $tasks->currentPage(),
-                    'last_page' => $tasks->lastPage(),
-                    'from' => $tasks->firstItem(),
-                    'to' => $tasks->lastItem(),
-                ],
-            ])
+            ->data($tasks->items())
+            ->meta(OffsetPagination::meta($tasks))
             ->json();
     }
 
     private function buildTasksQueryForUser(string $userId, Request $request): Builder
     {
-        $query = Task::where(function ($query) use ($userId) {
+        /** @var Builder $query */
+        $query = Task::query()->where(function (Builder $query) use ($userId) {
             $query->where('user_id', $userId);
 
-            $query->orWhereHas('theme.themeUserPermissions', function ($q) use ($userId) {
+            $query->orWhereHas('theme.themeUserPermissions', function (Builder $q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->where('can_view', true)
                     ->where('status', 'active');
@@ -60,10 +55,11 @@ class TaskController extends Controller
         if ($request->has('theme_id')) {
             $query->where('theme_id', $request->theme_id);
 
-            $theme = Theme::where('theme_id', $request->theme_id)
-                ->where(function ($q) use ($userId) {
+            Theme::query()
+                ->where('theme_id', $request->theme_id)
+                ->where(function (Builder $q) use ($userId) {
                     $q->where('owner_id', $userId)
-                        ->orWhereHas('themeUserPermissions', function ($subq) use ($userId) {
+                        ->orWhereHas('themeUserPermissions', function (Builder $subq) use ($userId) {
                             $subq->where('user_id', $userId)
                                 ->where('can_view', true)
                                 ->where('status', 'active');
@@ -114,9 +110,9 @@ class TaskController extends Controller
         return $query;
     }
 
-    private function handleSearchRequest(Builder $query, Request $request): JsonResponse
+    private function handleSearchRequest(Builder $query, string $search, array $pagination): JsonResponse
     {
-        $searchTerm = $this->normalizeString($request->search);
+        $searchTerm = $this->normalizeString($search);
 
         $tasks = $query->get();
 
@@ -126,24 +122,17 @@ class TaskController extends Controller
             return strpos($normalizedTitle, $searchTerm) !== false;
         });
 
-        $page = $request->input('page', 1);
-        $perPage = $request->input('per_page', 15);
-        $paginatedTasks = $this->paginateCollection($filteredTasks, $perPage, $page);
+        $paginatedTasks = $this->paginateCollection(
+            $filteredTasks,
+            $pagination['per_page'],
+            $pagination['page']
+        );
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('task.search', [])
-            ->data([
-                'tasks' => $paginatedTasks['items'],
-                'pagination' => [
-                    'total' => $paginatedTasks['total'],
-                    'per_page' => $paginatedTasks['per_page'],
-                    'current_page' => $paginatedTasks['current_page'],
-                    'last_page' => $paginatedTasks['last_page'],
-                    'from' => $paginatedTasks['from'],
-                    'to' => $paginatedTasks['to'],
-                ],
-            ])
+            ->data($paginatedTasks['items'])
+            ->meta($paginatedTasks['meta'])
             ->json();
     }
 
@@ -154,24 +143,28 @@ class TaskController extends Controller
         return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $string);
     }
 
-    private function paginateCollection($collection, $perPage, $page)
+    private function paginateCollection($collection, int $perPage, int $page): array
     {
         $total = $collection->count();
-        $lastPage = (int) ceil($total / $perPage);
+        $lastPage = max((int) ceil($total / $perPage), 1);
 
-        $currentPage = $page <= $lastPage ? $page : 1;
+        $currentPage = max(1, $page);
         $startIndex = ($currentPage - 1) * $perPage;
 
         $items = $collection->slice($startIndex, $perPage)->values()->all();
+        $itemsCount = count($items);
 
         return [
             'items' => $items,
-            'total' => $total,
-            'per_page' => $perPage,
-            'current_page' => $currentPage,
-            'last_page' => $lastPage,
-            'from' => $total > 0 ? $startIndex + 1 : null,
-            'to' => $total > 0 ? min($startIndex + $perPage, $total) : null,
+            'meta' => [
+                'current_page' => $currentPage,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => $lastPage,
+                'from' => $itemsCount > 0 ? $startIndex + 1 : null,
+                'to' => $itemsCount > 0 ? $startIndex + $itemsCount : null,
+                'has_next' => $currentPage < $lastPage,
+            ],
         ];
     }
 

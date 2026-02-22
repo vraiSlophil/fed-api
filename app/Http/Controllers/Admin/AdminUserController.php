@@ -11,6 +11,7 @@ use App\Models\Task;
 use App\Models\Theme;
 use App\Models\ThemeUserPermission;
 use App\Models\User;
+use App\Support\Pagination\OffsetPagination;
 use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\QueryException;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Throwable;
 
@@ -88,23 +90,15 @@ class AdminUserController extends Controller
 
         $query->orderBy($sortField, $sortDirection);
 
-        $perPage = $request->input('per_page', 20);
-        $perPage = max(1, min(100, intval($perPage)));
-
-        $users = $query->paginate($perPage);
+        $validatedPagination = Validator::make($request->query(), OffsetPagination::queryRules())->validate();
+        $pagination = OffsetPagination::extract($validatedPagination);
+        $users = $query->paginate($pagination['per_page'], ['*'], 'page', $pagination['page']);
 
         return ApiResponse::builder()
             ->success()
-            ->data([
-                'users' => $users->items(),
-                'pagination' => [
-                    'current_page' => $users->currentPage(),
-                    'total' => $users->total(),
-                    'per_page' => $users->perPage(),
-                    'last_page' => $users->lastPage(),
-                    'from' => $users->firstItem(),
-                    'to' => $users->lastItem(),
-                ],
+            ->data($users->items())
+            ->meta([
+                ...OffsetPagination::meta($users),
                 'sorting' => [
                     'sort_by' => $sortField,
                     'sort_direction' => $sortDirection,

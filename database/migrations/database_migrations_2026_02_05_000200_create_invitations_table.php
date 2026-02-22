@@ -25,6 +25,10 @@ return new class extends Migration
             $table->index(['invitable_type', 'invitable_id']);
             $table->index('invitee_user_id');
             $table->index('inviter_user_id');
+            $table->index(
+                ['invitee_user_id', 'status', 'created_at', 'invitation_id'],
+                'invitations_invitee_status_created_invitation_idx'
+            );
 
             $table->foreign('inviter_user_id')->references('user_id')->on('users')->cascadeOnDelete();
             $table->foreign('invitee_user_id')->references('user_id')->on('users')->cascadeOnDelete();

@@ -7,12 +7,13 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Playground;
 use App\Models\Task;
 use App\Models\Theme;
-use App\Utils\PaginationUtil;
+use App\Support\Pagination\OffsetPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class PlaygroundController extends Controller
@@ -354,39 +355,43 @@ class PlaygroundController extends Controller
 
     private function buildAccessibleThemesQuery(string $playgroundId, string $userId): Builder
     {
-        $ownedThemes = Theme::where('playground_id', $playgroundId)
-            ->where('owner_id', $userId);
+        /** @var Builder $query */
+        $query = Theme::query()
+            ->where('playground_id', $playgroundId)
+            ->where(function (Builder $query) use ($userId, $playgroundId) {
+                $query->where('owner_id', $userId)
+                    ->orWhere(function (Builder $sharedQuery) use ($userId, $playgroundId) {
+                        $sharedQuery->where('owner_id', '!=', $userId)
+                            ->whereHas('themeUserPermissions', function (Builder $permissionsQuery) use ($userId, $playgroundId) {
+                                $permissionsQuery->where('user_id', $userId)
+                                    ->where('status', 'active')
+                                    ->where('can_view', true)
+                                    ->where('target_playground_id', $playgroundId);
+                            });
+                    });
+            })
+            ->orderByDesc('created_at');
 
-        $sharedThemes = Theme::whereHas('themeUserPermissions', function ($query) use ($userId, $playgroundId) {
-            $query->where('user_id', $userId)
-                ->where('status', 'active')
-                ->where('can_view', true)
-                ->where('target_playground_id', $playgroundId);
-        })->whereNot('owner_id', $userId);
-
-        return $ownedThemes->union($sharedThemes)->orderBy('created_at', 'desc');
+        return $query;
     }
 
     private function getThemesPaginated(Request $request, Playground $playground): JsonResponse
     {
+        $validatedPagination = Validator::make($request->query(), OffsetPagination::queryRules())->validate();
+        $pagination = OffsetPagination::extract($validatedPagination);
+
         $themesQuery = $this->buildAccessibleThemesQuery(
             $playground->playground_id,
             $request->user()->user_id
         );
 
-        $paginator = PaginationUtil::paginate(
-            $themesQuery,
-            max(1, min(100, (int) $request->input('per_page', 20))),
-            max(1, (int) $request->input('page', 1))
-        );
+        $paginator = $themesQuery->paginate($pagination['per_page'], ['*'], 'page', $pagination['page']);
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('playground.themes.list.success')
-            ->data([
-                'themes' => $paginator['items'],
-                'pagination' => $paginator['pagination'],
-            ])
+            ->data($paginator->items())
+            ->meta(OffsetPagination::meta($paginator))
             ->json();
     }
 }
