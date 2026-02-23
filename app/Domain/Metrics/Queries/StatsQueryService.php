@@ -8,11 +8,24 @@ use App\Models\Themes\Theme;
 
 class StatsQueryService
 {
+    /**
+     * Compute global task statistics visible to the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @return array Global statistics visible to the authenticated user.
+     */
     public function globalForUser(User $user): array
     {
         return $this->buildTaskStats($user->user_id, null);
     }
 
+    /**
+     * Compute task statistics for a specific theme visible to the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return array Theme-scoped statistics visible to the authenticated user.
+     */
     public function forTheme(User $user, Theme $theme): array
     {
         $stats = $this->buildTaskStats($user->user_id, $theme->theme_id);
@@ -25,6 +38,13 @@ class StatsQueryService
         return $stats;
     }
 
+    /**
+     * Build task counters and completion rate for the requested scope.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @param  ?string  $themeId  Identifier of the theme.
+     * @return array Structured metrics payload returned to the caller.
+     */
     private function buildTaskStats(string $userId, ?string $themeId): array
     {
         $sevenDaysAgo = now()->subDays(7);

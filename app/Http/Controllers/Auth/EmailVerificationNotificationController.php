@@ -10,8 +10,19 @@ use Illuminate\Http\Request;
 
 class EmailVerificationNotificationController extends Controller
 {
+    /**
+     * Initialize the controller with authentication command handlers.
+     *
+     * @param  AuthActionService  $actionService  Service that dispatches verification notifications.
+     */
     public function __construct(private readonly AuthActionService $actionService) {}
 
+    /**
+     * Send a verification email unless the account is already verified.
+     *
+     * @param  Request  $request  Request that provides the currently authenticated user.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         $sent = $this->actionService->sendVerificationNotification($request->user());

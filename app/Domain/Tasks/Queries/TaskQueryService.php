@@ -10,6 +10,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class TaskQueryService
 {
+    /**
+     * Load a theme by ID before creating a task inside it.
+     *
+     * @param  string  $themeId  Identifier of the theme.
+     * @return Theme Theme instance returned after successful execution.
+     */
     public function findThemeForCreation(string $themeId): Theme
     {
         return Theme::query()
@@ -17,6 +23,14 @@ class TaskQueryService
             ->firstOrFail();
     }
 
+    /**
+     * Paginate tasks visible to the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  array  $filters  Filtering options applied to the query.
+     * @param  array  $pagination  Pagination options such as page and per-page values.
+     * @return LengthAwarePaginator Paginated collection of matching records.
+     */
     public function paginateForUser(User $user, array $filters, array $pagination): LengthAwarePaginator
     {
         $query = $this->buildTasksQueryForUser($user, $filters);
@@ -26,6 +40,13 @@ class TaskQueryService
         return $query->paginate($pagination['per_page'], ['*'], 'page', $pagination['page']);
     }
 
+    /**
+     * Find one task the authenticated user is allowed to view.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $taskId  Identifier of the task.
+     * @return Task Task instance returned after successful execution.
+     */
     public function findVisibleTaskForUser(User $user, string $taskId): Task
     {
         return Task::query()
@@ -41,6 +62,13 @@ class TaskQueryService
             ->firstOrFail();
     }
 
+    /**
+     * Build the base task query restricted to user visibility rules.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  array  $filters  Filtering options applied to the query.
+     * @return Builder Configured query builder instance.
+     */
     private function buildTasksQueryForUser(User $user, array $filters): Builder
     {
         $query = Task::query()->where(function (Builder $query) use ($user): void {
@@ -72,6 +100,13 @@ class TaskQueryService
         return $query;
     }
 
+    /**
+     * Apply filters and sorting options to the task query.
+     *
+     * @param  Builder  $query  Query builder instance used to compose the data access query.
+     * @param  array  $filters  Filtering options applied to the query.
+     * @return Builder Configured query builder instance.
+     */
     private function applyFiltersAndSorting(Builder $query, array $filters): Builder
     {
         if (isset($filters['status'])) {

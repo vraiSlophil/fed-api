@@ -21,8 +21,22 @@ use Throwable;
 
 class AuthActionService
 {
+    /**
+     * Initialize the service with token issuance and rotation utilities.
+     *
+     * @param  TokenService  $tokenService  Service used to issue access and refresh token pairs.
+     */
     public function __construct(private readonly TokenService $tokenService) {}
 
+    /**
+     * Authenticate credentials and issue auth tokens.
+     *
+     * @param  User  $user  User account resolved from submitted credentials.
+     * @param  Request  $request  HTTP request used to capture client IP metadata for the login event.
+     * @return array Authentication payload containing user data and issued tokens.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function login(User $user, Request $request): array
     {
         if ($user->isBlocked()) {
@@ -41,6 +55,13 @@ class AuthActionService
         ];
     }
 
+    /**
+     * Register a new user and issue initial authentication tokens.
+     *
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @param  Request  $request  HTTP request used to capture client IP metadata for the registration event.
+     * @return array Authentication payload containing user data and issued tokens.
+     */
     public function register(array $validated, Request $request): array
     {
         $user = User::create([
@@ -61,6 +82,12 @@ class AuthActionService
         ];
     }
 
+    /**
+     * Revoke auth tokens for the current session.
+     *
+     * @param  ?User  $user  Authenticated user whose tokens should be revoked for logout.
+     * @return void No return value.
+     */
     public function logout(?User $user): void
     {
         if ($user) {
@@ -68,6 +95,14 @@ class AuthActionService
         }
     }
 
+    /**
+     * Refresh the authentication token pair.
+     *
+     * @param  string  $refreshToken  Refresh token sent by the client.
+     * @return array Authentication payload containing user data and issued tokens.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function refresh(string $refreshToken): array
     {
         if ($refreshToken === '') {
@@ -126,6 +161,14 @@ class AuthActionService
         });
     }
 
+    /**
+     * Send a password-reset link to the provided email address.
+     *
+     * @param  string  $email  Email address associated with the account.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function sendPasswordResetLink(string $email): void
     {
         $user = User::where('email', $email)->first();
@@ -158,6 +201,14 @@ class AuthActionService
         }
     }
 
+    /**
+     * Reset the user password using a valid password-reset token.
+     *
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function resetPassword(array $validated): void
     {
         $status = Password::reset(
@@ -188,7 +239,13 @@ class AuthActionService
     }
 
     /**
-     * @return array{user:User,already_verified:bool}
+     * Verify a user's email address from signed route parameters.
+     *
+     * @param  string  $id  Opaque identifier provided by the signed verification URL.
+     * @param  string  $givenHash  Email verification hash extracted from the signed URL.
+     * @return array Payload containing the user and verification state after processing.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
      */
     public function verifyEmail(string $id, string $givenHash): array
     {
@@ -225,6 +282,14 @@ class AuthActionService
         ];
     }
 
+    /**
+     * Send an email-verification notification when the account is not yet verified.
+     *
+     * @param  User  $user  User account that should receive the verification notification.
+     * @return bool True when the condition is met; otherwise, false.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function sendVerificationNotification(User $user): bool
     {
         if ($user->hasVerifiedEmail()) {
@@ -245,6 +310,13 @@ class AuthActionService
         return true;
     }
 
+    /**
+     * Persist a refresh token revocation record before rotating tokens.
+     *
+     * @param  PersonalAccessToken  $token  Sanctum personal access token model instance.
+     * @param  User  $user  User account that owns the refresh token being revoked.
+     * @return void No return value.
+     */
     private function storeRevokedRefreshToken(PersonalAccessToken $token, User $user): void
     {
         RevokedRefreshToken::create([
@@ -256,6 +328,12 @@ class AuthActionService
         ]);
     }
 
+    /**
+     * Find a previously revoked refresh token by its raw token value.
+     *
+     * @param  string  $rawToken  Unencrypted token string handled by the authentication flow.
+     * @return ?RevokedRefreshToken Matching revoked token record, or null when no match exists.
+     */
     private function findRevokedRefreshToken(string $rawToken): ?RevokedRefreshToken
     {
         $hash = $this->hashToken($rawToken);
@@ -267,6 +345,12 @@ class AuthActionService
         return RevokedRefreshToken::where('token_hash', $hash)->first();
     }
 
+    /**
+     * Determine whether a revoked refresh token is still within the reuse grace period.
+     *
+     * @param  RevokedRefreshToken  $revoked  Persisted revoked refresh token record.
+     * @return bool True when the condition is met; otherwise, false.
+     */
     private function isWithinReuseGrace(RevokedRefreshToken $revoked): bool
     {
         $graceSeconds = (int) config('auth_tokens.refresh_reuse_grace_seconds', 0);
@@ -278,6 +362,12 @@ class AuthActionService
         return $revoked->revoked_at->addSeconds($graceSeconds)->isFuture();
     }
 
+    /**
+     * Find and lock a refresh token record before rotating it.
+     *
+     * @param  string  $rawToken  Unencrypted token string handled by the authentication flow.
+     * @return ?PersonalAccessToken Locked refresh-token record, or null when the token is invalid.
+     */
     private function findRefreshTokenForUpdate(string $rawToken): ?PersonalAccessToken
     {
         if ($rawToken === '') {
@@ -308,6 +398,12 @@ class AuthActionService
             ->first();
     }
 
+    /**
+     * Hash a raw refresh token into the storage lookup format.
+     *
+     * @param  string  $rawToken  Unencrypted token string handled by the authentication flow.
+     * @return ?string SHA-256 token hash, or null when the incoming token is empty.
+     */
     private function hashToken(string $rawToken): ?string
     {
         if ($rawToken === '') {
@@ -321,6 +417,12 @@ class AuthActionService
         return hash('sha256', $rawToken);
     }
 
+    /**
+     * Revoke all personal access tokens belonging to the specified user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return void No return value.
+     */
     private function revokeAllTokensForUser(string $userId): void
     {
         PersonalAccessToken::where('tokenable_id', $userId)

@@ -30,11 +30,21 @@ class ThemeTemplate extends Model
         'visibility' => 'string',
     ];
 
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * Define the one-to-many relationship to theme template item using template_id and template_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function items(): HasMany
     {
         return $this->hasMany(ThemeTemplateItem::class, 'template_id', 'template_id')

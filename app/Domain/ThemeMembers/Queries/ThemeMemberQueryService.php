@@ -9,6 +9,12 @@ use Illuminate\Support\Collection;
 
 class ThemeMemberQueryService
 {
+    /**
+     * Load a theme by identifier for member-management operations.
+     *
+     * @param  string  $themeId  Identifier of the theme.
+     * @return Theme Theme instance returned after successful execution.
+     */
     public function findTheme(string $themeId): Theme
     {
         return Theme::query()
@@ -16,6 +22,13 @@ class ThemeMemberQueryService
             ->firstOrFail();
     }
 
+    /**
+     * Search eligible users that can be invited to the theme.
+     *
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $search  Search keyword used to filter matching users.
+     * @return Collection Collection of matching records.
+     */
     public function searchUsers(Theme $theme, string $search): Collection
     {
         $ownerId = $theme->owner_id;
@@ -42,6 +55,12 @@ class ThemeMemberQueryService
         ]);
     }
 
+    /**
+     * Return owners, active members, and pending invitations for the theme.
+     *
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return Collection Collection of matching records.
+     */
     public function listMembers(Theme $theme): Collection
     {
         $owner = $theme->owner;

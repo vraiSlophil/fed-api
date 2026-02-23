@@ -7,7 +7,7 @@ use App\Models\Themes\Theme;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 
-it('autorise la re-invitation apres refus', function () {
+it('allows re-invitation after a decline', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -47,7 +47,7 @@ it('autorise la re-invitation apres refus', function () {
     ])->assertStatus(201);
 });
 
-it('refuse une double invitation pending', function () {
+it('rejects a duplicate pending invitation', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -82,7 +82,7 @@ it('refuse une double invitation pending', function () {
         ->assertJsonPath('message_code', 'theme.invitation.already_exists');
 });
 
-it('refuse de creer une invitation sans authentification', function () {
+it('rejects invitation creation without authentication', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -107,7 +107,7 @@ it('refuse de creer une invitation sans authentification', function () {
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
-it('refuse d inviter le proprietaire du theme', function () {
+it('rejects inviting the theme owner', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -132,7 +132,7 @@ it('refuse d inviter le proprietaire du theme', function () {
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
-it('refuse d inviter un utilisateur deja membre du theme', function () {
+it('rejects inviting a user who is already a theme member', function () {
     Mail::fake();
 
     $owner = User::factory()->create();

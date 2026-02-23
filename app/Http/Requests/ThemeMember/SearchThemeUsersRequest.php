@@ -6,11 +6,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SearchThemeUsersRequest extends FormRequest
 {
+    /**
+     * Allow validation of invitation candidate search parameters.
+     *
+     * @return bool Always true because theme member-management rights are enforced by policies.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for searching users eligible for theme invitations.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [

@@ -32,18 +32,30 @@ class ReminderNotification extends Model
         'delivered_at' => 'datetime',
     ];
 
+    /**
+     * Define the belongs-to relationship to reminder using reminder_id and reminder_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function reminder(): BelongsTo
     {
         return $this->belongsTo(Reminder::class, 'reminder_id', 'reminder_id');
     }
 
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     /**
-     * Vérifie si la notification a été délivrée
+     * Determine whether the reminder notification has been delivered.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isDelivered(): bool
     {
@@ -51,7 +63,9 @@ class ReminderNotification extends Model
     }
 
     /**
-     * Marque la notification comme délivrée
+     * Mark the reminder notification as delivered.
+     *
+     * @return self Current instance for fluent chaining.
      */
     public function markAsDelivered(): self
     {

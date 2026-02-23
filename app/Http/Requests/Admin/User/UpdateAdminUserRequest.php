@@ -8,11 +8,21 @@ use Illuminate\Validation\Rule;
 
 class UpdateAdminUserRequest extends FormRequest
 {
+    /**
+     * Allow request validation; route authorization is enforced by admin policies.
+     *
+     * @return bool Always true because authorization is handled outside this request object.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for updating an existing admin-managed user account.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         /** @var User $target */

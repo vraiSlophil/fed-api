@@ -5,12 +5,15 @@ namespace App\Domain\Admin\Users\Queries;
 use App\Models\Auth\Role;
 use App\Models\Auth\User;
 use App\Models\Invitations\Invitation;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdminUserQueryService
 {
     /**
-     * @return array{users:LengthAwarePaginator,sort_by:string,sort_direction:string,allowed_sort_fields:array<int,string>,filters:array<string,mixed>}
+     * Paginate user accounts for the admin listing with filters and sorting.
+     *
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @param  array  $pagination  Pagination options such as page and per-page values.
+     * @return array Paginated admin-user payload including items and metadata.
      */
     public function paginate(array $validated, array $pagination): array
     {
@@ -86,6 +89,11 @@ class AdminUserQueryService
         ];
     }
 
+    /**
+     * Return global admin metrics and available role filters.
+     *
+     * @return array Structured metrics payload returned to the caller.
+     */
     public function additionalStats(): array
     {
         return [
@@ -103,6 +111,12 @@ class AdminUserQueryService
         ];
     }
 
+    /**
+     * Return detailed profile and activity statistics for one user account.
+     *
+     * @param  User  $user  User account for which detailed admin stats are computed.
+     * @return array Detailed admin-user payload with recent activity counters.
+     */
     public function details(User $user): array
     {
         $user->load(['role', 'themes']);
@@ -149,6 +163,13 @@ class AdminUserQueryService
         ];
     }
 
+    /**
+     * Count distinct active days across theme and task creation events.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @param  int  $days  Number of days considered in the reporting window.
+     * @return int Total count computed by the method.
+     */
     private function getActiveDaysCount(string $userId, int $days): int
     {
         $startDate = now()->subDays($days);

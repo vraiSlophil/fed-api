@@ -21,6 +21,13 @@ class InvitationCreated extends Mailable
 
     public string $declineLink;
 
+    /**
+     * Initialize the mailable with invitation context and action links.
+     *
+     * @param  Invitation  $invitation  Invitation model used to render invite context.
+     * @param  string  $acceptLink  Absolute URL used to accept the invitation.
+     * @param  string  $declineLink  Absolute URL used to decline the invitation.
+     */
     public function __construct(Invitation $invitation, string $acceptLink, string $declineLink)
     {
         $this->invitation = $invitation;
@@ -28,17 +35,28 @@ class InvitationCreated extends Mailable
         $this->declineLink = $declineLink;
     }
 
+    /**
+     * Build the invitation-created email message.
+     *
+     * @return self Current instance for fluent chaining.
+     */
     public function build(): self
     {
         $resource = class_basename($this->invitation->invitable_type);
 
-        return $this->subject("Invitation a rejoindre {$resource}")
+        return $this->subject("Invitation to join {$resource}")
             ->markdown('emails.invitations.created')
             ->with([
                 'invitation' => $this->invitation,
             ]);
     }
 
+    /**
+     * Log queue delivery failures for the invitation-created email.
+     *
+     * @param  Throwable  $e  Exception captured by the failure callback.
+     * @return void No return value.
+     */
     public function failed(Throwable $e): void
     {
         Log::error('Invitation created email failed', [

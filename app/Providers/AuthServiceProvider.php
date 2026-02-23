@@ -27,6 +27,11 @@ class AuthServiceProvider extends ServiceProvider
         User::class => AdminUserPolicy::class,
     ];
 
+    /**
+     * Boot application services after all providers are registered.
+     *
+     * @return void No return value.
+     */
     public function boot(): void
     {
         $this->registerPolicies();

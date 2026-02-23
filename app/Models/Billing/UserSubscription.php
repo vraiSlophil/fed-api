@@ -35,18 +35,30 @@ class UserSubscription extends Model
         'cancellation_requested_at' => 'datetime',
     ];
 
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * Define the belongs-to relationship to plan using plan_id and plan_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
     /**
-     * Vérifie si l'abonnement est actif
+     * Determine whether the subscription is currently active.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isActive(): bool
     {
@@ -54,7 +66,9 @@ class UserSubscription extends Model
     }
 
     /**
-     * Vérifie si l'abonnement est en période d'essai
+     * Determine whether the subscription is in trial period.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isTrialing(): bool
     {
@@ -62,7 +76,9 @@ class UserSubscription extends Model
     }
 
     /**
-     * Vérifie si l'abonnement est annulé
+     * Determine whether the subscription has been canceled.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isCanceled(): bool
     {
@@ -70,7 +86,9 @@ class UserSubscription extends Model
     }
 
     /**
-     * Vérifie si l'abonnement a expiré
+     * Determine whether the subscription has expired.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isExpired(): bool
     {
@@ -78,7 +96,9 @@ class UserSubscription extends Model
     }
 
     /**
-     * Annule l'abonnement
+     * Cancel the subscription.
+     *
+     * @return void No return value.
      */
     public function cancel(): void
     {
@@ -90,7 +110,9 @@ class UserSubscription extends Model
     }
 
     /**
-     * Réactive l'abonnement annulé
+     * Resume the subscription.
+     *
+     * @return void No return value.
      */
     public function resume(): void
     {
@@ -104,7 +126,9 @@ class UserSubscription extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut annuler son abonnement
+     * Determine whether the subscription can be canceled.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canCancel(): bool
     {

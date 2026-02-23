@@ -22,8 +22,18 @@ use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Register application services, bindings, and global defaults.
+     *
+     * @return void No return value.
+     */
     public function register(): void {}
 
+    /**
+     * Boot application services after all providers are registered.
+     *
+     * @return void No return value.
+     */
     public function boot(): void
     {
         Factory::guessFactoryNamesUsing(

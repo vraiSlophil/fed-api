@@ -12,6 +12,12 @@ use Illuminate\Support\Collection;
 
 class PlaygroundQueryService
 {
+    /**
+     * List playgrounds owned by the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @return Collection Collection of matching records.
+     */
     public function listForUser(User $user): Collection
     {
         return $user->playgrounds()
@@ -21,6 +27,14 @@ class PlaygroundQueryService
             ->get();
     }
 
+    /**
+     * Find one playground owned by the authenticated user by ID.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $playgroundId  Identifier of the playground.
+     * @param  bool  $withThemesCount  Flag indicating whether theme counters must be eager loaded.
+     * @return Playground Playground instance returned after successful execution.
+     */
     public function findForUserById(User $user, string $playgroundId, bool $withThemesCount = false): Playground
     {
         $query = Playground::query()
@@ -34,6 +48,14 @@ class PlaygroundQueryService
         return $query->firstOrFail();
     }
 
+    /**
+     * Find one playground owned by the authenticated user by slug.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $slug  URL-friendly slug used to identify the resource.
+     * @param  bool  $withThemesCount  Flag indicating whether theme counters must be eager loaded.
+     * @return Playground Playground instance returned after successful execution.
+     */
     public function findForUserBySlug(User $user, string $slug, bool $withThemesCount = false): Playground
     {
         $query = Playground::query()
@@ -47,6 +69,14 @@ class PlaygroundQueryService
         return $query->firstOrFail();
     }
 
+    /**
+     * Paginate themes visible in a playground for the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @param  array  $pagination  Pagination options such as page and per-page values.
+     * @return LengthAwarePaginator Paginated collection of matching records.
+     */
     public function paginateAccessibleThemes(User $user, Playground $playground, array $pagination): LengthAwarePaginator
     {
         $themesQuery = $this->buildAccessibleThemesQuery($playground->playground_id, $user->user_id);
@@ -54,6 +84,12 @@ class PlaygroundQueryService
         return $themesQuery->paginate($pagination['per_page'], ['*'], 'page', $pagination['page']);
     }
 
+    /**
+     * Return aggregated task and theme statistics for a playground.
+     *
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return array Structured metrics payload returned to the caller.
+     */
     public function statsFor(Playground $playground): array
     {
         $taskCounts = Task::query()
@@ -84,6 +120,12 @@ class PlaygroundQueryService
         ];
     }
 
+    /**
+     * Calculate the percentage of done tasks inside the playground.
+     *
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return float Percentage value expressed as a float.
+     */
     private function calculateCompletionRate(Playground $playground): float
     {
         $totals = Task::query()
@@ -102,6 +144,12 @@ class PlaygroundQueryService
         return (float) number_format(($completed / $total) * 100.0, 2, '.', '');
     }
 
+    /**
+     * Return recent task and theme updates for the playground.
+     *
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return array Recent tasks and themes grouped for activity display.
+     */
     private function getRecentActivity(Playground $playground): array
     {
         $recentTasks = Task::query()
@@ -123,6 +171,13 @@ class PlaygroundQueryService
         ];
     }
 
+    /**
+     * Build a query for themes the user can access in the playground.
+     *
+     * @param  string  $playgroundId  Identifier of the playground.
+     * @param  string  $userId  Identifier of the user.
+     * @return Builder Configured query builder instance.
+     */
     private function buildAccessibleThemesQuery(string $playgroundId, string $userId): Builder
     {
         return Theme::query()

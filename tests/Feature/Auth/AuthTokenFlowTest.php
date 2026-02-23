@@ -4,7 +4,7 @@ use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
-it('login renvoie un token et permet d\'appeler une route protégée', function () {
+it('login returns a token and allows calling a protected route', function () {
     $user = User::factory()->create([
         'password' => bcrypt('secret-password'),
         'email_verified_at' => now(),
@@ -25,18 +25,18 @@ it('login renvoie un token et permet d\'appeler une route protégée', function 
         ->assertStatus(200);
 });
 
-it('une route protégée renvoie 401 sans token', function () {
+it('a protected route returns 401 without a token', function () {
     $this->getJson('/api/auth/ping')->assertStatus(401);
 });
 
-it('logout révoque le token courant (suppression en base)', function () {
+it('logout revokes the current token (database deletion)', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
 
     $token = $user->createToken('test-token')->plainTextToken;
 
-    // sanity check: le token existe
+    // Sanity check: the token exists.
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBeGreaterThan(0);
 
@@ -44,12 +44,12 @@ it('logout révoque le token courant (suppression en base)', function () {
         ->postJson('/api/auth/logout')
         ->assertStatus(200);
 
-    // Le token doit être supprimé en base (source de vérité)
+    // The token must be deleted from the database (source of truth).
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBe(0);
 });
 
-it('un refresh token ne peut pas accéder aux routes protégées', function () {
+it('a refresh token cannot access protected routes', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);

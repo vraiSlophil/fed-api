@@ -6,11 +6,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StorePlaygroundRequest extends FormRequest
 {
+    /**
+     * Allow playground creation payload validation.
+     *
+     * @return bool Always true because ownership is derived from the authenticated user.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for creating playground metadata and style options.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [

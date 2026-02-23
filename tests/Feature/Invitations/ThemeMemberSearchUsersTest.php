@@ -5,7 +5,7 @@ use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use Laravel\Sanctum\Sanctum;
 
-it('autorise le proprietaire du theme a rechercher des utilisateurs', function () {
+it('allows the theme owner to search for users', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -32,7 +32,7 @@ it('autorise le proprietaire du theme a rechercher des utilisateurs', function (
         ]);
 });
 
-it('refuse la recherche utilisateur si le demandeur n est pas proprietaire du theme', function () {
+it('rejects user search when the requester is not the theme owner', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -52,7 +52,7 @@ it('refuse la recherche utilisateur si le demandeur n est pas proprietaire du th
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
-it('refuse la recherche utilisateur sans authentification', function () {
+it('rejects user search without authentication', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)

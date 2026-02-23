@@ -10,6 +10,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureAccessToken
 {
+    /**
+     * Ensure the authenticated request is backed by an access token ability.
+     *
+     * @param  Request  $request  Current HTTP request expected to contain an authenticated user token.
+     * @param  Closure  $next  Callback that advances the middleware pipeline.
+     * @return Response Response returned by downstream middleware/controller.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();

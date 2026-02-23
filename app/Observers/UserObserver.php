@@ -9,7 +9,10 @@ use App\Models\Playgrounds\Playground;
 class UserObserver
 {
     /**
-     * Gérer l'événement "created" du modèle User
+     * Handle side effects triggered after model creation.
+     *
+     * @param  User  $user  Newly created user model that triggered the observer.
+     * @return void No return value.
      */
     public function created(User $user): void
     {
@@ -17,9 +20,9 @@ class UserObserver
 
         $defaultPlayground = Playground::create([
             'user_id' => $user->user_id,
-            'name' => 'Mon Espace Principal',
-            'slug' => 'principal',
-            'icon' => 'home', // Nom de l'icone sur la banque d'icone de google
+            'name' => 'Main Workspace',
+            'slug' => 'main',
+            'icon' => 'home', // Icon name from the Google icon set.
             'color' => $this->generateRandomColor(),
             'is_default' => true,
         ]);
@@ -27,6 +30,11 @@ class UserObserver
         $user->update(['active_playground_id' => $defaultPlayground->playground_id]);
     }
 
+    /**
+     * Generate a random hex color value for the default playground.
+     *
+     * @return string Random `#RRGGBB` color value assigned to generated playgrounds.
+     */
     private function generateRandomColor(): string
     {
         return sprintf('#%06X', mt_rand(0, 0xFFFFFF));

@@ -9,6 +9,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class MediaController extends Controller
 {
+    /**
+     * Stream a file from public storage after path and MIME validation.
+     *
+     * @param  Request  $request  Request used to inspect `Accept` header compatibility.
+     * @param  string  $path  Storage path of the target file.
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse Binary stream response for the resolved file.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException When the operation cannot be completed.
+     */
     public function show(Request $request, string $path)
     {
         $path = $this->sanitizePath($path);
@@ -39,6 +48,14 @@ class MediaController extends Controller
             ->build();
     }
 
+    /**
+     * Normalize a storage path and block path traversal segments.
+     *
+     * @param  string  $path  Storage path of the target file.
+     * @return string Resolved file path string.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException When the operation cannot be completed.
+     */
     private function sanitizePath(string $path): string
     {
         $path = str_replace('\\', '/', $path);
@@ -62,6 +79,13 @@ class MediaController extends Controller
         return implode('/', $clean);
     }
 
+    /**
+     * Resolve the file MIME type while honoring compatible Accept headers.
+     *
+     * @param  Request  $request  Request used to inspect acceptable media types.
+     * @param  string  $filePath  Storage path of the file to stream.
+     * @return string MIME type that will be used for the streamed response.
+     */
     private function determineMimeType(Request $request, string $filePath): string
     {
         $actualMimeType = mime_content_type($filePath);

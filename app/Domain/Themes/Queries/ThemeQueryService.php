@@ -9,6 +9,13 @@ use Illuminate\Support\Collection;
 
 class ThemeQueryService
 {
+    /**
+     * Ensure the playground exists and belongs to the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $playgroundId  Identifier of the playground.
+     * @return void No return value.
+     */
     public function assertOwnedPlaygroundExists(User $user, string $playgroundId): void
     {
         Playground::query()
@@ -17,6 +24,13 @@ class ThemeQueryService
             ->firstOrFail();
     }
 
+    /**
+     * List themes owned by the user and themes shared with view permission.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  ?string  $playgroundId  Identifier of the playground.
+     * @return Collection Collection of matching records.
+     */
     public function listForUser(User $user, ?string $playgroundId = null): Collection
     {
         $ownedThemes = Theme::query()
@@ -45,6 +59,13 @@ class ThemeQueryService
         return $ownedThemes->concat($invitedThemes);
     }
 
+    /**
+     * Find a theme the user is allowed to view.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $themeId  Identifier of the theme.
+     * @return Theme Theme instance returned after successful execution.
+     */
     public function findViewableForUser(User $user, string $themeId): Theme
     {
         return Theme::query()

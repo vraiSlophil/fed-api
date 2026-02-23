@@ -40,11 +40,21 @@ class Playground extends Model
         'preview_updated_at' => 'datetime',
     ];
 
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * Define the one-to-many relationship to theme using playground_id and playground_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function themes(): HasMany
     {
         return $this->hasMany(Theme::class, 'playground_id', 'playground_id')
@@ -52,7 +62,9 @@ class Playground extends Model
     }
 
     /**
-     * Vérifie si ce playground est le playground par défaut de l'utilisateur
+     * Determine whether this playground is the user's default playground.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isDefault(): bool
     {
@@ -60,16 +72,18 @@ class Playground extends Model
     }
 
     /**
-     * Définit ce playground comme playground par défaut
+     * Mark this playground as default and unset default on sibling playgrounds.
+     *
+     * @return void No return value.
      */
     public function setAsDefault(): void
     {
-        // Retirer le statut par défaut des autres playgrounds de cet utilisateur
+        // Remove default status from the user's other playgrounds.
         static::where('user_id', $this->user_id)
             ->where('playground_id', '!=', $this->playground_id)
             ->update(['is_default' => false]);
 
-        // Définir ce playground comme par défaut
+        // Set this playground as default.
         $this->update(['is_default' => true]);
     }
 }

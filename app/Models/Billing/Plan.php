@@ -31,13 +31,20 @@ class Plan extends Model
         'features' => 'array',
     ];
 
+    /**
+     * Define the one-to-many relationship to user subscription using plan_id and plan_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function subscriptions(): HasMany
     {
         return $this->hasMany(UserSubscription::class, 'plan_id', 'plan_id');
     }
 
     /**
-     * Vérifie si le plan est gratuit
+     * Determine whether the plan is a free tier.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isFree(): bool
     {
@@ -45,7 +52,9 @@ class Plan extends Model
     }
 
     /**
-     * Vérifie si le plan est Pro
+     * Determine whether the plan is the pro tier.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isPro(): bool
     {
@@ -53,7 +62,11 @@ class Plan extends Model
     }
 
     /**
-     * Récupère une fonctionnalité spécifique du plan
+     * Return the configured value for a plan feature key.
+     *
+     * @param  string  $key  Feature key looked up in the plan feature map.
+     * @param  mixed  $default  Fallback value returned when no explicit value exists.
+     * @return mixed Feature value stored in the JSON feature map, or the provided fallback.
      */
     public function getFeature(string $key, $default = null)
     {
@@ -61,7 +74,10 @@ class Plan extends Model
     }
 
     /**
-     * Vérifie si le plan a une fonctionnalité
+     * Determine whether a boolean plan feature is enabled.
+     *
+     * @param  string  $key  Feature key looked up in the plan feature map.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function hasFeature(string $key): bool
     {

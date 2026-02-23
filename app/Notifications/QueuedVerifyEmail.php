@@ -13,6 +13,12 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
 {
     public $tries = 3;
 
+    /**
+     * Build the email-verification message for the notifiable user.
+     *
+     * @param  mixed  $notifiable  Notifiable model exposing email-verification helper methods.
+     * @return MailMessage MailMessage instance returned after successful execution.
+     */
     public function toMail($notifiable): MailMessage
     {
         $verificationUrl = $this->verificationUrl($notifiable);
@@ -24,11 +30,22 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
             ->line('If you did not create an account, no further action is required.');
     }
 
+    /**
+     * Define queue names per notification channel.
+     *
+     * @return array Mapping of notification channels to queue names.
+     */
     public function viaQueues(): array
     {
         return ['mail' => config('queue.mail_queues.verification', 'emails-verification')];
     }
 
+    /**
+     * Build the frontend verification URL from a temporary signed backend route.
+     *
+     * @param  mixed  $notifiable  Notifiable model exposing identifier and verification email.
+     * @return string Frontend verification URL that preserves the signed query parameters.
+     */
     protected function verificationUrl($notifiable): string
     {
         $signedUrl = URL::temporarySignedRoute(
@@ -49,6 +66,12 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
         return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
     }
 
+    /**
+     * Handle queue failure callback logic.
+     *
+     * @param  Throwable  $e  Exception captured by the failure callback.
+     * @return void No return value.
+     */
     public function failed(Throwable $e): void
     {
         Log::error('Email verification notification failed', [

@@ -28,18 +28,30 @@ class TaskDependency extends Model
         'metadata' => 'array',
     ];
 
+    /**
+     * Define the belongs-to relationship to task using from_task_id and task_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function fromTask(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'from_task_id', 'task_id');
     }
 
+    /**
+     * Define the belongs-to relationship to task using to_task_id and task_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function toTask(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'to_task_id', 'task_id');
     }
 
     /**
-     * Vérifie si la dépendance est de type "bloquant"
+     * Determine whether the dependency is of type "blocking".
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isBlocking(): bool
     {
@@ -47,7 +59,9 @@ class TaskDependency extends Model
     }
 
     /**
-     * Vérifie si la dépendance est de type "séquentiel"
+     * Determine whether the dependency is of type "sequential".
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isSequential(): bool
     {
@@ -55,7 +69,9 @@ class TaskDependency extends Model
     }
 
     /**
-     * Vérifie si la dépendance est de type "soft"
+     * Determine whether the dependency is of type "soft".
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isSoft(): bool
     {

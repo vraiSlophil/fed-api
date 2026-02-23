@@ -9,10 +9,18 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Illuminate\Support\Facades\DB;
 
 class UserMetricsQueryService
 {
+    /**
+     * Build the metrics payload for the requested user and period.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $period  Requested analytics period key.
+     * @return array Structured metrics payload returned to the caller.
+     */
     public function metricsFor(User $user, string $period): array
     {
         [$startDate, $endDate] = $this->getDateRange($period);
@@ -26,6 +34,12 @@ class UserMetricsQueryService
         ];
     }
 
+    /**
+     * Compute aggregate overview metrics for the user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return array Structured metrics payload returned to the caller.
+     */
     private function getOverviewMetrics(string $userId): array
     {
         $totalThemes = Theme::where('owner_id', $userId)->count();
@@ -51,6 +65,14 @@ class UserMetricsQueryService
         ];
     }
 
+    /**
+     * Compute theme creation metrics over the requested date range.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @return array Structured metrics payload returned to the caller.
+     */
     private function getThemeMetrics(string $userId, CarbonImmutable $startDate, CarbonImmutable $endDate): array
     {
         $themes = Theme::where('owner_id', $userId)
@@ -67,6 +89,14 @@ class UserMetricsQueryService
         ];
     }
 
+    /**
+     * Compute task creation and completion metrics over the requested date range.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @return array Structured metrics payload returned to the caller.
+     */
     private function getTaskMetrics(string $userId, CarbonImmutable $startDate, CarbonImmutable $endDate): array
     {
         $tasksCreated = Task::where('user_id', $userId)
@@ -96,6 +126,14 @@ class UserMetricsQueryService
         ];
     }
 
+    /**
+     * Compute activity streak and active-day metrics for the date range.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @return array Structured metrics payload returned to the caller.
+     */
     private function getActivityMetrics(string $userId, CarbonImmutable $startDate, CarbonImmutable $endDate): array
     {
         $activeDays = $this->getActiveDays($userId, $startDate, $endDate);
@@ -109,6 +147,12 @@ class UserMetricsQueryService
         ];
     }
 
+    /**
+     * Compute week-over-week and month-over-month productivity trends.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return array Productivity trend metrics for week-over-week and month-over-month comparisons.
+     */
     private function getProductivityTrends(string $userId): array
     {
         $now = CarbonImmutable::now();
@@ -146,6 +190,14 @@ class UserMetricsQueryService
         ];
     }
 
+    /**
+     * Collect unique activity dates from theme and task events.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @return Collection Collection of matching records.
+     */
     private function getActiveDays(string $userId, CarbonImmutable $startDate, CarbonImmutable $endDate): Collection
     {
         $themeActiveDays = Theme::query()->where('owner_id', $userId)
@@ -182,6 +234,12 @@ class UserMetricsQueryService
         return collect($activityDays);
     }
 
+    /**
+     * Calculate the current consecutive-day activity streak.
+     *
+     * @param  Collection  $activeDays  Collection of `Y-m-d` dates when user activity occurred.
+     * @return int Number of consecutive active days ending today.
+     */
     private function calculateCurrentStreak(Collection $activeDays): int
     {
         if ($activeDays->isEmpty()) {
@@ -203,6 +261,12 @@ class UserMetricsQueryService
         return $streak;
     }
 
+    /**
+     * Calculate the longest consecutive-day activity streak.
+     *
+     * @param  Collection  $activeDays  Collection of `Y-m-d` dates when user activity occurred.
+     * @return int Highest number of consecutive active days observed in the last year.
+     */
     private function calculateLongestStreak(Collection $activeDays): int
     {
         if ($activeDays->isEmpty()) {
@@ -226,6 +290,13 @@ class UserMetricsQueryService
         return $longest;
     }
 
+    /**
+     * Calculate percentage trend between current and previous periods.
+     *
+     * @param  int  $current  Current period value used for trend comparison.
+     * @param  int  $previous  Previous period value used for trend comparison.
+     * @return float Relative variation expressed as a percentage.
+     */
     private function calculateTrend(int $current, int $previous): float
     {
         if ($previous === 0) {
@@ -235,6 +306,14 @@ class UserMetricsQueryService
         return round((($current - $previous) / $previous) * 100, 2);
     }
 
+    /**
+     * Calculate the percentage of active days within the reporting period.
+     *
+     * @param  int  $activeDays  Count of unique active days in the reporting window.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @return float Percentage value expressed as a float.
+     */
     private function calculateActivityPercentage(int $activeDays, CarbonImmutable $startDate, CarbonImmutable $endDate): float
     {
         $totalDays = $startDate->diffInDays($endDate) + 1;
@@ -242,6 +321,14 @@ class UserMetricsQueryService
         return $totalDays > 0 ? round(($activeDays / $totalDays) * 100, 2) : 0.0;
     }
 
+    /**
+     * Calculate average daily count across the reporting period.
+     *
+     * @param  int  $total  Total number of records used in the metric.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @return float Average number of events per day across the requested period.
+     */
     private function calculateAveragePerDay(int $total, CarbonImmutable $startDate, CarbonImmutable $endDate): float
     {
         $totalDays = $startDate->diffInDays($endDate) + 1;
@@ -249,6 +336,12 @@ class UserMetricsQueryService
         return $totalDays > 0 ? round($total / $totalDays, 2) : 0.0;
     }
 
+    /**
+     * Resolve start and end dates for the requested analytics period.
+     *
+     * @param  string  $period  Requested analytics period key.
+     * @return array Start and end dates computed from the requested period key.
+     */
     private function getDateRange(string $period): array
     {
         $end = CarbonImmutable::now();
@@ -266,6 +359,16 @@ class UserMetricsQueryService
         return [$start, $end];
     }
 
+    /**
+     * Fill missing dates in a time-series dataset with zero values.
+     *
+     * @param  Collection|Enumerable  $data  Query result indexed by date with aggregated counts.
+     * @param  CarbonImmutable  $startDate  Inclusive start date for the reporting window.
+     * @param  CarbonImmutable  $endDate  Inclusive end date for the reporting window.
+     * @param  string  $dateField  Data field containing the date value in the source payload.
+     * @param  string  $valueField  Data field containing the metric value in the source payload.
+     * @return array Time-series data with missing dates filled using zero values.
+     */
     private function fillDateGaps($data, CarbonImmutable $startDate, CarbonImmutable $endDate, string $dateField, string $valueField): array
     {
         $result = [];

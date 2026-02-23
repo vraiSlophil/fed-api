@@ -16,11 +16,23 @@ use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
 {
+    /**
+     * Initialize the controller with admin user query and command handlers.
+     *
+     * @param  AdminUserQueryService  $queryService  Service that retrieves admin-visible user datasets.
+     * @param  AdminUserActionService  $actionService  Service that applies admin user account mutations.
+     */
     public function __construct(
         private readonly AdminUserQueryService $queryService,
         private readonly AdminUserActionService $actionService,
     ) {}
 
+    /**
+     * List admin-visible users with filters, sorting, and pagination metadata.
+     *
+     * @param  ListAdminUsersRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function index(ListAdminUsersRequest $request): JsonResponse
     {
         $this->authorize('viewAny', User::class);
@@ -49,6 +61,12 @@ class AdminUserController extends Controller
             ->json();
     }
 
+    /**
+     * Create a new user account from the admin panel.
+     *
+     * @param  StoreAdminUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function store(StoreAdminUserRequest $request): JsonResponse
     {
         $this->authorize('create', User::class);
@@ -62,6 +80,13 @@ class AdminUserController extends Controller
             ->json();
     }
 
+    /**
+     * Return detailed admin data for one user account.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  User  $user  User account resolved from the route and targeted by this action.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function show(Request $request, User $user): JsonResponse
     {
         $this->authorize('view', $user);
@@ -75,6 +100,13 @@ class AdminUserController extends Controller
             ->json();
     }
 
+    /**
+     * Update one user account from the admin panel.
+     *
+     * @param  UpdateAdminUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  User  $user  User account resolved from the route and targeted by this action.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function update(UpdateAdminUserRequest $request, User $user): JsonResponse
     {
         $this->authorize('update', $user);
@@ -96,6 +128,13 @@ class AdminUserController extends Controller
             ->json();
     }
 
+    /**
+     * Permanently delete one user account from the admin panel.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  User  $user  User account resolved from the route and targeted by this action.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function destroy(Request $request, User $user): JsonResponse
     {
         $this->authorize('delete', $user);
@@ -108,6 +147,13 @@ class AdminUserController extends Controller
             ->json();
     }
 
+    /**
+     * Block the targeted user account.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  User  $user  User account resolved from the route and targeted by this action.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function block(Request $request, User $user): JsonResponse
     {
         $this->authorize('block', $user);
@@ -121,6 +167,13 @@ class AdminUserController extends Controller
             ->json();
     }
 
+    /**
+     * Unblock the targeted user account.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  User  $user  User account resolved from the route and targeted by this action.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function unblock(Request $request, User $user): JsonResponse
     {
         $this->authorize('unblock', $user);

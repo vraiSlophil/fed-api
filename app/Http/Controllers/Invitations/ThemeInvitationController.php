@@ -16,11 +16,23 @@ use Illuminate\Http\JsonResponse;
 
 class ThemeInvitationController extends Controller
 {
+    /**
+     * Initialize the controller with invitation query and command handlers.
+     *
+     * @param  InvitationQueryService  $queryService  Service that reads invitation lists and related data.
+     * @param  InvitationActionService  $actionService  Service that applies invitation response commands.
+     */
     public function __construct(
         private readonly InvitationQueryService $queryService,
         private readonly InvitationActionService $actionService,
     ) {}
 
+    /**
+     * List invitations received by the authenticated user.
+     *
+     * @param  ListInvitationsRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function index(ListInvitationsRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -42,6 +54,14 @@ class ThemeInvitationController extends Controller
             ->json();
     }
 
+    /**
+     * Accept or decline an invitation from a signed request.
+     *
+     * @param  RespondInvitationRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @param  InvitationService  $invitationService  Service responsible for invitation operations.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function respond(
         RespondInvitationRequest $request,
         Invitation $invitation,
@@ -78,6 +98,12 @@ class ThemeInvitationController extends Controller
             ->json();
     }
 
+    /**
+     * Transform an invitation model into the API response shape.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return array Serialized array representation of the resource.
+     */
     private function toInvitationItem(Invitation $invitation): array
     {
         $invitable = $invitation->invitable;

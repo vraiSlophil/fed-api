@@ -12,6 +12,17 @@ use App\Models\Themes\ThemeUserPermission;
 
 class ThemeMemberActionService
 {
+    /**
+     * Create a pending invitation for a user to join the theme.
+     *
+     * @param  User  $actor  Authenticated user who initiates the action.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @param  InvitationService  $invitationService  Service responsible for invitation operations.
+     * @return array Payload containing the created invitation and current member snapshot.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function inviteUser(User $actor, Theme $theme, array $validated, InvitationService $invitationService): array
     {
         if ($theme->owner_id === $validated['user_id']) {
@@ -65,6 +76,14 @@ class ThemeMemberActionService
         ];
     }
 
+    /**
+     * Update permission flags for the specified theme member.
+     *
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @return ThemeUserPermission ThemeUserPermission instance returned after successful execution.
+     */
     public function updateMemberPermissions(Theme $theme, string $userId, array $validated): ThemeUserPermission
     {
         $permission = ThemeUserPermission::query()
@@ -84,6 +103,15 @@ class ThemeMemberActionService
         return $permission->fresh();
     }
 
+    /**
+     * Revoke access for the specified theme member.
+     *
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function deactivateMember(Theme $theme, string $userId): void
     {
         if ($theme->owner_id === $userId) {
@@ -99,6 +127,13 @@ class ThemeMemberActionService
         $permission->save();
     }
 
+    /**
+     * Restore access for a previously revoked theme member.
+     *
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return void No return value.
+     */
     public function reactivateMember(Theme $theme, string $userId): void
     {
         $permission = ThemeUserPermission::query()
@@ -111,6 +146,15 @@ class ThemeMemberActionService
         $permission->save();
     }
 
+    /**
+     * Remove a member from the theme permission list.
+     *
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function removeMember(Theme $theme, string $userId): void
     {
         if ($theme->owner_id === $userId) {
@@ -125,6 +169,15 @@ class ThemeMemberActionService
         $permission->delete();
     }
 
+    /**
+     * Remove the current user from the theme membership.
+     *
+     * @param  User  $actor  Authenticated user who initiates the action.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function leaveTheme(User $actor, Theme $theme): void
     {
         if ($theme->owner_id === $actor->user_id) {
@@ -139,6 +192,14 @@ class ThemeMemberActionService
         $permission->delete();
     }
 
+    /**
+     * Move shared theme visibility to another playground for the user.
+     *
+     * @param  User  $actor  Authenticated user who initiates the action.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @return ThemeUserPermission ThemeUserPermission instance returned after successful execution.
+     */
     public function moveToPlayground(User $actor, Theme $theme, array $validated): ThemeUserPermission
     {
         Playground::query()

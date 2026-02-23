@@ -6,11 +6,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAdminUserRequest extends FormRequest
 {
+    /**
+     * Allow request validation; route authorization is enforced by admin policies.
+     *
+     * @return bool Always true because authorization is handled outside this request object.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for creating a user account from the admin area.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [
