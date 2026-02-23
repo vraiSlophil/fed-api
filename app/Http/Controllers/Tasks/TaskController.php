@@ -10,7 +10,6 @@ use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tasks\Task;
-use App\Models\Themes\Theme;
 use App\Support\Pagination\OffsetPagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,7 +44,7 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $theme = Theme::query()->where('theme_id', $validated['theme_id'])->firstOrFail();
+        $theme = $this->queryService->findThemeForCreation((string) $validated['theme_id']);
         $this->authorize('addTask', $theme);
 
         $task = $this->actionService->create($request->user(), $theme, $validated);

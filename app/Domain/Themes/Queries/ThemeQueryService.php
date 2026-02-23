@@ -3,11 +3,20 @@
 namespace App\Domain\Themes\Queries;
 
 use App\Models\Auth\User;
+use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use Illuminate\Support\Collection;
 
 class ThemeQueryService
 {
+    public function assertOwnedPlaygroundExists(User $user, string $playgroundId): void
+    {
+        Playground::query()
+            ->where('playground_id', $playgroundId)
+            ->where('user_id', $user->user_id)
+            ->firstOrFail();
+    }
+
     public function listForUser(User $user, ?string $playgroundId = null): Collection
     {
         $ownedThemes = Theme::query()
