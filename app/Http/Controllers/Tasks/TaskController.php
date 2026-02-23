@@ -13,6 +13,8 @@ use App\Models\Tasks\Task;
 use App\Models\Themes\Theme;
 use App\Support\Pagination\OffsetPagination;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class TaskController extends Controller
 {
@@ -58,7 +60,7 @@ class TaskController extends Controller
     }
 
     public function show(
-        \Illuminate\Http\Request $request,
+        Request $request,
         Task $task
     ): JsonResponse {
         $this->authorize('view', $task);
@@ -87,7 +89,7 @@ class TaskController extends Controller
             ->json();
     }
 
-    public function archive(\Illuminate\Http\Request $request, Task $task): JsonResponse
+    public function archive(Request $request, Task $task): JsonResponse
     {
         $this->authorize('archive', $task);
         $task = $this->actionService->archive($request->user(), $task);
@@ -101,7 +103,7 @@ class TaskController extends Controller
             ->json();
     }
 
-    public function restore(\Illuminate\Http\Request $request, Task $task): JsonResponse
+    public function restore(Request $request, Task $task): JsonResponse
     {
         $this->authorize('restore', $task);
         $task = $this->actionService->restore($request->user(), $task);
@@ -115,7 +117,7 @@ class TaskController extends Controller
             ->json();
     }
 
-    public function complete(\Illuminate\Http\Request $request, Task $task): JsonResponse
+    public function complete(Request $request, Task $task): JsonResponse
     {
         $this->authorize('validate', $task);
         $task = $this->actionService->complete($request->user(), $task);
@@ -129,7 +131,7 @@ class TaskController extends Controller
             ->json();
     }
 
-    public function uncomplete(\Illuminate\Http\Request $request, Task $task): JsonResponse
+    public function uncomplete(Request $request, Task $task): JsonResponse
     {
         $this->authorize('validate', $task);
         $task = $this->actionService->uncomplete($request->user(), $task);
@@ -143,14 +145,11 @@ class TaskController extends Controller
             ->json();
     }
 
-    public function destroy(\Illuminate\Http\Request $request, Task $task): JsonResponse
+    public function destroy(Request $request, Task $task): Response
     {
         $this->authorize('delete', $task);
         $this->actionService->delete($request->user(), $task);
 
-        return ApiResponse::builder()
-            ->success(204, 'No Content')
-            ->messageCode('task.deleted', ['task' => $task->task_id])
-            ->json();
+        return ApiResponse::noContent();
     }
 }

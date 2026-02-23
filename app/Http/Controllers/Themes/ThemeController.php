@@ -12,6 +12,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class ThemeController extends Controller
 {
@@ -90,15 +91,12 @@ class ThemeController extends Controller
             ->json();
     }
 
-    public function destroy(\Illuminate\Http\Request $request, Theme $theme): JsonResponse
+    public function destroy(\Illuminate\Http\Request $request, Theme $theme): Response
     {
         $this->authorize('delete', $theme);
 
         $this->actionService->delete($theme);
 
-        return ApiResponse::builder()
-            ->success(204)
-            ->messageCode('theme.delete.success')
-            ->json();
+        return ApiResponse::noContent();
     }
 }
