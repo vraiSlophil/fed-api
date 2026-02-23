@@ -25,7 +25,7 @@ class ThemeMemberController extends Controller
     public function searchUsers(SearchThemeUsersRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $theme = Theme::query()->where('theme_id', $validated['theme_id'])->firstOrFail();
+        $theme = $this->queryService->findTheme((string) $validated['theme_id']);
 
         $this->authorize('manageMembers', $theme);
 

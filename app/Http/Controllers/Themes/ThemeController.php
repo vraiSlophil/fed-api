@@ -9,7 +9,6 @@ use App\Http\Requests\Theme\ListThemeRequest;
 use App\Http\Requests\Theme\StoreThemeRequest;
 use App\Http\Requests\Theme\UpdateThemeRequest;
 use App\Http\Responses\ApiResponse;
-use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -38,11 +37,7 @@ class ThemeController extends Controller
     public function store(StoreThemeRequest $request): JsonResponse
     {
         $validated = $request->validated();
-
-        Playground::query()
-            ->where('playground_id', $validated['playground_id'])
-            ->where('user_id', $request->user()->user_id)
-            ->firstOrFail();
+        $this->queryService->assertOwnedPlaygroundExists($request->user(), (string) $validated['playground_id']);
 
         $theme = $this->actionService->create($request->user(), $validated);
 

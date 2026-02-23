@@ -9,6 +9,13 @@ use Illuminate\Support\Collection;
 
 class ThemeMemberQueryService
 {
+    public function findTheme(string $themeId): Theme
+    {
+        return Theme::query()
+            ->where('theme_id', $themeId)
+            ->firstOrFail();
+    }
+
     public function searchUsers(Theme $theme, string $search): Collection
     {
         $ownerId = $theme->owner_id;

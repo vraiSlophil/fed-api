@@ -10,6 +10,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class TaskQueryService
 {
+    public function findThemeForCreation(string $themeId): Theme
+    {
+        return Theme::query()
+            ->where('theme_id', $themeId)
+            ->firstOrFail();
+    }
+
     public function paginateForUser(User $user, array $filters, array $pagination): LengthAwarePaginator
     {
         $query = $this->buildTasksQueryForUser($user, $filters);
