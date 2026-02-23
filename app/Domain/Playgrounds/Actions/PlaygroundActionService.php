@@ -91,8 +91,7 @@ class PlaygroundActionService
             $playground->delete();
 
             if ($playgrounds->count() <= 1) {
-                $defaultPlayground = $this->createDefaultPlayground($user->user_id);
-                $user->update(['active_playground_id' => $defaultPlayground->playground_id]);
+                $this->createDefaultPlayground($user->user_id);
             }
         });
     }
@@ -100,14 +99,12 @@ class PlaygroundActionService
     /**
      * Set the specified playground as the user's default playground.
      *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
      * @param  Playground  $playground  Playground targeted by the operation.
      * @return Playground Playground instance returned after successful execution.
      */
-    public function setAsDefault(User $user, Playground $playground): Playground
+    public function setAsDefault(Playground $playground): Playground
     {
         $playground->setAsDefault();
-        $user->update(['active_playground_id' => $playground->playground_id]);
 
         return $playground->fresh();
     }
