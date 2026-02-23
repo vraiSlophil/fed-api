@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class UserMetricsQueryService
 {
@@ -28,8 +29,14 @@ class UserMetricsQueryService
     private function getOverviewMetrics(string $userId): array
     {
         $totalThemes = Theme::where('owner_id', $userId)->count();
-        $totalTasks = Task::where('user_id', $userId)->count();
-        $completedTasks = Task::where('user_id', $userId)->where('status', 'done')->count();
+        $taskStats = Task::query()
+            ->where('user_id', $userId)
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw("SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS completed")
+            ->first();
+
+        $totalTasks = (int) ($taskStats?->total ?? 0);
+        $completedTasks = (int) ($taskStats?->completed ?? 0);
 
         $memberOf = Theme::whereHas('themeUserPermissions', function ($q) use ($userId): void {
             $q->where('user_id', $userId)->where('status', 'active');
@@ -104,27 +111,26 @@ class UserMetricsQueryService
 
     private function getProductivityTrends(string $userId): array
     {
-        $thisWeek = Task::where('user_id', $userId)
-            ->where('created_at', '>=', now()->startOfWeek())
-            ->count();
+        $now = CarbonImmutable::now();
+        $thisWeekStart = $now->startOfWeek();
+        $lastWeekStart = $now->subWeek()->startOfWeek();
+        $lastWeekEnd = $now->subWeek()->endOfWeek();
+        $thisMonthStart = $now->startOfMonth();
+        $lastMonthStart = $now->subMonth()->startOfMonth();
+        $lastMonthEnd = $now->subMonth()->endOfMonth();
 
-        $lastWeek = Task::where('user_id', $userId)
-            ->whereBetween('created_at', [
-                now()->subWeek()->startOfWeek(),
-                now()->subWeek()->endOfWeek(),
-            ])
-            ->count();
+        $stats = Task::query()
+            ->where('user_id', $userId)
+            ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS this_week', [$thisWeekStart])
+            ->selectRaw('SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) AS last_week', [$lastWeekStart, $lastWeekEnd])
+            ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS this_month', [$thisMonthStart])
+            ->selectRaw('SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) AS last_month', [$lastMonthStart, $lastMonthEnd])
+            ->first();
 
-        $thisMonth = Task::where('user_id', $userId)
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->count();
-
-        $lastMonth = Task::where('user_id', $userId)
-            ->whereBetween('created_at', [
-                now()->subMonth()->startOfMonth(),
-                now()->subMonth()->endOfMonth(),
-            ])
-            ->count();
+        $thisWeek = (int) ($stats?->this_week ?? 0);
+        $lastWeek = (int) ($stats?->last_week ?? 0);
+        $thisMonth = (int) ($stats?->this_month ?? 0);
+        $lastMonth = (int) ($stats?->last_month ?? 0);
 
         return [
             'weekly' => [
@@ -142,21 +148,38 @@ class UserMetricsQueryService
 
     private function getActiveDays(string $userId, CarbonImmutable $startDate, CarbonImmutable $endDate): Collection
     {
-        $themeActiveDays = Theme::where('owner_id', $userId)
+        $themeActiveDays = Theme::query()->where('owner_id', $userId)
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('DATE(created_at) as date')
+            ->selectRaw('DATE(created_at) AS activity_date');
+
+        $taskCreatedDays = Task::query()->where('user_id', $userId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) AS activity_date');
+
+        $taskUpdatedDays = Task::query()->where('user_id', $userId)
+            ->whereBetween('updated_at', [$startDate, $endDate])
+            ->selectRaw('DATE(updated_at) AS activity_date');
+
+        $taskValidatedDays = Task::query()->where('user_id', $userId)
+            ->whereNotNull('validated_at')
+            ->whereBetween('validated_at', [$startDate, $endDate])
+            ->selectRaw('DATE(validated_at) AS activity_date');
+
+        $activityDays = DB::query()
+            ->fromSub(
+                $themeActiveDays
+                    ->unionAll($taskCreatedDays)
+                    ->unionAll($taskUpdatedDays)
+                    ->unionAll($taskValidatedDays),
+                'activity_days'
+            )
+            ->select('activity_date')
             ->distinct()
-            ->pluck('date')
+            ->orderBy('activity_date')
+            ->pluck('activity_date')
             ->map(static fn ($date) => (string) $date);
 
-        $taskActiveDays = Task::where('user_id', $userId)
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('DATE(created_at) as date')
-            ->distinct()
-            ->pluck('date')
-            ->map(static fn ($date) => (string) $date);
-
-        return $themeActiveDays->concat($taskActiveDays)->unique()->sort()->values();
+        return collect($activityDays);
     }
 
     private function calculateCurrentStreak(Collection $activeDays): int
