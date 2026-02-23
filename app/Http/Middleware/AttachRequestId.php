@@ -10,6 +10,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class AttachRequestId
 {
+    /**
+     * Attach a request identifier to request attributes and response metadata/headers.
+     *
+     * @param  Request  $request  Current HTTP request that may already include `X-Request-Id`.
+     * @param  Closure  $next  Callback that advances the middleware pipeline.
+     * @return Response Response enriched with the request identifier header and optional JSON metadata.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $requestId = $request->headers->get('X-Request-Id') ?: (string) Str::uuid();

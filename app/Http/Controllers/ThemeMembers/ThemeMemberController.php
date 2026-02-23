@@ -17,11 +17,23 @@ use Illuminate\Http\Request;
 
 class ThemeMemberController extends Controller
 {
+    /**
+     * Initialize the controller with theme membership query and command handlers.
+     *
+     * @param  ThemeMemberQueryService  $queryService  Service that reads membership and invitation candidates.
+     * @param  ThemeMemberActionService  $actionService  Service that manages invitations and member permissions.
+     */
     public function __construct(
         private readonly ThemeMemberQueryService $queryService,
         private readonly ThemeMemberActionService $actionService,
     ) {}
 
+    /**
+     * Search users eligible to be invited as theme members.
+     *
+     * @param  SearchThemeUsersRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function searchUsers(SearchThemeUsersRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -40,6 +52,13 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * List owner, active members, and pending invites for a theme.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function listMembers(Request $request, Theme $theme): JsonResponse
     {
         $this->authorize('manageMembers', $theme);
@@ -55,6 +74,14 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Create a pending invitation for a user to join the theme.
+     *
+     * @param  InviteThemeMemberRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  InvitationService  $invitationService  Service responsible for invitation operations.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function inviteUser(
         InviteThemeMemberRequest $request,
         Theme $theme,
@@ -90,6 +117,14 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Update permission flags for the specified theme member.
+     *
+     * @param  UpdateThemeMemberPermissionsRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function updateMemberPermissions(
         UpdateThemeMemberPermissionsRequest $request,
         Theme $theme,
@@ -115,6 +150,14 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Revoke access for the specified theme member.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function deactivateMember(Request $request, Theme $theme, string $userId): JsonResponse
     {
         $this->authorize('manageMembers', $theme);
@@ -127,6 +170,14 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Restore access for a previously revoked theme member.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function reactivateMember(Request $request, Theme $theme, string $userId): JsonResponse
     {
         $this->authorize('manageMembers', $theme);
@@ -139,6 +190,14 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Remove a member from the theme permission list.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @param  string  $userId  Identifier of the user.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function removeMember(Request $request, Theme $theme, string $userId): JsonResponse
     {
         $this->authorize('manageMembers', $theme);
@@ -151,6 +210,13 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Remove the current user from the theme membership.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function leaveTheme(Request $request, Theme $theme): JsonResponse
     {
         $this->authorize('view', $theme);
@@ -163,6 +229,13 @@ class ThemeMemberController extends Controller
             ->json();
     }
 
+    /**
+     * Move shared theme visibility to another playground for the user.
+     *
+     * @param  MoveThemeMemberPlaygroundRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function moveToPlayground(
         MoveThemeMemberPlaygroundRequest $request,
         Theme $theme,

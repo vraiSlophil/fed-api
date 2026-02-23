@@ -35,16 +35,31 @@ class Invitation extends Model
         'expires_at' => 'datetime',
     ];
 
+    /**
+     * Define the belongs-to relationship to user using inviter_user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'inviter_user_id', 'user_id');
     }
 
+    /**
+     * Define the belongs-to relationship to user using invitee_user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function invitee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invitee_user_id', 'user_id');
     }
 
+    /**
+     * Define the polymorphic relation to the invitation target.
+     *
+     * @return MorphTo MorphTo instance returned after successful execution.
+     */
     public function invitable(): MorphTo
     {
         return $this->morphTo();

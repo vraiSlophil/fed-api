@@ -13,8 +13,19 @@ use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
+    /**
+     * Initialize the controller with profile command handlers.
+     *
+     * @param  ProfileActionService  $actionService  Service that updates profile, password, and avatar fields.
+     */
     public function __construct(private readonly ProfileActionService $actionService) {}
 
+    /**
+     * Return the authenticated user's profile payload.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -34,6 +45,12 @@ class ProfileController extends Controller
             ->json();
     }
 
+    /**
+     * Update profile fields for the authenticated user.
+     *
+     * @param  UpdateProfileRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $this->actionService->update($request->user(), $request->validated());
@@ -57,6 +74,12 @@ class ProfileController extends Controller
             ->json();
     }
 
+    /**
+     * Update the authenticated user's password.
+     *
+     * @param  UpdateProfilePasswordRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function updatePassword(UpdateProfilePasswordRequest $request): JsonResponse
     {
         $this->actionService->updatePassword($request->user(), $request->validated());
@@ -67,6 +90,12 @@ class ProfileController extends Controller
             ->json();
     }
 
+    /**
+     * Update the authenticated user's avatar image.
+     *
+     * @param  UpdateProfileAvatarRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function updateAvatar(UpdateProfileAvatarRequest $request): JsonResponse
     {
         $path = $request->file('avatar')->store('avatars', 'public');

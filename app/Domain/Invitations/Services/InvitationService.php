@@ -14,10 +14,23 @@ use Throwable;
 
 class InvitationService
 {
+    /**
+     * Initialize the service with invitation-link generation utilities.
+     *
+     * @param  InvitationLinkGenerator  $linkGenerator  Helper that builds signed accept/decline invitation links.
+     */
     public function __construct(
         private readonly InvitationLinkGenerator $linkGenerator
     ) {}
 
+    /**
+     * Send the invitation-created email to the invitee.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function sendCreatedEmail(Invitation $invitation): void
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
@@ -48,6 +61,12 @@ class InvitationService
         }
     }
 
+    /**
+     * Mark an invitation as accepted and notify the inviter.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     */
     public function markAccepted(Invitation $invitation): void
     {
         $invitation->update(['status' => 'accepted']);
@@ -55,6 +74,12 @@ class InvitationService
         $this->sendAcceptedEmail($invitation);
     }
 
+    /**
+     * Mark an invitation as declined and notify the inviter.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     */
     public function markDeclined(Invitation $invitation): void
     {
         $invitation->update(['status' => 'declined']);
@@ -62,6 +87,12 @@ class InvitationService
         $this->sendDeclinedEmail($invitation);
     }
 
+    /**
+     * Expire a pending invitation when its expiration date has passed.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return bool True when the condition is met; otherwise, false.
+     */
     public function expireInvitation(Invitation $invitation): bool
     {
         if ($invitation->status !== 'pending') {
@@ -78,6 +109,12 @@ class InvitationService
         return true;
     }
 
+    /**
+     * Send the invitation-accepted email to the inviter.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     */
     public function sendAcceptedEmail(Invitation $invitation): void
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
@@ -99,6 +136,12 @@ class InvitationService
         }
     }
 
+    /**
+     * Send the invitation-declined email to the inviter.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     */
     public function sendDeclinedEmail(Invitation $invitation): void
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);
@@ -120,6 +163,12 @@ class InvitationService
         }
     }
 
+    /**
+     * Send the invitation-expired email to the inviter.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     */
     public function sendExpiredEmail(Invitation $invitation): void
     {
         $invitation->loadMissing(['inviter', 'invitee', 'invitable']);

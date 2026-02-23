@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
-it('accepte une invitation via signature et auth', function () {
+it('accepts an invitation via signed URL and authentication', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -71,7 +71,7 @@ it('accepte une invitation via signature et auth', function () {
     expect($permission->target_playground_id)->toBe($inviteePlayground->playground_id);
 });
 
-it('refuse une invitation via signature et auth', function () {
+it('declines an invitation via signed URL and authentication', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -124,7 +124,7 @@ it('refuse une invitation via signature et auth', function () {
         ->toBeFalse();
 });
 
-it('rejette une invitation sans authentification', function () {
+it('rejects an invitation without authentication', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -166,7 +166,7 @@ it('rejette une invitation sans authentification', function () {
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
-it('rejette une invitation avec signature invalide', function () {
+it('rejects an invitation with an invalid signature', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -200,7 +200,7 @@ it('rejette une invitation avec signature invalide', function () {
         ->assertJsonPath('message_code', 'signature.invalid');
 });
 
-it('rejette une invitation pour un utilisateur different', function () {
+it('rejects an invitation intended for a different user', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -245,7 +245,7 @@ it('rejette une invitation pour un utilisateur different', function () {
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
-it('rejette une invitation inexistante', function () {
+it('rejects a non-existent invitation', function () {
     $invitee = User::factory()->create();
 
     $url = URL::temporarySignedRoute(
@@ -265,7 +265,7 @@ it('rejette une invitation inexistante', function () {
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
-it('rejette une invitation deja traitee', function () {
+it('rejects an invitation that has already been handled', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -309,7 +309,7 @@ it('rejette une invitation deja traitee', function () {
         ->assertJsonPath('message_code', 'invitation.already_responded');
 });
 
-it('rejette une invitation expiree meme avec signature valide', function () {
+it('rejects an expired invitation even with a valid signature', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -355,7 +355,7 @@ it('rejette une invitation expiree meme avec signature valide', function () {
         ->assertJsonPath('message_code', 'invitation.expired');
 });
 
-it('rejette une invitation si status est manquant', function () {
+it('rejects an invitation when status is missing', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -392,7 +392,7 @@ it('rejette une invitation si status est manquant', function () {
         ->assertJsonPath('message_code', 'validation.invalid');
 });
 
-it('rejette une invitation si status est invalide', function () {
+it('rejects an invitation when status is invalid', function () {
     $owner = User::factory()->create();
     $ownerPlayground = Playground::where('user_id', $owner->user_id)
         ->where('is_default', true)
@@ -432,7 +432,7 @@ it('rejette une invitation si status est invalide', function () {
         ->assertJsonPath('message_code', 'validation.invalid');
 });
 
-it('accepte une invitation avec target playground explicite', function () {
+it('accepts an invitation with an explicit target playground', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -484,7 +484,7 @@ it('accepte une invitation avec target playground explicite', function () {
     expect($permission->target_playground_id)->toBe($customPlayground->playground_id);
 });
 
-it('rejette target playground qui ne appartient pas a invite', function () {
+it('rejects a target playground that does not belong to the invitee', function () {
     Mail::fake();
 
     $owner = User::factory()->create();
@@ -531,7 +531,7 @@ it('rejette target playground qui ne appartient pas a invite', function () {
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
-it('rejette une invitation avec invitable non supporte', function () {
+it('rejects an invitation with an unsupported invitable type', function () {
     $owner = User::factory()->create();
     $invitee = User::factory()->create();
     $playground = Playground::where('user_id', $owner->user_id)

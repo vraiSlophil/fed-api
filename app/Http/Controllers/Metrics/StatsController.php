@@ -11,8 +11,19 @@ use Illuminate\Http\Request;
 
 class StatsController extends Controller
 {
+    /**
+     * Initialize the controller with task statistics query handlers.
+     *
+     * @param  StatsQueryService  $statsQueryService  Service that computes global and theme task statistics.
+     */
     public function __construct(private readonly StatsQueryService $statsQueryService) {}
 
+    /**
+     * Return global task statistics for the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function globalStats(Request $request): JsonResponse
     {
         $stats = $this->statsQueryService->globalForUser($request->user());
@@ -24,6 +35,13 @@ class StatsController extends Controller
             ->json();
     }
 
+    /**
+     * Return task statistics for a specific theme.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Theme  $theme  Theme instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function themeStats(Request $request, Theme $theme): JsonResponse
     {
         $this->authorize('view', $theme);

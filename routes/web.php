@@ -10,11 +10,11 @@ Route::get('/', function () {
 
 if (app()->environment(['local', 'testing'])) {
     // require __DIR__.'/auth.php';
-    // Route de test pour générer des VRAIES erreurs HTTP
+    // Test route to generate REAL HTTP errors
     Route::get('/test-security', function (Request $request) {
         $results = [];
 
-        // Simuler 15 requêtes 403 Forbidden depuis la même IP
+        // Simulate 15 Forbidden (403) requests from the same IP
         for ($i = 0; $i < 15; $i++) {
             Log::channel('single')->warning('Access Forbidden', [
                 'status' => 403,
@@ -26,7 +26,7 @@ if (app()->environment(['local', 'testing'])) {
         }
         $results['403_generated'] = 15;
 
-        // Simuler 25 requêtes 401 Unauthorized depuis la même IP
+        // Simulate 25 Unauthorized (401) requests from the same IP
         for ($i = 0; $i < 25; $i++) {
             Log::channel('single')->warning('Unauthorized Access', [
                 'status' => 401,
@@ -38,7 +38,7 @@ if (app()->environment(['local', 'testing'])) {
         }
         $results['401_generated'] = 25;
 
-        // Simuler des tentatives de scan
+        // Simulate scan attempts
         $scanPaths = ['/.env', '/wp-admin', '/phpmyadmin', '/.git/config', '/admin/login'];
         foreach ($scanPaths as $path) {
             Log::channel('single')->warning('Suspicious access attempt', [
@@ -51,7 +51,7 @@ if (app()->environment(['local', 'testing'])) {
         }
         $results['scans_generated'] = count($scanPaths);
 
-        // Simuler des erreurs serveur 500
+        // Simulate 500 server errors
         Log::channel('single')->emergency('Server Error', [
             'status' => 500,
             'ip' => '192.168.1.101',
@@ -69,19 +69,19 @@ if (app()->environment(['local', 'testing'])) {
 
         return response()->json([
             'success' => true,
-            'message' => 'Logs de sécurité générés',
+            'message' => 'Security logs generated',
             'summary' => $results,
         ]);
     });
 
-    // Routes qui retournent vraiment des codes HTTP d'erreur
+    // Routes that intentionally return HTTP error codes
     Route::get('/trigger-403', function () {
         Log::warning('Real 403 Forbidden triggered', [
             'ip' => request()->ip(),
             'status' => 403,
             'path' => request()->path(),
         ]);
-        abort(403, 'Accès interdit - Test de sécurité');
+        abort(403, 'Access denied - Security test');
     });
 
     Route::get('/trigger-401', function () {
@@ -90,7 +90,7 @@ if (app()->environment(['local', 'testing'])) {
             'status' => 401,
             'path' => request()->path(),
         ]);
-        abort(401, 'Non autorisé - Test de sécurité');
+        abort(401, 'Unauthorized - Security test');
     });
 
     Route::get('/trigger-500', function () {
@@ -99,6 +99,6 @@ if (app()->environment(['local', 'testing'])) {
             'status' => 500,
             'path' => request()->path(),
         ]);
-        abort(500, 'Erreur serveur - Test de sécurité');
+        abort(500, 'Server error - Security test');
     });
 }

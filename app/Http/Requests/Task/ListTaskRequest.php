@@ -7,11 +7,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ListTaskRequest extends FormRequest
 {
+    /**
+     * Allow validation of task listing filters and pagination parameters.
+     *
+     * @return bool Always true because task visibility is enforced by query services/policies.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for task filters, sorting, and pagination.
+     *
+     * @return array Validation constraints keyed by query parameter name.
+     */
     public function rules(): array
     {
         return [

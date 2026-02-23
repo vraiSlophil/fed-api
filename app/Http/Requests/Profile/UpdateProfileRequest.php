@@ -6,11 +6,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProfileRequest extends FormRequest
 {
+    /**
+     * Allow authenticated users to submit profile field updates.
+     *
+     * @return bool Always true because the endpoint only targets the current user.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for editable profile identity fields.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         $userId = $this->user()?->user_id;

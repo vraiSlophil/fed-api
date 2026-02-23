@@ -11,6 +11,13 @@ use Throwable;
 
 class ProfileActionService
 {
+    /**
+     * Update profile fields for the authenticated user.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @return User User instance returned after successful execution.
+     */
     public function update(User $user, array $validated): User
     {
         $emailChanged = isset($validated['email']) && $validated['email'] !== $user->email;
@@ -33,6 +40,15 @@ class ProfileActionService
         return $user->fresh();
     }
 
+    /**
+     * Update the authenticated user's password after checking the current password.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function updatePassword(User $user, array $validated): void
     {
         if (! Hash::check($validated['current_password'], $user->password)) {
@@ -44,6 +60,13 @@ class ProfileActionService
         ]);
     }
 
+    /**
+     * Update the authenticated user's avatar and remove the previous file when present.
+     *
+     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
+     * @param  string  $uploadedPath  Storage path of the uploaded media file.
+     * @return User User instance returned after successful execution.
+     */
     public function updateAvatar(User $user, string $uploadedPath): User
     {
         if ($user->avatar_path) {

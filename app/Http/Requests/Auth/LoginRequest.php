@@ -9,11 +9,21 @@ use Illuminate\Support\Facades\Hash;
 
 class LoginRequest extends FormRequest
 {
+    /**
+     * Allow login attempts for anonymous callers.
+     *
+     * @return bool Always true because credentials are validated by the authentication step.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for login credentials.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [
@@ -23,10 +33,11 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Authentification stateless: vérifie les identifiants et retourne le User.
-     * Aucun user resolver, aucune session.
+     * Authenticate credentials from the validated request.
      *
-     * @throws AuthenticationException
+     * @return User User account that matches the submitted credentials.
+     *
+     * @throws \Illuminate\Auth\AuthenticationException When the operation cannot be completed.
      */
     public function authenticate(): User
     {

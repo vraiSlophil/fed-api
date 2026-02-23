@@ -38,7 +38,10 @@ class Theme extends Model implements Invitable
     ];
 
     /**
-     * Vérifie si l'utilisateur donné est le propriétaire du thème
+     * Determine whether the theme is owned by the specified user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isOwnedBy(string $userId): bool
     {
@@ -46,7 +49,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Récupère les permissions d'un utilisateur spécifique pour ce thème
+     * Return theme permissions for the specified user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return ?ThemeUserPermission ThemeUserPermission instance returned after successful execution.
      */
     public function getPermissionsFor(string $userId): ?ThemeUserPermission
     {
@@ -56,7 +62,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Vérifie si l'utilisateur a la permission de voir le thème
+     * Determine whether the theme can be viewed by the specified user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canBeViewedBy(string $userId): bool
     {
@@ -70,7 +79,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Vérifie si l'utilisateur a la permission de mettre à jour le thème
+     * Determine whether the theme can be updated by the specified user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canBeUpdatedBy(string $userId): bool
     {
@@ -84,7 +96,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Vérifie si l'utilisateur a la permission d'ajouter une tâche
+     * Determine whether the specified user can add tasks to the theme.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canAddTaskBy(string $userId): bool
     {
@@ -98,7 +113,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Vérifie si l'utilisateur a la permission de modifier une tâche
+     * Determine whether the specified user can edit tasks in the theme.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canEditTaskBy(string $userId): bool
     {
@@ -112,7 +130,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Vérifie si l'utilisateur a la permission de supprimer une tâche
+     * Determine whether the specified user can delete tasks in the theme.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canDeleteTaskBy(string $userId): bool
     {
@@ -125,6 +146,15 @@ class Theme extends Model implements Invitable
         return $permissions && $permissions->canDeleteTask();
     }
 
+    /**
+     * Grant theme permissions when an invitation is accepted.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @param  ?string  $targetPlaygroundId  Identifier of the destination playground for shared access.
+     * @return ThemeUserPermission ThemeUserPermission instance returned after successful execution.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function acceptInvitation(Invitation $invitation, ?string $targetPlaygroundId): ThemeUserPermission
     {
         if ($invitation->invitable_type !== self::class || $invitation->invitable_id !== $this->theme_id) {
@@ -169,7 +199,10 @@ class Theme extends Model implements Invitable
     }
 
     /**
-     * Vérifie si l'utilisateur a la permission de valider une tâche
+     * Determine whether the specified user can validate tasks in the theme.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canValidateTaskBy(string $userId): bool
     {
@@ -182,23 +215,40 @@ class Theme extends Model implements Invitable
         return $permissions && $permissions->canValidateTask();
     }
 
+    /**
+     * Define the belongs-to relationship to user using owner_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id', 'user_id');
     }
 
+    /**
+     * Define the belongs-to relationship to playground using playground_id and playground_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function playground(): BelongsTo
     {
         return $this->belongsTo(Playground::class, 'playground_id', 'playground_id');
     }
 
+    /**
+     * Define the one-to-many relationship to task using theme_id and theme_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class, 'theme_id', 'theme_id');
     }
 
     /**
-     * Relation avec les permissions des utilisateurs pour ce thème
+     * Define the one-to-many relationship to theme user permission using theme_id and theme_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
      */
     public function themeUserPermissions(): HasMany
     {

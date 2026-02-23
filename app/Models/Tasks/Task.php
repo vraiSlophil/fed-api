@@ -48,7 +48,9 @@ class Task extends Model
     ];
 
     /**
-     * Vérifie si une tâche est validée
+     * Determine whether the task has already been validated.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isValidated(): bool
     {
@@ -56,7 +58,9 @@ class Task extends Model
     }
 
     /**
-     * Valide une tâche
+     * Validate the specified task.
+     *
+     * @return self Current instance for fluent chaining.
      */
     public function validate(): self
     {
@@ -68,7 +72,9 @@ class Task extends Model
     }
 
     /**
-     * Invalide une tâche (enlève la validation)
+     * Invalidate the specified task.
+     *
+     * @return self Current instance for fluent chaining.
      */
     public function invalidate(): self
     {
@@ -78,56 +84,94 @@ class Task extends Model
     }
 
     /**
-     * Gère automatiquement la mise à jour du statut
+     * Normalize task status and keep completion timestamps in sync.
+     *
+     * @param  mixed  $value  Task status value before normalization.
+     * @return void No return value.
      */
     public function setStatusAttribute($value): void
     {
         $status = $value instanceof TaskStatus ? $value : TaskStatus::fromInput((string) $value);
         $this->attributes['status'] = $status->value;
 
-        // Si marquée comme terminée, ajouter la date de validation
+        // If marked as done, set the validation timestamp.
         if ($status === TaskStatus::DONE && $this->validated_at === null) {
             $this->attributes['validated_at'] = now();
             $this->attributes['completed_at'] = now();
         }
 
-        // Si on change le statut de done à autre chose, retirer la date de validation
+        // If status changes from done to another value, clear the validation timestamp.
         if ($status !== TaskStatus::DONE && $this->validated_at !== null) {
             $this->attributes['validated_at'] = null;
             $this->attributes['completed_at'] = null;
         }
     }
 
+    /**
+     * Define the belongs-to relationship to theme using theme_id and theme_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function theme(): BelongsTo
     {
         return $this->belongsTo(Theme::class, 'theme_id', 'theme_id');
     }
 
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    /**
+     * Define the belongs-to relationship to task using parent_task_id and task_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function parentTask(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'parent_task_id', 'task_id');
     }
 
+    /**
+     * Define the one-to-many relationship to task using parent_task_id and task_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function subTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'parent_task_id', 'task_id');
     }
 
+    /**
+     * Define the one-to-many relationship to task dependency using from_task_id and task_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function dependenciesFrom(): HasMany
     {
         return $this->hasMany(TaskDependency::class, 'from_task_id', 'task_id');
     }
 
+    /**
+     * Define the one-to-many relationship to task dependency using to_task_id and task_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function dependenciesTo(): HasMany
     {
         return $this->hasMany(TaskDependency::class, 'to_task_id', 'task_id');
     }
 
+    /**
+     * Define the one-to-many relationship to reminder using task_id and task_id keys.
+     *
+     * @return HasMany Configured relationship query definition.
+     */
     public function reminders(): HasMany
     {
         return $this->hasMany(Reminder::class, 'task_id', 'task_id');

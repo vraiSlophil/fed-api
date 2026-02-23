@@ -8,11 +8,21 @@ use Illuminate\Validation\Rules;
 
 class RegisterRequest extends FormRequest
 {
+    /**
+     * Allow registration attempts for anonymous callers.
+     *
+     * @return bool Always true because business constraints are handled by validation rules.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for self-service account registration.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [

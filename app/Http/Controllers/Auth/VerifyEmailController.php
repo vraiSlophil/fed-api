@@ -10,8 +10,19 @@ use Illuminate\Http\JsonResponse;
 
 class VerifyEmailController extends Controller
 {
+    /**
+     * Initialize the controller with authentication command handlers.
+     *
+     * @param  AuthActionService  $actionService  Service that validates and applies email verification.
+     */
     public function __construct(private readonly AuthActionService $actionService) {}
 
+    /**
+     * Validate signed verification parameters and mark the email as verified.
+     *
+     * @param  VerifyEmailRequest  $request  Request carrying validated signed verification query parameters.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function __invoke(VerifyEmailRequest $request): JsonResponse
     {
         $validated = $request->validated();

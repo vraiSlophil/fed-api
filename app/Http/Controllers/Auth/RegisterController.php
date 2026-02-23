@@ -10,8 +10,19 @@ use Illuminate\Http\JsonResponse;
 
 class RegisterController extends Controller
 {
+    /**
+     * Initialize the controller with authentication command handlers.
+     *
+     * @param  AuthActionService  $actionService  Service that creates accounts and issues tokens.
+     */
     public function __construct(private readonly AuthActionService $actionService) {}
 
+    /**
+     * Register a user account and return the initial authenticated session payload.
+     *
+     * @param  RegisterRequest  $request  Request carrying validated registration fields.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function __invoke(RegisterRequest $request): JsonResponse
     {
         $payload = $this->actionService->register($request->validated(), $request);

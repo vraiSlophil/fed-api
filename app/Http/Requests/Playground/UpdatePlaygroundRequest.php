@@ -6,11 +6,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePlaygroundRequest extends FormRequest
 {
+    /**
+     * Allow playground update payload validation.
+     *
+     * @return bool Always true because playground ownership checks run in policies/services.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for partial playground metadata updates.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [

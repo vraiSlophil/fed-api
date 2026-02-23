@@ -17,6 +17,12 @@ use Throwable;
 
 final class ApiExceptionHandler
 {
+    /**
+     * Register API-specific exception reporting and rendering callbacks.
+     *
+     * @param  Exceptions  $exceptions  Exception configuration object used to register handlers.
+     * @return void No return value.
+     */
     public function register(Exceptions $exceptions): void
     {
         $levelForStatus = static function (?int $status): string {

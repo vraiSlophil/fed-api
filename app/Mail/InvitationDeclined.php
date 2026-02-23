@@ -15,17 +15,33 @@ class InvitationDeclined extends Mailable
 
     public Invitation $invitation;
 
+    /**
+     * Initialize the mailable with the invitation declined by the invitee.
+     *
+     * @param  Invitation  $invitation  Invitation model used to render decline details.
+     */
     public function __construct(Invitation $invitation)
     {
         $this->invitation = $invitation;
     }
 
+    /**
+     * Build the invitation-declined email message.
+     *
+     * @return self Current instance for fluent chaining.
+     */
     public function build(): self
     {
-        return $this->subject('Invitation refusee')
+        return $this->subject('Invitation declined')
             ->markdown('emails.invitations.declined');
     }
 
+    /**
+     * Log queue delivery failures for the invitation-declined email.
+     *
+     * @param  Throwable  $e  Exception captured by the failure callback.
+     * @return void No return value.
+     */
     public function failed(Throwable $e): void
     {
         Log::error('Invitation declined email failed', [

@@ -6,11 +6,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class InviteThemeMemberRequest extends FormRequest
 {
+    /**
+     * Allow validation of theme-member invitation payloads.
+     *
+     * @return bool Always true because member-management rights are enforced by policies.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for invite target and permission flags.
+     *
+     * @return array Validation constraints keyed by input field name.
+     */
     public function rules(): array
     {
         return [

@@ -6,6 +6,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class OffsetPagination
 {
+    /**
+     * Return validation rules for offset-based pagination parameters.
+     *
+     * @return array Validation rules for offset-based pagination query parameters.
+     */
     public static function queryRules(): array
     {
         return [
@@ -17,8 +22,10 @@ final class OffsetPagination
     }
 
     /**
-     * @param  array<string, mixed>  $validated
-     * @return array{page:int, per_page:int}
+     * Extract normalized values from the provided input.
+     *
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @return array Normalized values extracted from input data.
      */
     public static function extract(array $validated): array
     {
@@ -45,7 +52,10 @@ final class OffsetPagination
     }
 
     /**
-     * @return array{current_page:int, per_page:int, total:int, last_page:int, from:int|null, to:int|null, has_next:bool}
+     * Merge metadata into the response payload.
+     *
+     * @param  LengthAwarePaginator  $paginator  Paginator instance containing the query result set.
+     * @return array Pagination metadata derived from the paginator state.
      */
     public static function meta(LengthAwarePaginator $paginator): array
     {
@@ -60,16 +70,31 @@ final class OffsetPagination
         ];
     }
 
+    /**
+     * Resolve the default page index from configuration.
+     *
+     * @return int Minimum page number allowed for paginated endpoints.
+     */
     private static function defaultPage(): int
     {
         return max(1, (int) config('api_pagination.default_page', 1));
     }
 
+    /**
+     * Resolve the default page size from configuration.
+     *
+     * @return int Default number of records returned per page when no value is provided.
+     */
     private static function defaultPerPage(): int
     {
         return min(max(1, (int) config('api_pagination.default_per_page', 15)), self::maxPerPage());
     }
 
+    /**
+     * Resolve the maximum allowed page size from configuration.
+     *
+     * @return int Upper bound accepted for `per_page`/`limit` query parameters.
+     */
     private static function maxPerPage(): int
     {
         return max(1, (int) config('api_pagination.max_per_page', 100));

@@ -8,11 +8,21 @@ use Illuminate\Validation\Rule;
 
 class ListAdminUsersRequest extends FormRequest
 {
+    /**
+     * Allow request validation; route authorization is enforced by admin policies.
+     *
+     * @return bool Always true because authorization is handled outside this request object.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for admin user listing filters, sorting, and pagination.
+     *
+     * @return array Validation constraints keyed by query parameter name.
+     */
     public function rules(): array
     {
         return [

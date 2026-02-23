@@ -14,22 +14,22 @@ class ThemeUserPermission extends Model
     use HasFactory, HasUuids;
 
     /**
-     * La clé primaire du modèle
+     * The model primary key.
      */
     protected $primaryKey = 'permission_id';
 
     /**
-     * La clé primaire est composite (theme_id, user_id)
+     * The model does not use an auto-incrementing key.
      */
     public $incrementing = false;
 
     /**
-     * Le type de la clé primaire
+     * The primary key type.
      */
     protected $keyType = 'string';
 
     /**
-     * Les attributs assignables en masse
+     * The mass assignable attributes.
      */
     protected $fillable = [
         'theme_id',
@@ -45,7 +45,7 @@ class ThemeUserPermission extends Model
     ];
 
     /**
-     * Les attributs qui doivent être convertis
+     * The attributes that should be cast.
      */
     protected $casts = [
         'can_view' => 'boolean',
@@ -57,7 +57,9 @@ class ThemeUserPermission extends Model
     ];
 
     /**
-     * Vérifie si le statut est actif
+     * Determine whether the permission entry is active.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isActive(): bool
     {
@@ -65,7 +67,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si le statut est inactif (révoqué)
+     * Determine whether the permission entry is revoked.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function isInactive(): bool
     {
@@ -73,7 +77,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut voir le thème
+     * Determine whether the user can view the theme.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canView(): bool
     {
@@ -81,7 +87,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut mettre à jour le thème
+     * Determine whether the user can update the theme.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canUpdateTheme(): bool
     {
@@ -89,7 +97,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut ajouter une tâche
+     * Determine whether the user can add tasks in the theme.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canAddTask(): bool
     {
@@ -97,7 +107,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut modifier une tâche
+     * Determine whether the user can edit tasks in the theme.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canEditTask(): bool
     {
@@ -105,7 +117,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut supprimer une tâche
+     * Determine whether the user can delete tasks in the theme.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canDeleteTask(): bool
     {
@@ -113,7 +127,9 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Vérifie si l'utilisateur peut valider une tâche
+     * Determine whether the user can validate tasks in the theme.
+     *
+     * @return bool True when the condition is met; otherwise, false.
      */
     public function canValidateTask(): bool
     {
@@ -121,18 +137,30 @@ class ThemeUserPermission extends Model
     }
 
     /**
-     * Relation vers le playground cible (où l'invité voit le thème)
+     * Define the belongs-to relationship to playground using target_playground_id and playground_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
      */
     public function targetPlayground(): BelongsTo
     {
         return $this->belongsTo(Playground::class, 'target_playground_id', 'playground_id');
     }
 
+    /**
+     * Define the belongs-to relationship to theme using theme_id and theme_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function theme(): BelongsTo
     {
         return $this->belongsTo(Theme::class, 'theme_id', 'theme_id');
     }
 
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

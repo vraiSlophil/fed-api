@@ -30,6 +30,11 @@ class ThemeTemplateItem extends Model
         'default_metadata' => 'array',
     ];
 
+    /**
+     * Define the belongs-to relationship to theme template using template_id and template_id keys.
+     *
+     * @return BelongsTo Configured relationship query definition.
+     */
     public function template(): BelongsTo
     {
         return $this->belongsTo(ThemeTemplate::class, 'template_id', 'template_id');

@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\URL;
 class InvitationLinkGenerator
 {
     /**
-     * @return array{accept:string, decline:string}
+     * Build signed accept/decline links for an invitation.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return array Structured set of generated links.
      */
     public function buildSignedLinks(Invitation $invitation): array
     {
@@ -40,6 +43,13 @@ class InvitationLinkGenerator
         ];
     }
 
+    /**
+     * Convert a signed API URL into the frontend invitation URL format.
+     *
+     * @param  string  $signedApiUrl  Absolute URL passed to downstream logic.
+     * @param  string  $invitationId  Identifier of the invitation.
+     * @return string Frontend invitation URL that preserves the signed query string.
+     */
     private function buildFrontendInvitationUrl(string $signedApiUrl, string $invitationId): string
     {
         $frontendBase = rtrim((string) config('app.frontend_url'), '/');

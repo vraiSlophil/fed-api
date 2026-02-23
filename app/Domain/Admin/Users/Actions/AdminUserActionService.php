@@ -14,6 +14,13 @@ use Throwable;
 
 class AdminUserActionService
 {
+    /**
+     * Create a new user account.
+     *
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @param  ?\Illuminate\Http\UploadedFile  $avatar  Uploaded avatar file sent with the request.
+     * @return User User instance returned after successful execution.
+     */
     public function create(array $validated, ?\Illuminate\Http\UploadedFile $avatar = null): User
     {
         $data = [
@@ -35,6 +42,14 @@ class AdminUserActionService
         return $user;
     }
 
+    /**
+     * Update an existing user account and optionally rotate avatar/password data.
+     *
+     * @param  User  $user  User account being updated by the admin action.
+     * @param  array  $validated  Validated payload extracted from the request.
+     * @param  ?\Illuminate\Http\UploadedFile  $avatar  Uploaded avatar file sent with the request.
+     * @return array Payload containing the updated user and email-change state.
+     */
     public function update(User $user, array $validated, ?\Illuminate\Http\UploadedFile $avatar = null): array
     {
         $data = [
@@ -78,6 +93,15 @@ class AdminUserActionService
         ];
     }
 
+    /**
+     * Permanently delete a user account while guarding against self-deletion.
+     *
+     * @param  User  $target  Target user instance affected by this operation.
+     * @param  User  $actor  Authenticated user who initiates the action.
+     * @return void No return value.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function delete(User $target, User $actor): void
     {
         if ($target->user_id === $actor->user_id) {
@@ -99,6 +123,15 @@ class AdminUserActionService
         }
     }
 
+    /**
+     * Block the targeted user account.
+     *
+     * @param  User  $target  Target user instance affected by this operation.
+     * @param  User  $actor  Authenticated user who initiates the action.
+     * @return User User instance returned after successful execution.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function block(User $target, User $actor): User
     {
         if ($target->blocked_at !== null) {
@@ -114,6 +147,14 @@ class AdminUserActionService
         return $target->fresh();
     }
 
+    /**
+     * Unblock the targeted user account.
+     *
+     * @param  User  $target  Target user instance affected by this operation.
+     * @return User User instance returned after successful execution.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function unblock(User $target): User
     {
         if ($target->blocked_at === null) {

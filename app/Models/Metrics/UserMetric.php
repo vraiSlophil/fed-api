@@ -8,6 +8,7 @@ use App\Models\Themes\Theme;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserMetric extends Model
 {
@@ -23,24 +24,32 @@ class UserMetric extends Model
 
     protected $casts = ['last_activity_date' => 'date', 'updated_at' => 'datetime', 'created_at' => 'datetime'];
 
-    public function user()
+    /**
+     * Define the belongs-to relationship to user using user_id and user_id keys.
+     *
+     * @return BelongsTo Relationship used to access the user owning this metric row.
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     /**
-     * Met à jour les métriques de l'utilisateur
+     * Recompute aggregate user metrics from current theme/task data.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return void No return value.
      */
     public static function updateUserMetrics(string $userId): void
     {
         $metrics = self::firstOrCreate(['user_id' => $userId]);
 
-        // Compter les totaux
+        // Count totals.
         $metrics->total_themes_created = Theme::where('owner_id', $userId)->count();
         $metrics->total_tasks_created = Task::where('user_id', $userId)->count();
         $metrics->total_tasks_completed = Task::where('user_id', $userId)->where('status', 'done')->count();
 
-        // Calculer les métriques hebdomadaires
+        // Compute weekly metrics.
         $startOfWeek = now()->startOfWeek();
         $startOfLastWeek = now()->subWeek()->startOfWeek();
         $endOfLastWeek = now()->subWeek()->endOfWeek();
@@ -57,7 +66,7 @@ class UserMetric extends Model
 
         $metrics->tasks_completed_last_week = Task::where('user_id', $userId)->where('status', 'done')->whereBetween('validated_at', [$startOfLastWeek, $endOfLastWeek])->count();
 
-        // Mettre à jour la dernière activité
+        // Update the latest activity date.
         $lastThemeActivity = Theme::where('owner_id', $userId)->latest('created_at')->first()?->created_at;
         $lastTaskActivity = Task::where('user_id', $userId)->latest('updated_at')->first()?->updated_at;
 

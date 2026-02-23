@@ -11,8 +11,21 @@ use Illuminate\Http\Request;
 
 class RefreshTokenController extends Controller
 {
+    /**
+     * Initialize the controller with authentication command handlers.
+     *
+     * @param  AuthActionService  $actionService  Service that validates and rotates refresh tokens.
+     */
     public function __construct(private readonly AuthActionService $actionService) {}
 
+    /**
+     * Rotate the refresh token and return a new token pair with expiration metadata.
+     *
+     * @param  Request  $request  Request containing the refresh token in headers or bearer token.
+     * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function __invoke(Request $request): JsonResponse
     {
         $refreshToken = $this->extractRefreshToken($request);
@@ -35,6 +48,12 @@ class RefreshTokenController extends Controller
             ->json();
     }
 
+    /**
+     * Extract the refresh token from request headers or bearer token.
+     *
+     * @param  Request  $request  Request inspected for `X-Refresh-Token` or bearer token credentials.
+     * @return ?string Raw refresh token value, or null when no token is present.
+     */
     private function extractRefreshToken(Request $request): ?string
     {
         $refreshHeader = $request->header('X-Refresh-Token');

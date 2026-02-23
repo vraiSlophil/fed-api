@@ -7,11 +7,21 @@ use Illuminate\Validation\Rule;
 
 class UserMetricsRequest extends FormRequest
 {
+    /**
+     * Allow authenticated users to request their analytics snapshots.
+     *
+     * @return bool Always true because user scoping is applied in the controller/service.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for supported analytics period keys.
+     *
+     * @return array Validation constraints keyed by query parameter name.
+     */
     public function rules(): array
     {
         return [

@@ -8,11 +8,21 @@ use Illuminate\Validation\Rule;
 
 class ListInvitationsRequest extends FormRequest
 {
+    /**
+     * Allow authenticated users to validate invitation listing filters.
+     *
+     * @return bool Always true because access control is handled in controllers/policies.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Return validation rules for invitation status filtering and pagination.
+     *
+     * @return array Validation constraints keyed by query parameter name.
+     */
     public function rules(): array
     {
         return [

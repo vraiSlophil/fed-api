@@ -6,14 +6,14 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
 
-it('refresh échoue si le refresh token est manquant', function () {
+it('refresh fails when the refresh token is missing', function () {
     $response = $this->postJson('/api/auth/refresh');
 
     $response->assertStatus(401);
     expect($response->json('message_code'))->toBe('auth.refresh.missing');
 });
 
-it('refresh échoue si le refresh token est invalide', function () {
+it('refresh fails when the refresh token is invalid', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
@@ -31,7 +31,7 @@ it('refresh échoue si le refresh token est invalide', function () {
     expect($response->json('message_code'))->toBe('auth.refresh.invalid');
 });
 
-it('refresh renvoie un nouveau couple access/refresh et invalide l’ancien refresh', function () {
+it('refresh returns a new access/refresh pair and invalidates the previous refresh token', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
@@ -54,7 +54,7 @@ it('refresh renvoie un nouveau couple access/refresh et invalide l’ancien refr
     expect(PersonalAccessToken::findToken($refreshToken))->toBeNull();
 });
 
-it('refresh verrouille le token pour éviter les refresh concurrents', function () {
+it('refresh locks the token to prevent concurrent refresh calls', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
@@ -89,7 +89,7 @@ it('refresh verrouille le token pour éviter les refresh concurrents', function 
     expect($matched)->toBeTrue();
 });
 
-it('refresh accepte la réutilisation dans la fenêtre de grace', function () {
+it('refresh accepts token reuse within the grace window', function () {
     config(['auth_tokens.refresh_reuse_grace_seconds' => 30]);
 
     $user = User::factory()->create([
@@ -113,7 +113,7 @@ it('refresh accepte la réutilisation dans la fenêtre de grace', function () {
     expect($response->json('message_code'))->toBe('auth.refresh.success');
 });
 
-it('refresh détecte la réutilisation d’un refresh token et révoque tous les tokens', function () {
+it('refresh detects refresh token reuse and revokes all tokens', function () {
     config(['auth_tokens.refresh_reuse_grace_seconds' => 0]);
 
     $user = User::factory()->create([
@@ -140,7 +140,7 @@ it('refresh détecte la réutilisation d’un refresh token et révoque tous les
         ->toBe(0);
 });
 
-it('refresh échoue si le refresh token est expiré', function () {
+it('refresh fails when the refresh token is expired', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
@@ -159,7 +159,7 @@ it('refresh échoue si le refresh token est expiré', function () {
     expect($response->json('message_code'))->toBe('auth.refresh.expired');
 });
 
-it('refresh renvoie auth.blocked si l’utilisateur est bloqué', function () {
+it('refresh returns auth.blocked when the user is blocked', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
         'blocked_at' => now(),

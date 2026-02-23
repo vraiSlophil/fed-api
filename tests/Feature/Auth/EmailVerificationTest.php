@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Laravel\Sanctum\Sanctum;
 
-it('verifie un email via lien signe (POST)', function () {
+it('verifies an email through a signed link (POST)', function () {
     $user = User::factory()->create([
         'email_verified_at' => null,
     ]);
@@ -28,7 +28,7 @@ it('verifie un email via lien signe (POST)', function () {
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
 });
 
-it('refuse un lien de verification sans signature', function () {
+it('rejects an email verification link without a signature', function () {
     $user = User::factory()->create([
         'email_verified_at' => null,
     ]);
@@ -39,7 +39,7 @@ it('refuse un lien de verification sans signature', function () {
     ])->assertStatus(403);
 });
 
-it('refuse un lien de verification expire', function () {
+it('rejects an expired email verification link', function () {
     $user = User::factory()->create([
         'email_verified_at' => null,
     ]);
@@ -57,7 +57,7 @@ it('refuse un lien de verification expire', function () {
     $this->postJson($url)->assertStatus(403);
 });
 
-it('refuse un lien de verification avec hash invalide', function () {
+it('rejects an email verification link with an invalid hash', function () {
     $user = User::factory()->create([
         'email_verified_at' => null,
     ]);
@@ -77,7 +77,7 @@ it('refuse un lien de verification avec hash invalide', function () {
         ->assertJsonPath('message_code', 'auth.verification.invalid');
 });
 
-it('retourne deja verifie si l email est deja confirme', function () {
+it('returns already verified when the email is already confirmed', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
@@ -97,7 +97,7 @@ it('retourne deja verifie si l email est deja confirme', function () {
         ->assertJsonPath('message_code', 'auth.verification.already_verified');
 });
 
-it('retourne not found si l utilisateur de verification n existe pas', function () {
+it('returns not found when the verification user does not exist', function () {
     $url = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
@@ -113,7 +113,7 @@ it('retourne not found si l utilisateur de verification n existe pas', function 
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
-it('renvoie une notification de verification par email', function () {
+it('sends the verification email notification', function () {
     Notification::fake();
 
     $user = User::factory()->create([
@@ -129,13 +129,13 @@ it('renvoie une notification de verification par email', function () {
     Notification::assertSentTo($user, QueuedVerifyEmail::class);
 });
 
-it('refuse la notification de verification sans auth', function () {
+it('rejects the verification notification request without authentication', function () {
     $this->postJson('/api/email-verification-notifications')
         ->assertStatus(401)
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
-it('retourne already verified et n envoie pas de notification', function () {
+it('returns already verified and does not send a notification', function () {
     Notification::fake();
 
     $user = User::factory()->create([

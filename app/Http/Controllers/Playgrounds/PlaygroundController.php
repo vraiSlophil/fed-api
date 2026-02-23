@@ -16,11 +16,23 @@ use Illuminate\Http\Request;
 
 class PlaygroundController extends Controller
 {
+    /**
+     * Initialize the controller with playground query and command handlers.
+     *
+     * @param  PlaygroundQueryService  $queryService  Service that reads playground resources and derived stats.
+     * @param  PlaygroundActionService  $actionService  Service that creates, updates, and deletes playgrounds.
+     */
     public function __construct(
         private readonly PlaygroundQueryService $queryService,
         private readonly PlaygroundActionService $actionService,
     ) {}
 
+    /**
+     * List playgrounds owned by the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function index(Request $request): JsonResponse
     {
         $playgrounds = $this->queryService->listForUser($request->user());
@@ -34,6 +46,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Return one playground owned by the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function show(Request $request, Playground $playground): JsonResponse
     {
         $this->authorize('view', $playground);
@@ -49,6 +68,12 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Create a playground for the authenticated user.
+     *
+     * @param  StorePlaygroundRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function store(StorePlaygroundRequest $request): JsonResponse
     {
         $playground = $this->actionService->create($request->user(), $request->validated());
@@ -62,6 +87,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Update a playground owned by the authenticated user.
+     *
+     * @param  UpdatePlaygroundRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function update(UpdatePlaygroundRequest $request, Playground $playground): JsonResponse
     {
         $this->authorize('update', $playground);
@@ -77,6 +109,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Delete a playground owned by the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function destroy(Request $request, Playground $playground): JsonResponse
     {
         $this->authorize('delete', $playground);
@@ -89,6 +128,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Mark the selected playground as the user's default playground.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function setAsDefault(Request $request, Playground $playground): JsonResponse
     {
         $this->authorize('setDefault', $playground);
@@ -104,6 +150,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Return aggregated statistics for the specified playground.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function stats(Request $request, Playground $playground): JsonResponse
     {
         $this->authorize('stats', $playground);
@@ -120,6 +173,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * List themes accessible in the specified playground.
+     *
+     * @param  ListPlaygroundThemesRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function themes(ListPlaygroundThemesRequest $request, Playground $playground): JsonResponse
     {
         $this->authorize('view', $playground);
@@ -136,6 +196,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * Return one playground by slug for the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function showBySlug(Request $request, Playground $playground): JsonResponse
     {
         $this->authorize('view', $playground);
@@ -149,6 +216,13 @@ class PlaygroundController extends Controller
             ->json();
     }
 
+    /**
+     * List accessible themes for a playground resolved by slug.
+     *
+     * @param  ListPlaygroundThemesRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Playground  $playground  Playground targeted by the operation.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function themesBySlug(ListPlaygroundThemesRequest $request, Playground $playground): JsonResponse
     {
         $this->authorize('view', $playground);

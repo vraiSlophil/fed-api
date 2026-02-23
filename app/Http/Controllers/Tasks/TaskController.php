@@ -17,11 +17,23 @@ use Illuminate\Http\Response;
 
 class TaskController extends Controller
 {
+    /**
+     * Initialize the controller with task query and command handlers.
+     *
+     * @param  TaskQueryService  $queryService  Service that loads task lists and visibility-scoped resources.
+     * @param  TaskActionService  $actionService  Service that applies task lifecycle state changes.
+     */
     public function __construct(
         private readonly TaskQueryService $queryService,
         private readonly TaskActionService $actionService,
     ) {}
 
+    /**
+     * List tasks visible to the authenticated user.
+     *
+     * @param  ListTaskRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function index(ListTaskRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -41,6 +53,12 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Create a new task in the requested theme.
+     *
+     * @param  StoreTaskRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function store(StoreTaskRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -58,6 +76,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Return one task visible to the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function show(
         Request $request,
         Task $task
@@ -73,6 +98,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Update an existing task visible to the authenticated user.
+     *
+     * @param  UpdateTaskRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         $this->authorize('update', $task);
@@ -88,6 +120,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Archive the specified task.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function archive(Request $request, Task $task): JsonResponse
     {
         $this->authorize('archive', $task);
@@ -102,6 +141,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Restore the specified task.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function restore(Request $request, Task $task): JsonResponse
     {
         $this->authorize('restore', $task);
@@ -116,6 +162,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Mark the task as completed.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function complete(Request $request, Task $task): JsonResponse
     {
         $this->authorize('validate', $task);
@@ -130,6 +183,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Mark the task as not completed.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return JsonResponse JSON API response using the standard envelope.
+     */
     public function uncomplete(Request $request, Task $task): JsonResponse
     {
         $this->authorize('validate', $task);
@@ -144,6 +204,13 @@ class TaskController extends Controller
             ->json();
     }
 
+    /**
+     * Delete a task visible to the authenticated user.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Task  $task  Task instance being read or mutated by this method.
+     * @return Response HTTP response generated by the method.
+     */
     public function destroy(Request $request, Task $task): Response
     {
         $this->authorize('delete', $task);

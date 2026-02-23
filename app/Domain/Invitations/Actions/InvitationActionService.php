@@ -9,6 +9,17 @@ use App\Models\Invitations\Invitation;
 
 class InvitationActionService
 {
+    /**
+     * Apply an accept/decline response to an invitation with expiration safeguards.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @param  string  $status  Requested status value applied by this method.
+     * @param  ?string  $targetPlaygroundId  Identifier of the destination playground for shared access.
+     * @param  InvitationService  $invitationService  Service responsible for invitation operations.
+     * @return array Payload describing invitation response status and permission result.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     */
     public function respond(Invitation $invitation, string $status, ?string $targetPlaygroundId, InvitationService $invitationService): array
     {
         if ($invitation->status === 'accepted' || $invitation->status === 'declined') {
