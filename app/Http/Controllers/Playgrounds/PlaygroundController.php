@@ -131,15 +131,14 @@ class PlaygroundController extends Controller
     /**
      * Mark the selected playground as the user's default playground.
      *
-     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  Playground  $playground  Playground targeted by the operation.
      * @return JsonResponse JSON API response using the standard envelope.
      */
-    public function setAsDefault(Request $request, Playground $playground): JsonResponse
+    public function setAsDefault(Playground $playground): JsonResponse
     {
         $this->authorize('setDefault', $playground);
 
-        $playground = $this->actionService->setAsDefault($request->user(), $playground);
+        $playground = $this->actionService->setAsDefault($playground);
 
         return ApiResponse::builder()
             ->success()

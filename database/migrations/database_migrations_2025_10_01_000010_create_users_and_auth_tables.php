@@ -24,7 +24,6 @@ return new class extends Migration
             $table->json('settings')->nullable();
             $table->smallInteger('role_power')->default(10);
             $table->timestamp('blocked_at')->nullable();
-            $table->uuid('active_playground_id')->nullable(); // future utilisation contextuelle
             $table->timestamps();
 
             $table->foreign('role_power')->references('power')->on('roles');

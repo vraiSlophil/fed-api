@@ -18,7 +18,7 @@ class UserObserver
     {
         UserMetric::create(['user_id' => $user->user_id]);
 
-        $defaultPlayground = Playground::create([
+        Playground::create([
             'user_id' => $user->user_id,
             'name' => 'Main Workspace',
             'slug' => 'main',
@@ -26,8 +26,6 @@ class UserObserver
             'color' => $this->generateRandomColor(),
             'is_default' => true,
         ]);
-
-        $user->update(['active_playground_id' => $defaultPlayground->playground_id]);
     }
 
     /**

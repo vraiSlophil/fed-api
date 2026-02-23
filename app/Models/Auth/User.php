@@ -43,7 +43,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_ip',
         'role_power',
         'blocked_at',
-        'active_playground_id',
     ];
 
     protected $hidden = [
@@ -115,16 +114,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function playgrounds(): HasMany
     {
         return $this->hasMany(Playground::class, 'user_id', 'user_id');
-    }
-
-    /**
-     * Define the belongs-to relationship to playground using active_playground_id and playground_id keys.
-     *
-     * @return BelongsTo Configured relationship query definition.
-     */
-    public function activePlayground(): BelongsTo
-    {
-        return $this->belongsTo(Playground::class, 'active_playground_id', 'playground_id');
     }
 
     /**
