@@ -3,6 +3,7 @@
 namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 final class ApiResponse
 {
@@ -37,6 +38,11 @@ final class ApiResponse
             ->messageCode($messageCode, $messageParams)
             ->errors($errors)
             ->json();
+    }
+
+    public static function noContent(int $status = 204, array $headers = []): Response
+    {
+        return response()->noContent($status, $headers);
     }
 
     public static function media(): ApiMediaBuilder
