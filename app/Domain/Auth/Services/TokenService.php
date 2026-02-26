@@ -4,6 +4,7 @@ namespace App\Domain\Auth\Services;
 
 use App\Models\Auth\User;
 use Carbon\CarbonImmutable;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class TokenService
 {
@@ -43,5 +44,18 @@ class TokenService
             'access_expires_at' => $accessExpiresAt->toIso8601String(),
             'refresh_expires_at' => $refreshExpiresAt->toIso8601String(),
         ];
+    }
+
+    /**
+     * Revoke all personal access tokens belonging to the specified user.
+     *
+     * @param  string  $userId  Identifier of the user.
+     * @return void No return value.
+     */
+    public function revokeAllTokensForUser(string $userId): void
+    {
+        PersonalAccessToken::where('tokenable_id', $userId)
+            ->where('tokenable_type', User::class)
+            ->delete();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Profile\Actions;
 
+use App\Domain\Auth\Services\TokenService;
 use App\Exceptions\ApiException;
 use App\Models\Auth\User;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,13 @@ use Throwable;
 
 class ProfileActionService
 {
+    /**
+     * Initialize the service with token lifecycle utilities.
+     *
+     * @param  TokenService  $tokenService  Service used to revoke all active user tokens after password rotation.
+     */
+    public function __construct(private readonly TokenService $tokenService) {}
+
     /**
      * Update profile fields for the authenticated user.
      *
@@ -58,6 +66,8 @@ class ProfileActionService
         $user->update([
             'password' => Hash::make($validated['password']),
         ]);
+
+        $this->tokenService->revokeAllTokensForUser((string) $user->getAuthIdentifier());
     }
 
     /**

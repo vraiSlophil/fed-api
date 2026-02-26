@@ -51,6 +51,10 @@ Notes:
     - inside grace window: refresh still accepted
     - outside grace window: all user tokens revoked + `auth.refresh.reused`
 - Logout revokes all tokens of authenticated user.
+- Password reset (`POST /auth/reset-password`) revokes all active user tokens.
+- Password update (`POST /profile/password`) revokes all active user tokens.
+- Admin password update (`POST /admin/users/{user}` with `password`) revokes all active tokens for the target user.
+- After any password change, previously issued access/refresh tokens are invalid and clients must authenticate again.
 
 ## Storage model
 
