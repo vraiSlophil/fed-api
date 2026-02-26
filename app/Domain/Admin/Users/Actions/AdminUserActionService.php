@@ -2,6 +2,7 @@
 
 namespace App\Domain\Admin\Users\Actions;
 
+use App\Domain\Auth\Services\TokenService;
 use App\Exceptions\ApiException;
 use App\Models\Auth\User;
 use Exception;
@@ -14,6 +15,13 @@ use Throwable;
 
 class AdminUserActionService
 {
+    /**
+     * Initialize the service with token lifecycle utilities.
+     *
+     * @param  TokenService  $tokenService  Service used to revoke all active user tokens after admin password rotation.
+     */
+    public function __construct(private readonly TokenService $tokenService) {}
+
     /**
      * Create a new user account.
      *
@@ -73,6 +81,10 @@ class AdminUserActionService
 
         $emailChanged = $user->email !== $data['email'];
         $user->update($data);
+
+        if (array_key_exists('password', $data)) {
+            $this->tokenService->revokeAllTokensForUser((string) $user->getAuthIdentifier());
+        }
 
         if ($emailChanged) {
             $user->email_verified_at = null;

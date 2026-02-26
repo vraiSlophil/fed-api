@@ -124,7 +124,7 @@ class AuthActionService
                 return $this->tokenService->issueTokensFor($user);
             }
 
-            $this->revokeAllTokensForUser($revoked->user_id);
+            $this->tokenService->revokeAllTokensForUser($revoked->user_id);
             throw new ApiException('auth.refresh.reused', [], 401, 'Refresh token reused');
         }
 
@@ -215,14 +215,16 @@ class AuthActionService
             [
                 'email' => $validated['email'],
                 'password' => $validated['password'],
-                'password_confirmation' => $validated['password_confirmation'],
+                'password_confirmation' => $validated['password_confirmation'] ?? $validated['password'],
                 'token' => $validated['token'],
             ],
-            function ($user) use ($validated): void {
+            function (User $user) use ($validated): void {
                 $user->forceFill([
                     'password' => Hash::make((string) $validated['password']),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                $this->tokenService->revokeAllTokensForUser((string) $user->getAuthIdentifier());
 
                 event(new PasswordReset($user));
             }
@@ -415,18 +417,5 @@ class AuthActionService
         }
 
         return hash('sha256', $rawToken);
-    }
-
-    /**
-     * Revoke all personal access tokens belonging to the specified user.
-     *
-     * @param  string  $userId  Identifier of the user.
-     * @return void No return value.
-     */
-    private function revokeAllTokensForUser(string $userId): void
-    {
-        PersonalAccessToken::where('tokenable_id', $userId)
-            ->where('tokenable_type', User::class)
-            ->delete();
     }
 }
