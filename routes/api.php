@@ -71,12 +71,9 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
     Route::get('/invitations', [ThemeInvitationController::class, 'index'])->name('invitations.index');
 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
-    Route::get('/users/search', [ThemeMemberController::class, 'searchUsers'])->name('users.search');
-
-    Route::prefix('/user')->group(function () {
-        Route::get('', UserController::class)->name('user.show');
-        Route::get('/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
-    });
+    Route::get('/users', [AdminUserController::class, 'index'])->middleware('admin')->name('users.index');
+    Route::get('/users/me', UserController::class)->name('users.me');
+    Route::get('/user/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
 
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show'])->name('profile.show');

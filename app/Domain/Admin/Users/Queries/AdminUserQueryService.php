@@ -5,6 +5,7 @@ namespace App\Domain\Admin\Users\Queries;
 use App\Models\Auth\Role;
 use App\Models\Auth\User;
 use App\Models\Invitations\Invitation;
+use App\Models\Themes\Theme;
 
 class AdminUserQueryService
 {
@@ -27,6 +28,17 @@ class AdminUserQueryService
                     ->orWhere('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%");
             });
+        }
+
+        if (! empty($validated['theme_id'])) {
+            $theme = Theme::query()
+                ->where('theme_id', (string) $validated['theme_id'])
+                ->first();
+
+            if ($theme) {
+                $query->whereNotNull('email_verified_at')
+                    ->where('user_id', '!=', $theme->owner_id);
+            }
         }
 
         if (! empty($validated['role'])) {
@@ -82,6 +94,7 @@ class AdminUserQueryService
             'allowed_sort_fields' => $allowedSortFields,
             'filters' => [
                 'search' => $validated['search'] ?? null,
+                'theme_id' => $validated['theme_id'] ?? null,
                 'role' => $validated['role'] ?? null,
                 'status' => $validated['status'] ?? null,
                 'roles' => $validated['roles'] ?? null,
