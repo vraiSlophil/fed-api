@@ -1,0 +1,112 @@
+<?php
+
+use App\Models\Auth\User;
+use App\Models\Playgrounds\Playground;
+use App\Models\Themes\Theme;
+use Laravel\Sanctum\Sanctum;
+
+it('returns the authenticated caller via GET /api/users/me', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($user, ['access']);
+
+    $this->getJson('/api/users/me')
+        ->assertStatus(200)
+        ->assertJsonPath('message_code', 'auth.user.fetched')
+        ->assertJsonPath('data.user_id', $user->user_id)
+        ->assertJsonPath('data.email', $user->email);
+});
+
+it('rejects GET /api/users/me without authentication', function () {
+    $this->getJson('/api/users/me')
+        ->assertStatus(401)
+        ->assertJsonPath('message_code', 'auth.failed');
+});
+
+it('allows admin users to list accounts via GET /api/users', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    $listedUser = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($admin, ['access']);
+
+    $this->getJson('/api/users')
+        ->assertStatus(200)
+        ->assertJsonPath('status', 'success')
+        ->assertJsonFragment([
+            'user_id' => $listedUser->user_id,
+        ]);
+});
+
+it('supports search and theme_id query params via GET /api/users', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    $owner = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $ownerPlayground = Playground::query()
+        ->where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $searchUser = User::factory()->create([
+        'username' => 'query-target-user',
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($admin, ['access']);
+
+    $this->getJson('/api/users?search=query-target&theme_id='.$theme->theme_id)
+        ->assertStatus(200)
+        ->assertJsonFragment([
+            'user_id' => $searchUser->user_id,
+            'username' => $searchUser->username,
+        ]);
+});
+
+it('forbids non-admin users from listing accounts via GET /api/users', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($user, ['access']);
+
+    $this->getJson('/api/users')
+        ->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+});
+
+it('rejects GET /api/users without authentication', function () {
+    $this->getJson('/api/users')
+        ->assertStatus(401)
+        ->assertJsonPath('message_code', 'auth.failed');
+});
+
+it('returns 404 on removed GET /api/users/search endpoint', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($admin, ['access']);
+
+    $this->getJson('/api/users/search?search=john')
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
