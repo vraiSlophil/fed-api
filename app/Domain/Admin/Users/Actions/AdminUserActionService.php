@@ -53,54 +53,75 @@ class AdminUserActionService
     /**
      * Update an existing user account and optionally rotate avatar/password data.
      *
-     * @param  User  $user  User account being updated by the admin action.
+     * @param  User  $actor  Authenticated user who initiates the action.
+     * @param  User  $target  User account being updated by the action.
      * @param  array  $validated  Validated payload extracted from the request.
      * @param  ?\Illuminate\Http\UploadedFile  $avatar  Uploaded avatar file sent with the request.
      * @return array Payload containing the updated user and email-change state.
+     *
+     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
      */
-    public function update(User $user, array $validated, ?\Illuminate\Http\UploadedFile $avatar = null): array
+    public function update(User $actor, User $target, array $validated, ?\Illuminate\Http\UploadedFile $avatar = null): array
     {
-        $data = [
-            'username' => $validated['username'],
-            'email' => $validated['email'],
-            'first_name' => $validated['first_name'] ?? null,
-            'last_name' => $validated['last_name'] ?? null,
-            'role_power' => $validated['role_power'],
-        ];
+        $data = [];
+        $isAdmin = $actor->role_power >= 100;
+
+        foreach (['username', 'email', 'first_name', 'last_name'] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $data[$field] = $validated[$field];
+            }
+        }
+
+        if ($isAdmin) {
+            if (array_key_exists('role_power', $validated)) {
+                $data['role_power'] = $validated['role_power'];
+            }
+
+            if (array_key_exists('blocked_at', $validated)) {
+                $data['blocked_at'] = $validated['blocked_at'];
+            }
+        }
 
         if (! empty($validated['password'])) {
+            if (! $isAdmin && ! Hash::check($validated['current_password'], $target->password)) {
+                throw new ApiException('auth.failed', [], 422, 'Authentication failed');
+            }
+
             $data['password'] = Hash::make($validated['password']);
         }
 
         if ($avatar) {
-            if ($user->avatar_path) {
-                Storage::disk('public')->delete($user->avatar_path);
+            if ($target->avatar_path) {
+                Storage::disk('public')->delete($target->avatar_path);
             }
             $data['avatar_path'] = $avatar->store('avatars', 'public');
         }
 
-        $emailChanged = $user->email !== $data['email'];
-        $user->update($data);
+        $emailChanged = array_key_exists('email', $data) && $target->email !== $data['email'];
+
+        if ($data !== []) {
+            $target->update($data);
+        }
 
         if (array_key_exists('password', $data)) {
-            $this->tokenService->revokeAllTokensForUser((string) $user->getAuthIdentifier());
+            $this->tokenService->revokeAllTokensForUser((string) $target->getAuthIdentifier());
         }
 
         if ($emailChanged) {
-            $user->email_verified_at = null;
-            $user->save();
+            $target->email_verified_at = null;
+            $target->save();
             try {
-                $user->sendEmailVerificationNotification();
+                $target->sendEmailVerificationNotification();
             } catch (Throwable $e) {
                 Log::error('Email verification notification failed to dispatch', [
-                    'user_id' => $user->user_id,
+                    'user_id' => $target->user_id,
                     'error' => $e->getMessage(),
                 ]);
             }
         }
 
         return [
-            'user' => $user->fresh(),
+            'user' => $target->fresh(),
             'email_changed' => $emailChanged,
         ];
     }

@@ -49,7 +49,7 @@ class AdminUserPolicy
      */
     public function update(User $user, User $target): bool
     {
-        return $user->role_power >= 100;
+        return $user->role_power >= 100 || $user->user_id === $target->user_id;
     }
 
     /**

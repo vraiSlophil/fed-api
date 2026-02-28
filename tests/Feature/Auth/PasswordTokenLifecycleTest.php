@@ -61,7 +61,7 @@ it('password reset revokes all active tokens and invalidates previously issued a
     ])->assertStatus(200);
 });
 
-it('profile password update revokes all active tokens and invalidates the current access token', function () {
+it('user PATCH password update revokes all active tokens and invalidates the current access token', function () {
     $oldPassword = 'current-password-123';
     $newPassword = 'updated-password-123';
 
@@ -86,14 +86,14 @@ it('profile password update revokes all active tokens and invalidates the curren
         ->toBe(2);
 
     $response = $this->withHeader('Authorization', 'Bearer '.$accessToken)
-        ->postJson('/api/profile/password', [
+        ->patchJson("/api/users/{$user->user_id}", [
             'current_password' => $oldPassword,
             'password' => $newPassword,
             'password_confirmation' => $newPassword,
         ]);
 
     $response->assertStatus(200);
-    expect($response->json('message_code'))->toBe('auth.password.updated');
+    expect($response->json('message_code'))->toBe('user.update.success');
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBe(0);
     expect(PersonalAccessToken::findToken($accessToken))->toBeNull();
@@ -111,7 +111,7 @@ it('profile password update revokes all active tokens and invalidates the curren
     ])->assertStatus(200);
 });
 
-it('admin password update revokes all active tokens for the target user', function () {
+it('admin PATCH password update revokes all active tokens for the target user', function () {
     $newPassword = 'admin-reset-password-123';
 
     $admin = User::factory()->create([
@@ -146,12 +146,7 @@ it('admin password update revokes all active tokens for the target user', functi
         ->toBe(2);
 
     $response = $this->withHeader('Authorization', 'Bearer '.$adminAccessToken)
-        ->postJson("/api/admin/users/{$target->user_id}", [
-            'username' => $target->username,
-            'email' => $target->email,
-            'first_name' => $target->first_name,
-            'last_name' => $target->last_name,
-            'role_power' => $target->role_power,
+        ->patchJson("/api/users/{$target->user_id}", [
             'password' => $newPassword,
             'password_confirmation' => $newPassword,
         ]);
@@ -170,7 +165,7 @@ it('admin password update revokes all active tokens for the target user', functi
     expect($expiredTargetSession->json('message_code'))->toBe('auth.failed');
 });
 
-it('admin update without password does not revoke target user tokens', function () {
+it('admin PATCH update without password does not revoke target user tokens', function () {
     $admin = User::factory()->create([
         'role_power' => 100,
         'email_verified_at' => now(),
@@ -202,12 +197,8 @@ it('admin update without password does not revoke target user tokens', function 
         ->toBe(2);
 
     $response = $this->withHeader('Authorization', 'Bearer '.$adminAccessToken)
-        ->postJson("/api/admin/users/{$target->user_id}", [
-            'username' => $target->username,
-            'email' => $target->email,
-            'first_name' => $target->first_name,
-            'last_name' => $target->last_name,
-            'role_power' => $target->role_power,
+        ->patchJson("/api/users/{$target->user_id}", [
+            'first_name' => 'UpdatedByAdmin',
         ]);
 
     $response->assertStatus(200);
