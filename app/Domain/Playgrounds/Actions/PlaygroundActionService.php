@@ -46,9 +46,17 @@ class PlaygroundActionService
      */
     public function update(Playground $playground, array $validated): Playground
     {
-        $playground->update($validated);
+        $markAsDefault = array_key_exists('is_default', $validated) && (bool) $validated['is_default'] === true;
 
-        if (isset($validated['is_default']) && $validated['is_default']) {
+        if (array_key_exists('is_default', $validated)) {
+            unset($validated['is_default']);
+        }
+
+        if ($validated !== []) {
+            $playground->update($validated);
+        }
+
+        if ($markAsDefault) {
             $playground->setAsDefault();
         }
 
@@ -94,19 +102,6 @@ class PlaygroundActionService
                 $this->createDefaultPlayground($user->user_id);
             }
         });
-    }
-
-    /**
-     * Set the specified playground as the user's default playground.
-     *
-     * @param  Playground  $playground  Playground targeted by the operation.
-     * @return Playground Playground instance returned after successful execution.
-     */
-    public function setAsDefault(Playground $playground): Playground
-    {
-        $playground->setAsDefault();
-
-        return $playground->fresh();
     }
 
     /**

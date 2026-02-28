@@ -51,9 +51,11 @@ class TaskActionService
     public function update(User $user, Task $task, array $validated): Task
     {
         $theme = $task->theme;
+        $requiresEditPermission = false;
+        $requiresValidatePermission = false;
 
-        if (! $theme->canEditTaskBy($user->user_id)) {
-            throw new AuthorizationException('Forbidden');
+        if (array_key_exists('title', $validated) || array_key_exists('archived_at', $validated)) {
+            $requiresEditPermission = true;
         }
 
         if (isset($validated['status'])) {
@@ -62,98 +64,28 @@ class TaskActionService
 
             $currentStatus = $task->status;
             $currentStatusValue = $currentStatus instanceof TaskStatus ? $currentStatus->value : (string) $currentStatus;
-            if ($targetStatus === TaskStatus::DONE && $currentStatusValue !== TaskStatus::DONE->value) {
-                if (! $theme->canValidateTaskBy($user->user_id)) {
-                    throw new AuthorizationException('Forbidden');
+            $statusChanged = $targetStatus->value !== $currentStatusValue;
+
+            if ($statusChanged) {
+                $touchesDoneState = $targetStatus === TaskStatus::DONE || $currentStatusValue === TaskStatus::DONE->value;
+
+                if ($touchesDoneState) {
+                    $requiresValidatePermission = true;
+                } else {
+                    $requiresEditPermission = true;
                 }
             }
         }
 
+        if ($requiresEditPermission && ! $theme->canEditTaskBy($user->user_id)) {
+            throw new AuthorizationException('Forbidden');
+        }
+
+        if ($requiresValidatePermission && ! $theme->canValidateTaskBy($user->user_id)) {
+            throw new AuthorizationException('Forbidden');
+        }
+
         $task->update($validated);
-
-        return $task->fresh();
-    }
-
-    /**
-     * Archive the specified task.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Task  $task  Task instance being read or mutated by this method.
-     * @return Task Task instance returned after successful execution.
-     *
-     * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
-     */
-    public function archive(User $user, Task $task): Task
-    {
-        if (! $task->theme->canEditTaskBy($user->user_id)) {
-            throw new AuthorizationException('Forbidden');
-        }
-
-        $task->archived_at = now();
-        $task->save();
-
-        return $task->fresh();
-    }
-
-    /**
-     * Restore the specified task.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Task  $task  Task instance being read or mutated by this method.
-     * @return Task Task instance returned after successful execution.
-     *
-     * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
-     */
-    public function restore(User $user, Task $task): Task
-    {
-        if (! $task->theme->canEditTaskBy($user->user_id)) {
-            throw new AuthorizationException('Forbidden');
-        }
-
-        $task->archived_at = null;
-        $task->save();
-
-        return $task->fresh();
-    }
-
-    /**
-     * Mark the task as completed.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Task  $task  Task instance being read or mutated by this method.
-     * @return Task Task instance returned after successful execution.
-     *
-     * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
-     */
-    public function complete(User $user, Task $task): Task
-    {
-        if (! $task->theme->canValidateTaskBy($user->user_id)) {
-            throw new AuthorizationException('Forbidden');
-        }
-
-        $task->status = TaskStatus::DONE;
-        $task->save();
-
-        return $task->fresh();
-    }
-
-    /**
-     * Mark the task as not completed.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Task  $task  Task instance being read or mutated by this method.
-     * @return Task Task instance returned after successful execution.
-     *
-     * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
-     */
-    public function uncomplete(User $user, Task $task): Task
-    {
-        if (! $task->theme->canValidateTaskBy($user->user_id)) {
-            throw new AuthorizationException('Forbidden');
-        }
-
-        $task->status = TaskStatus::TODO;
-        $task->save();
 
         return $task->fresh();
     }

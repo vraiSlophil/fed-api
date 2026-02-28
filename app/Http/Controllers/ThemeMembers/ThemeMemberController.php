@@ -5,9 +5,9 @@ namespace App\Http\Controllers\ThemeMembers;
 use App\Domain\Invitations\Services\InvitationService;
 use App\Domain\ThemeMembers\Actions\ThemeMemberActionService;
 use App\Domain\ThemeMembers\Queries\ThemeMemberQueryService;
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ThemeMember\InviteThemeMemberRequest;
-use App\Http\Requests\ThemeMember\MoveThemeMemberPlaygroundRequest;
 use App\Http\Requests\ThemeMember\SearchThemeUsersRequest;
 use App\Http\Requests\ThemeMember\UpdateThemeMemberPermissionsRequest;
 use App\Http\Responses\ApiResponse;
@@ -130,9 +130,45 @@ class ThemeMemberController extends Controller
         Theme $theme,
         string $userId,
     ): JsonResponse {
-        $this->authorize('manageMembers', $theme);
+        $validated = $request->validated();
+        $actor = $request->user();
+        $isSelfUpdate = $userId === $actor->user_id;
 
-        $permission = $this->actionService->updateMemberPermissions($theme, $userId, $request->validated());
+        if (array_key_exists('target_playground_id', $validated)) {
+            if (! $isSelfUpdate) {
+                throw new ApiException('permission.denied', [], 403, 'Only the current member can change target playground');
+            }
+
+            foreach ([
+                'can_view',
+                'can_update_theme',
+                'can_add_task',
+                'can_edit_task',
+                'can_delete_task',
+                'can_validate_task',
+                'status',
+            ] as $restrictedField) {
+                if (array_key_exists($restrictedField, $validated)) {
+                    throw new ApiException('permission.denied', [], 403, 'Cannot update member permissions while moving playground');
+                }
+            }
+
+            $this->authorize('view', $theme);
+
+            $permission = $this->actionService->moveToPlayground($actor, $theme, $validated);
+
+            return ApiResponse::builder()
+                ->success(200)
+                ->messageCode('theme.move.success', ['target_playground_id' => $validated['target_playground_id']])
+                ->data([
+                    'permission' => $permission,
+                ])
+                ->json();
+        } else {
+            $this->authorize('manageMembers', $theme);
+        }
+
+        $permission = $this->actionService->updateMemberPermissions($theme, $userId, $validated);
 
         return ApiResponse::builder()
             ->success(200)
@@ -146,47 +182,9 @@ class ThemeMemberController extends Controller
                     'can_delete_task' => $permission->can_delete_task,
                     'can_validate_task' => $permission->can_validate_task,
                 ],
+                'status' => $permission->status,
+                'target_playground_id' => $permission->target_playground_id,
             ])
-            ->json();
-    }
-
-    /**
-     * Revoke access for the specified theme member.
-     *
-     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @param  string  $userId  Identifier of the user.
-     * @return JsonResponse JSON API response using the standard envelope.
-     */
-    public function deactivateMember(Request $request, Theme $theme, string $userId): JsonResponse
-    {
-        $this->authorize('manageMembers', $theme);
-
-        $this->actionService->deactivateMember($theme, $userId);
-
-        return ApiResponse::builder()
-            ->success(200)
-            ->messageCode('theme.member.deactivated', ['user_id' => $userId])
-            ->json();
-    }
-
-    /**
-     * Restore access for a previously revoked theme member.
-     *
-     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @param  string  $userId  Identifier of the user.
-     * @return JsonResponse JSON API response using the standard envelope.
-     */
-    public function reactivateMember(Request $request, Theme $theme, string $userId): JsonResponse
-    {
-        $this->authorize('manageMembers', $theme);
-
-        $this->actionService->reactivateMember($theme, $userId);
-
-        return ApiResponse::builder()
-            ->success(200)
-            ->messageCode('theme.member.reactivated', ['user_id' => $userId])
             ->json();
     }
 
@@ -200,6 +198,17 @@ class ThemeMemberController extends Controller
      */
     public function removeMember(Request $request, Theme $theme, string $userId): JsonResponse
     {
+        if ($userId === $request->user()->user_id) {
+            $this->authorize('view', $theme);
+
+            $this->actionService->leaveTheme($request->user(), $theme);
+
+            return ApiResponse::builder()
+                ->success(200)
+                ->messageCode('theme.member.left', ['user_id' => $userId])
+                ->json();
+        }
+
         $this->authorize('manageMembers', $theme);
 
         $this->actionService->removeMember($theme, $userId);
@@ -207,49 +216,6 @@ class ThemeMemberController extends Controller
         return ApiResponse::builder()
             ->success(200)
             ->messageCode('theme.member.removed', ['user_id' => $userId])
-            ->json();
-    }
-
-    /**
-     * Remove the current user from the theme membership.
-     *
-     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @return JsonResponse JSON API response using the standard envelope.
-     */
-    public function leaveTheme(Request $request, Theme $theme): JsonResponse
-    {
-        $this->authorize('view', $theme);
-
-        $this->actionService->leaveTheme($request->user(), $theme);
-
-        return ApiResponse::builder()
-            ->success(200)
-            ->messageCode('theme.member.left', ['user_id' => $request->user()->user_id])
-            ->json();
-    }
-
-    /**
-     * Move shared theme visibility to another playground for the user.
-     *
-     * @param  MoveThemeMemberPlaygroundRequest  $request  HTTP request carrying validated parameters for this endpoint.
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @return JsonResponse JSON API response using the standard envelope.
-     */
-    public function moveToPlayground(
-        MoveThemeMemberPlaygroundRequest $request,
-        Theme $theme,
-    ): JsonResponse {
-        $this->authorize('view', $theme);
-
-        $permission = $this->actionService->moveToPlayground($request->user(), $theme, $request->validated());
-
-        return ApiResponse::builder()
-            ->success(200)
-            ->messageCode('theme.move.success', ['target_playground_id' => $request->validated('target_playground_id')])
-            ->data([
-                'permission' => $permission,
-            ])
             ->json();
     }
 }

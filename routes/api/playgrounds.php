@@ -13,7 +13,6 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
             Route::get('/themes', [PlaygroundController::class, 'themes'])->middleware('can:view,playground');
             Route::patch('', [PlaygroundController::class, 'update'])->middleware('can:update,playground');
             Route::delete('', [PlaygroundController::class, 'destroy'])->middleware('can:delete,playground');
-            Route::post('/set-default', [PlaygroundController::class, 'setAsDefault'])->middleware('can:setDefault,playground');
             Route::get('/stats', [PlaygroundController::class, 'stats'])->middleware('can:stats,playground');
         });
 

@@ -28,7 +28,8 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        return $task->theme->canEditTaskBy($user->user_id);
+        return $task->theme->canEditTaskBy($user->user_id)
+            || $task->theme->canValidateTaskBy($user->user_id);
     }
 
     /**
@@ -53,29 +54,5 @@ class TaskPolicy
     public function validate(User $user, Task $task): bool
     {
         return $task->theme->canValidateTaskBy($user->user_id);
-    }
-
-    /**
-     * Archive the specified task.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Task  $task  Task instance being read or mutated by this method.
-     * @return bool True when the condition is met; otherwise, false.
-     */
-    public function archive(User $user, Task $task): bool
-    {
-        return $this->update($user, $task);
-    }
-
-    /**
-     * Restore the specified task.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Task  $task  Task instance being read or mutated by this method.
-     * @return bool True when the condition is met; otherwise, false.
-     */
-    public function restore(User $user, Task $task): bool
-    {
-        return $this->update($user, $task);
     }
 }

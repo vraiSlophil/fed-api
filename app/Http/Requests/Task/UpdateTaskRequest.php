@@ -26,6 +26,7 @@ class UpdateTaskRequest extends FormRequest
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'status' => ['sometimes', 'required', 'string', 'in:todo,in_progress,done'],
+            'archived_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }
