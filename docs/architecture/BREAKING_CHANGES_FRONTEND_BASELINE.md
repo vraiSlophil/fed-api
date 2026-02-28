@@ -30,6 +30,38 @@ Frontend impact:
 - If your router/client parses signed URLs, do not depend on `invitationId`.
 - Use the signed URL exactly as provided by the API, without rewriting parameter names.
 
+### 1.4 Action-verb mutation endpoints removed (REST contracts)
+Mutation routes based on action verbs have been removed.
+
+Frontend impact:
+- Use resource PATCH/DELETE routes only.
+- Send explicit business fields in payloads (`blocked_at`, `archived_at`, `status`, `is_default`, etc.).
+- Do not call legacy action URLs.
+
+Canonical replacements:
+- Users:
+  - `PATCH /api/users/{user}` (e.g. `blocked_at`)
+- Tasks:
+  - `PATCH /api/tasks/{task}` (e.g. `status`, `archived_at`)
+- Playgrounds:
+  - `PATCH /api/playgrounds/{playground}` (e.g. `is_default`)
+- Theme members:
+  - `PATCH /api/themes/{theme}/members/{userId}` (e.g. `status`, `target_playground_id`)
+  - `DELETE /api/themes/{theme}/members/{userId}` (remove member / self-leave)
+
+Removed endpoints:
+- `/api/users/{user}/block`
+- `/api/users/{user}/unblock`
+- `/api/tasks/{task}/archive`
+- `/api/tasks/{task}/restore`
+- `/api/tasks/{task}/complete`
+- `/api/tasks/{task}/uncomplete`
+- `/api/playgrounds/{playground}/set-default`
+- `/api/themes/{theme}/members/{userId}/deactivate`
+- `/api/themes/{theme}/members/{userId}/reactivate`
+- `/api/themes/{theme}/members/{userId}/move-to-playground`
+- `/api/themes/{theme}/leave`
+
 ## 2. Behavioral changes (potentially visible)
 
 ### 2.1 Authorization centralized through policies
@@ -52,7 +84,7 @@ Frontend impact:
 - Do not depend on these routes in shared dev/staging/prod environments.
 
 ## 3. What does not change (important)
-- Main API URIs remain stable.
+- Main API envelope/format remains stable, but route URIs changed where listed in section 1.4.
 - The global JSON envelope (`ApiResponseBuilder`) was not redesigned in this PR.
 - The auth token flow contract (access/refresh) is unchanged.
 
@@ -60,8 +92,9 @@ Frontend impact:
 1. Replace all `doing` usages with `in_progress` (types, UI, filters, tests).
 2. Verify statistics screens (`in_progress` expected).
 3. Verify invitation flows with signed URLs provided by the API.
-4. Verify standardized handling of `403` and `422`.
-5. Re-run core E2E flows: login, task listing, task status update, invitations, stats.
+4. Replace calls to removed action endpoints with PATCH/DELETE resource contracts.
+5. Verify standardized handling of `403` and `422`.
+6. Re-run core E2E flows: login, task listing, task status update, invitations, stats.
 
 ## 5. Backend technical notes (non-contractual for frontend)
 - Backend models were reorganized by domain (`App\\Models\\Auth\\User`, etc.).
