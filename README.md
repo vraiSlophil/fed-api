@@ -10,6 +10,16 @@ This project provides the backend API used by the `fed-webapp` client applicatio
 
 ---
 
+## API Routing Structure
+
+API routes are organized by resource under `routes/api/*.php`.
+
+- `routes/api.php` is a thin composition entrypoint that includes resource route files.
+- User endpoints are centralized under `/api/users...` (`users.index`, `users.me`, `users.show`, `users.update`, `users.destroy`, etc.).
+- Legacy `profile` and `admin/users` route groups are removed.
+
+---
+
 ## Tech Stack
 
 - Language: PHP 8.5

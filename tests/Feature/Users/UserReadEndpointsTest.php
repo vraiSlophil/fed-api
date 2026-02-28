@@ -110,3 +110,62 @@ it('returns 404 on removed GET /api/users/search endpoint', function () {
         ->assertStatus(404)
         ->assertJsonPath('message_code', 'resource.not_found');
 });
+
+it('allows admin users to read account details via GET /api/users/{user}', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    $target = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($admin, ['access']);
+
+    $this->getJson("/api/users/{$target->user_id}")
+        ->assertStatus(200)
+        ->assertJsonPath('message_code', 'user.show.success')
+        ->assertJsonPath('data.user.user_id', $target->user_id);
+});
+
+it('forbids non-admin users from reading account details via GET /api/users/{user}', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $target = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($user, ['access']);
+
+    $this->getJson("/api/users/{$target->user_id}")
+        ->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+});
+
+it('returns 404 on removed admin users route group', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($admin, ['access']);
+
+    $this->getJson('/api/admin/users')
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
+
+it('returns 404 on removed profile route group', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($user, ['access']);
+
+    $this->getJson('/api/profile')
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
