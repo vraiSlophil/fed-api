@@ -73,13 +73,14 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
     Route::get('/stats', [StatsController::class, 'globalStats'])->name('stats.global');
     Route::get('/users', [AdminUserController::class, 'index'])->middleware('admin')->name('users.index');
     Route::get('/users/me', UserController::class)->name('users.me');
+    Route::patch('/users/{user:user_id}', [AdminUserController::class, 'update'])
+        ->whereUuid('user')
+        ->middleware('can:update,user')
+        ->name('users.update');
     Route::get('/user/metrics', [UserMetricsController::class, 'getUserMetrics'])->name('user.metrics');
 
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
-        Route::post('/update', [ProfileController::class, 'update'])->name('profile.update');
-        Route::post('/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-        Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     });
 
     Route::middleware('admin')->prefix('admin')->group(function () {
@@ -88,7 +89,6 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
             Route::post('/', [AdminUserController::class, 'store'])->name('admin.users.store');
             Route::prefix('/{user:user_id}')->group(function () {
                 Route::get('', [AdminUserController::class, 'show'])->middleware('can:view,user')->name('admin.users.show');
-                Route::post('', [AdminUserController::class, 'update'])->middleware('can:update,user')->name('admin.users.update');
                 Route::delete('', [AdminUserController::class, 'destroy'])->middleware('can:delete,user')->name('admin.users.destroy');
                 Route::post('/block', [AdminUserController::class, 'block'])->middleware('can:block,user')->name('admin.users.block');
                 Route::post('/unblock', [AdminUserController::class, 'unblock'])->middleware('can:unblock,user')->name('admin.users.unblock');

@@ -7,7 +7,7 @@ use App\Domain\Admin\Users\Queries\AdminUserQueryService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\User\ListAdminUsersRequest;
 use App\Http\Requests\Admin\User\StoreAdminUserRequest;
-use App\Http\Requests\Admin\User\UpdateAdminUserRequest;
+use App\Http\Requests\User\PatchUserRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Auth\User;
 use App\Support\Pagination\OffsetPagination;
@@ -101,17 +101,17 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Update one user account from the admin panel.
+     * Update one user account through the unified users PATCH endpoint.
      *
-     * @param  UpdateAdminUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  PatchUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
      */
-    public function update(UpdateAdminUserRequest $request, User $user): JsonResponse
+    public function update(PatchUserRequest $request, User $user): JsonResponse
     {
         $this->authorize('update', $user);
 
-        $result = $this->actionService->update($user, $request->validated(), $request->file('avatar'));
+        $result = $this->actionService->update($request->user(), $user, $request->validated(), $request->file('avatar'));
 
         if ($result['email_changed']) {
             return ApiResponse::builder()
