@@ -155,47 +155,4 @@ class AdminUserActionService
             throw new ApiException('user.delete.failed', [], 500);
         }
     }
-
-    /**
-     * Block the targeted user account.
-     *
-     * @param  User  $target  Target user instance affected by this operation.
-     * @param  User  $actor  Authenticated user who initiates the action.
-     * @return User User instance returned after successful execution.
-     *
-     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
-     */
-    public function block(User $target, User $actor): User
-    {
-        if ($target->blocked_at !== null) {
-            throw new ApiException('user.block.already_blocked', [], 400);
-        }
-
-        if ($target->user_id === $actor->user_id) {
-            throw new ApiException('user.block.forbidden_self', [], 400);
-        }
-
-        $target->update(['blocked_at' => now()]);
-
-        return $target->fresh();
-    }
-
-    /**
-     * Unblock the targeted user account.
-     *
-     * @param  User  $target  Target user instance affected by this operation.
-     * @return User User instance returned after successful execution.
-     *
-     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
-     */
-    public function unblock(User $target): User
-    {
-        if ($target->blocked_at === null) {
-            throw new ApiException('user.unblock.not_blocked', [], 400);
-        }
-
-        $target->update(['blocked_at' => null]);
-
-        return $target->fresh();
-    }
 }

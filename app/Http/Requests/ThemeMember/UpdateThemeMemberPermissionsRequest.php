@@ -24,12 +24,14 @@ class UpdateThemeMemberPermissionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'can_view' => ['required', 'boolean'],
-            'can_update_theme' => ['required', 'boolean'],
-            'can_add_task' => ['required', 'boolean'],
-            'can_edit_task' => ['required', 'boolean'],
-            'can_delete_task' => ['required', 'boolean'],
-            'can_validate_task' => ['required', 'boolean'],
+            'can_view' => ['sometimes', 'required', 'boolean'],
+            'can_update_theme' => ['sometimes', 'required', 'boolean'],
+            'can_add_task' => ['sometimes', 'required', 'boolean'],
+            'can_edit_task' => ['sometimes', 'required', 'boolean'],
+            'can_delete_task' => ['sometimes', 'required', 'boolean'],
+            'can_validate_task' => ['sometimes', 'required', 'boolean'],
+            'status' => ['sometimes', 'required', 'string', 'in:active,revoked'],
+            'target_playground_id' => ['sometimes', 'required', 'uuid', 'exists:playgrounds,playground_id'],
         ];
     }
 }

@@ -23,14 +23,4 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
         ->whereUuid('user')
         ->middleware(['admin', 'can:delete,user'])
         ->name('users.destroy');
-
-    Route::post('/users/{user:user_id}/block', [AdminUserController::class, 'block'])
-        ->whereUuid('user')
-        ->middleware(['admin', 'can:block,user'])
-        ->name('users.block');
-
-    Route::post('/users/{user:user_id}/unblock', [AdminUserController::class, 'unblock'])
-        ->whereUuid('user')
-        ->middleware(['admin', 'can:unblock,user'])
-        ->name('users.unblock');
 });

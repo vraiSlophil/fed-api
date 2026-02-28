@@ -111,3 +111,24 @@ it('allows admin users to update role_power and blocked_at through PATCH /api/us
     expect($response->json('data.role_power'))->toBe(100);
     expect($response->json('data.blocked_at'))->not->toBeNull();
 });
+
+it('returns 404 on removed users block and unblock action routes', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    $target = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($admin, ['access']);
+
+    $this->postJson("/api/users/{$target->user_id}/block")
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+
+    $this->postJson("/api/users/{$target->user_id}/unblock")
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});

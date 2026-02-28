@@ -86,36 +86,8 @@ class ThemeMemberActionService
      */
     public function updateMemberPermissions(Theme $theme, string $userId, array $validated): ThemeUserPermission
     {
-        $permission = ThemeUserPermission::query()
-            ->where('theme_id', $theme->theme_id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-
-        $permission->update([
-            'can_view' => $validated['can_view'],
-            'can_update_theme' => $validated['can_update_theme'],
-            'can_add_task' => $validated['can_add_task'],
-            'can_edit_task' => $validated['can_edit_task'],
-            'can_delete_task' => $validated['can_delete_task'],
-            'can_validate_task' => $validated['can_validate_task'],
-        ]);
-
-        return $permission->fresh();
-    }
-
-    /**
-     * Revoke access for the specified theme member.
-     *
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @param  string  $userId  Identifier of the user.
-     * @return void No return value.
-     *
-     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
-     */
-    public function deactivateMember(Theme $theme, string $userId): void
-    {
-        if ($theme->owner_id === $userId) {
-            throw new ApiException('permission.denied', [], 400, 'Cannot deactivate theme owner');
+        if (array_key_exists('status', $validated) && $theme->owner_id === $userId) {
+            throw new ApiException('permission.denied', [], 400, 'Cannot update theme owner status');
         }
 
         $permission = ThemeUserPermission::query()
@@ -123,27 +95,26 @@ class ThemeMemberActionService
             ->where('user_id', $userId)
             ->firstOrFail();
 
-        $permission->status = 'revoked';
-        $permission->save();
-    }
+        $updates = [];
+        foreach ([
+            'can_view',
+            'can_update_theme',
+            'can_add_task',
+            'can_edit_task',
+            'can_delete_task',
+            'can_validate_task',
+            'status',
+        ] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $updates[$field] = $validated[$field];
+            }
+        }
 
-    /**
-     * Restore access for a previously revoked theme member.
-     *
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @param  string  $userId  Identifier of the user.
-     * @return void No return value.
-     */
-    public function reactivateMember(Theme $theme, string $userId): void
-    {
-        $permission = ThemeUserPermission::query()
-            ->where('theme_id', $theme->theme_id)
-            ->where('user_id', $userId)
-            ->where('status', 'revoked')
-            ->firstOrFail();
+        if ($updates !== []) {
+            $permission->update($updates);
+        }
 
-        $permission->status = 'active';
-        $permission->save();
+        return $permission->fresh();
     }
 
     /**

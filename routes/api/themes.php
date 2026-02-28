@@ -20,15 +20,14 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
                 Route::get('', [ThemeMemberController::class, 'listMembers'])->middleware('can:manageMembers,theme')->name('theme.members.list');
                 Route::post('', [ThemeMemberController::class, 'inviteUser'])->middleware('can:manageMembers,theme')->name('theme.members.invite');
                 Route::prefix('/{userId}')->group(function () {
-                    Route::patch('', [ThemeMemberController::class, 'updateMemberPermissions'])->middleware('can:manageMembers,theme')->name('theme.members.update');
-                    Route::delete('', [ThemeMemberController::class, 'removeMember'])->middleware('can:manageMembers,theme')->name('theme.members.remove');
-                    Route::post('/deactivate', [ThemeMemberController::class, 'deactivateMember'])->middleware('can:manageMembers,theme')->name('theme.members.deactivate');
-                    Route::post('/reactivate', [ThemeMemberController::class, 'reactivateMember'])->middleware('can:manageMembers,theme')->name('theme.members.reactivate');
-                    Route::patch('/move-to-playground', [ThemeMemberController::class, 'moveToPlayground'])->middleware('can:view,theme')->name('theme.members.move-to-playground');
+                    Route::patch('', [ThemeMemberController::class, 'updateMemberPermissions'])
+                        ->whereUuid('userId')
+                        ->name('theme.members.update');
+                    Route::delete('', [ThemeMemberController::class, 'removeMember'])
+                        ->whereUuid('userId')
+                        ->name('theme.members.remove');
                 });
             });
-
-            Route::post('/leave', [ThemeMemberController::class, 'leaveTheme'])->middleware('can:view,theme')->name('theme.leave');
         });
     });
 });

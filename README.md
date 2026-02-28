@@ -17,6 +17,29 @@ API routes are organized by resource under `routes/api/*.php`.
 - `routes/api.php` is a thin composition entrypoint that includes resource route files.
 - User endpoints are centralized under `/api/users...` (`users.index`, `users.me`, `users.show`, `users.update`, `users.destroy`, etc.).
 - Legacy `profile` and `admin/users` route groups are removed.
+- Action-verb mutation endpoints were removed in favor of resource-level contracts.
+
+### Resource Mutation Contracts
+
+- Users: `PATCH /api/users/{user}` with business fields such as `blocked_at`.
+- Tasks: `PATCH /api/tasks/{task}` with business fields such as `status` and `archived_at`.
+- Playgrounds: `PATCH /api/playgrounds/{playground}` with business field `is_default`.
+- Theme members: `PATCH /api/themes/{theme}/members/{userId}` with business fields such as `status` and `target_playground_id`.
+- Theme membership leave/remove: `DELETE /api/themes/{theme}/members/{userId}`.
+
+### Removed Action Endpoints (Breaking)
+
+- `/api/users/{user}/block`
+- `/api/users/{user}/unblock`
+- `/api/tasks/{task}/archive`
+- `/api/tasks/{task}/restore`
+- `/api/tasks/{task}/complete`
+- `/api/tasks/{task}/uncomplete`
+- `/api/playgrounds/{playground}/set-default`
+- `/api/themes/{theme}/members/{userId}/deactivate`
+- `/api/themes/{theme}/members/{userId}/reactivate`
+- `/api/themes/{theme}/members/{userId}/move-to-playground`
+- `/api/themes/{theme}/leave`
 
 ---
 

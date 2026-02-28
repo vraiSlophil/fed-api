@@ -1,7 +1,7 @@
 # Issue 21 - SPA-friendly email verification and invitations
 
 This document describes the current implementation used by the frontend.
-It reflects the code in `routes/api.php` and current controllers/services.
+It reflects the code in `routes/api/*.php` and current controllers/services.
 
 ## 1) Scope
 
@@ -109,7 +109,7 @@ Errors:
 ### 4.1 Create invitation (theme owner)
 
 Endpoint:
-- `POST /api/themes/{id}/members`
+- `POST /api/themes/{theme}/members`
 - middleware: `auth:sanctum`, `access-token`, `verified`
 
 Body:
@@ -303,7 +303,7 @@ Important front rule:
 
 Important compatibility note:
 - issue #43 introduces pagination standardization and `GET /api/invitations`.
-- it does **not** change the signed response endpoint contract (`PATCH /api/invitations/{invitationId}`).
+- it does **not** change the signed response endpoint contract (`PATCH /api/invitations/{invitation}`).
 
 ## 5) Email links and frontend paths
 
