@@ -212,7 +212,7 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (ModelNotFoundException|NotFoundHttpException|MethodNotAllowedHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (ModelNotFoundException|NotFoundHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'info');
 
@@ -223,6 +223,25 @@ final class ApiExceptionHandler
             $response = ApiResponse::builder()
                 ->error(404, 'Not found')
                 ->messageCode('resource.not_found')
+                ->meta(['request_id' => $requestId])
+                ->build();
+
+            $response->headers->set('X-Request-Id', $requestId);
+
+            return $response;
+        });
+
+        $exceptions->renderable(function (MethodNotAllowedHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
+            $requestId = $getRequestId($request);
+            $logException($e, $requestId, $request, 'warning');
+
+            if (! $shouldRenderJson($request)) {
+                return null;
+            }
+
+            $response = ApiResponse::builder()
+                ->error(405, 'Method not allowed')
+                ->messageCode('method.not_allowed')
                 ->meta(['request_id' => $requestId])
                 ->build();
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Metrics\StatsController;
 use App\Http\Controllers\ThemeMembers\ThemeMemberController;
 use App\Http\Controllers\Themes\ThemeController;
@@ -22,6 +23,9 @@ Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function 
 
             Route::prefix('members')->name('theme.members.')->group(function () {
                 Route::get('', [ThemeMemberController::class, 'listMembers'])->middleware('can:manageMembers,theme')->name('list');
+                Route::post('', function () {
+                    throw new ApiException('resource.not_found', [], 404, 'Not found');
+                });
                 Route::prefix('{userId}')->whereUuid('userId')->group(function () {
                     Route::patch('', [ThemeMemberController::class, 'updateMemberPermissions'])
                         ->name('update');
