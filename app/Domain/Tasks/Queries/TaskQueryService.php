@@ -51,9 +51,9 @@ class TaskQueryService
     {
         return Task::query()
             ->where('task_id', $taskId)
-            ->where(function (Builder $query) use ($user): void {
-                $query->where('user_id', $user->user_id)
-                    ->orWhereHas('theme.themeUserPermissions', function (Builder $q) use ($user): void {
+            ->whereHas('theme', function (Builder $query) use ($user): void {
+                $query->where('owner_id', $user->user_id)
+                    ->orWhereHas('themeUserPermissions', function (Builder $q) use ($user): void {
                         $q->where('user_id', $user->user_id)
                             ->where('can_view', true)
                             ->where('status', 'active');
@@ -71,9 +71,9 @@ class TaskQueryService
      */
     private function buildTasksQueryForUser(User $user, array $filters): Builder
     {
-        $query = Task::query()->where(function (Builder $query) use ($user): void {
-            $query->where('user_id', $user->user_id)
-                ->orWhereHas('theme.themeUserPermissions', function (Builder $q) use ($user): void {
+        $query = Task::query()->whereHas('theme', function (Builder $query) use ($user): void {
+            $query->where('owner_id', $user->user_id)
+                ->orWhereHas('themeUserPermissions', function (Builder $q) use ($user): void {
                     $q->where('user_id', $user->user_id)
                         ->where('can_view', true)
                         ->where('status', 'active');

@@ -113,6 +113,41 @@ function createPendingInvitationContext(): array
     return compact('owner', 'theme', 'invitee');
 }
 
+function createMemberOwnedTaskContext(string $memberStatus = 'active'): array
+{
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::query()->where('user_id', $owner->user_id)->where('is_default', true)->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $member = User::factory()->create();
+    $memberPlayground = Playground::query()->where('user_id', $member->user_id)->where('is_default', true)->firstOrFail();
+
+    ThemeUserPermission::factory()->create([
+        'theme_id' => $theme->theme_id,
+        'user_id' => $member->user_id,
+        'target_playground_id' => $memberPlayground->playground_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => true,
+        'can_edit_task' => true,
+        'can_delete_task' => true,
+        'can_validate_task' => true,
+        'status' => $memberStatus,
+    ]);
+
+    $task = Task::factory()->create([
+        'theme_id' => $theme->theme_id,
+        'user_id' => $member->user_id,
+        'status' => 'todo',
+    ]);
+
+    return compact('owner', 'theme', 'member', 'task', 'memberPlayground');
+}
+
 it('forbids member without can_edit_task from updating task', function () {
     $ctx = createThemeContext();
 
@@ -187,4 +222,111 @@ it('forbids users with pending invitation from viewing theme before acceptance',
     $this->getJson("/api/themes/{$ctx['theme']->theme_id}")
         ->assertStatus(403)
         ->assertJsonPath('message_code', 'permission.denied');
+});
+
+it('allows members with can_update_theme to update title', function () {
+    $ctx = createThemeContext();
+
+    ThemeUserPermission::query()
+        ->where('theme_id', $ctx['theme']->theme_id)
+        ->where('user_id', $ctx['member']->user_id)
+        ->update(['can_update_theme' => true]);
+
+    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+
+    $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
+        'title' => 'Member allowed title update',
+    ])
+        ->assertStatus(200)
+        ->assertJsonPath('data.theme.title', 'Member allowed title update');
+});
+
+it('forbids members from changing theme playground through patch', function () {
+    $ctx = createThemeContext();
+
+    ThemeUserPermission::query()
+        ->where('theme_id', $ctx['theme']->theme_id)
+        ->where('user_id', $ctx['member']->user_id)
+        ->update(['can_update_theme' => true]);
+
+    $memberDefaultPlayground = Playground::query()
+        ->where('user_id', $ctx['member']->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+
+    $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
+        'playground_id' => $memberDefaultPlayground->playground_id,
+    ])
+        ->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+});
+
+it('allows owners to move theme to another owned playground', function () {
+    $ctx = createThemeContext();
+
+    $newOwnerPlayground = Playground::factory()->create([
+        'user_id' => $ctx['owner']->user_id,
+        'is_default' => false,
+    ]);
+
+    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+
+    $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
+        'playground_id' => $newOwnerPlayground->playground_id,
+    ])
+        ->assertStatus(200)
+        ->assertJsonPath('data.theme.playground_id', $newOwnerPlayground->playground_id);
+});
+
+it('rejects owner theme move to a playground they do not own', function () {
+    $ctx = createThemeContext();
+
+    $otherUser = User::factory()->create();
+    $otherPlayground = Playground::query()
+        ->where('user_id', $otherUser->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+
+    $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
+        'playground_id' => $otherPlayground->playground_id,
+    ])
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
+
+it('forbids revoked members from viewing tasks they created in the theme', function () {
+    $ctx = createMemberOwnedTaskContext('revoked');
+
+    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+
+    $this->getJson("/api/tasks/{$ctx['task']->task_id}")
+        ->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+
+    $this->getJson('/api/tasks?theme_id='.$ctx['theme']->theme_id)
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
+
+it('forbids removed members from viewing tasks in a former theme', function () {
+    $ctx = createMemberOwnedTaskContext('active');
+
+    ThemeUserPermission::query()
+        ->where('theme_id', $ctx['theme']->theme_id)
+        ->where('user_id', $ctx['member']->user_id)
+        ->delete();
+
+    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+
+    $this->getJson("/api/tasks/{$ctx['task']->task_id}")
+        ->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+
+    $this->getJson('/api/tasks?theme_id='.$ctx['theme']->theme_id)
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
 });

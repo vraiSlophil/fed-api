@@ -2,6 +2,7 @@
 
 namespace App\Models\Themes;
 
+use App\Domain\Themes\Support\ThemePermissionInvariant;
 use App\Exceptions\ApiException;
 use App\Invitations\Invitable;
 use App\Models\Auth\User;
@@ -183,6 +184,9 @@ class Theme extends Model implements Invitable
 
         $payload = $invitation->payload;
         $permissions = is_array($payload) ? ($payload['permissions'] ?? []) : [];
+        ThemePermissionInvariant::ensureCanViewForActionFlags(
+            is_array($permissions) ? $permissions : []
+        );
 
         return ThemeUserPermission::create([
             'theme_id' => $this->theme_id,

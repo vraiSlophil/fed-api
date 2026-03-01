@@ -122,6 +122,29 @@ it('rejects inviting the theme owner', function () {
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
+it('rejects invitation payload with action permissions when can_view is false', function () {
+    $owner = User::factory()->create();
+    $ownerPlayground = Playground::where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $invitee = User::factory()->create();
+    Sanctum::actingAs($owner, ['access']);
+
+    $payload = invitationPayload($theme, $invitee->user_id);
+    $payload['payload']['permissions']['can_view'] = false;
+    $payload['payload']['permissions']['can_edit_task'] = true;
+
+    $this->postJson('/api/invitations', $payload)
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'theme.permissions.invalid');
+});
+
 it('rejects inviting a user who is already a theme member', function () {
     Mail::fake();
 

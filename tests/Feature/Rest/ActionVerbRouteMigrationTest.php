@@ -217,3 +217,38 @@ it('updates member status and target playground through PATCH and removes action
         ->where('user_id', $member->user_id)
         ->exists())->toBeFalse();
 });
+
+it('rejects incoherent member permission graph on PATCH /api/themes/{theme}/members/{userId}', function () {
+    $ctx = createOwnedThemeAndTask();
+
+    $member = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $memberDefaultPlayground = Playground::query()
+        ->where('user_id', $member->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    ThemeUserPermission::factory()->create([
+        'theme_id' => $ctx['theme']->theme_id,
+        'user_id' => $member->user_id,
+        'target_playground_id' => $memberDefaultPlayground->playground_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => false,
+        'can_edit_task' => false,
+        'can_delete_task' => false,
+        'can_validate_task' => false,
+        'status' => 'active',
+    ]);
+
+    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+
+    $this->patchJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}", [
+        'can_view' => false,
+        'can_edit_task' => true,
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'theme.permissions.invalid');
+});
