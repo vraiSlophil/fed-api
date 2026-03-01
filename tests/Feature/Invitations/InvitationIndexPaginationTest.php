@@ -178,6 +178,7 @@ it('supports status filter when provided', function () {
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'accepted');
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'accepted');
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'declined');
+    createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'canceled');
 
     Sanctum::actingAs($invitee, ['access']);
 
@@ -198,4 +199,18 @@ it('returns 422 when status filter is invalid', function () {
     $this->getJson('/api/invitations?status=wrong')
         ->assertStatus(422)
         ->assertJsonPath('message_code', 'validation.invalid');
+});
+
+it('supports canceled status filter when provided', function () {
+    $invitee = User::factory()->create();
+
+    createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'canceled');
+    createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'pending');
+
+    Sanctum::actingAs($invitee, ['access']);
+
+    $this->getJson('/api/invitations?status=canceled')
+        ->assertStatus(200)
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.status', 'canceled');
 });

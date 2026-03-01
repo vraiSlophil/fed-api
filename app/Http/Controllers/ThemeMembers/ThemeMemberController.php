@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers\ThemeMembers;
 
-use App\Domain\Invitations\Services\InvitationService;
 use App\Domain\ThemeMembers\Actions\ThemeMemberActionService;
 use App\Domain\ThemeMembers\Queries\ThemeMemberQueryService;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ThemeMember\InviteThemeMemberRequest;
-use App\Http\Requests\ThemeMember\SearchThemeUsersRequest;
 use App\Http\Requests\ThemeMember\UpdateThemeMemberPermissionsRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Themes\Theme;
@@ -29,30 +26,6 @@ class ThemeMemberController extends Controller
     ) {}
 
     /**
-     * Search users eligible to be invited as theme members.
-     *
-     * @param  SearchThemeUsersRequest  $request  HTTP request carrying validated parameters for this endpoint.
-     * @return JsonResponse JSON API response using the standard envelope.
-     */
-    public function searchUsers(SearchThemeUsersRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-        $theme = $this->queryService->findTheme((string) $validated['theme_id']);
-
-        $this->authorize('manageMembers', $theme);
-
-        $users = $this->queryService->searchUsers($theme, (string) $validated['search']);
-
-        return ApiResponse::builder()
-            ->success()
-            ->messageCode('theme.users.search.success')
-            ->data([
-                'users' => $users,
-            ])
-            ->json();
-    }
-
-    /**
      * List owner, active members, and pending invites for a theme.
      *
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
@@ -70,49 +43,6 @@ class ThemeMemberController extends Controller
             ->messageCode('theme.members.list.success')
             ->data([
                 'members' => $members,
-            ])
-            ->json();
-    }
-
-    /**
-     * Create a pending invitation for a user to join the theme.
-     *
-     * @param  InviteThemeMemberRequest  $request  HTTP request carrying validated parameters for this endpoint.
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @param  InvitationService  $invitationService  Service responsible for invitation operations.
-     * @return JsonResponse JSON API response using the standard envelope.
-     */
-    public function inviteUser(
-        InviteThemeMemberRequest $request,
-        Theme $theme,
-        InvitationService $invitationService,
-    ): JsonResponse {
-        $this->authorize('manageMembers', $theme);
-
-        $result = $this->actionService->inviteUser(
-            $request->user(),
-            $theme,
-            $request->validated(),
-            $invitationService,
-        );
-
-        $invitation = $result['invitation'];
-        $invitedUser = $result['invited_user'];
-
-        return ApiResponse::builder()
-            ->success(201)
-            ->messageCode('theme.invite.sent', ['email' => $invitedUser->email])
-            ->data([
-                'invitation' => [
-                    'invitation_id' => $invitation->invitation_id,
-                    'user_id' => $invitedUser->user_id,
-                    'username' => $invitedUser->username,
-                    'email' => $invitedUser->email,
-                    'first_name' => $invitedUser->first_name,
-                    'last_name' => $invitedUser->last_name,
-                    'status' => $invitation->status,
-                    'created_at' => $invitation->created_at,
-                ],
             ])
             ->json();
     }

@@ -11,33 +11,33 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('/auth')->group(function () {
-    Route::post('/register', RegisterController::class)->name('auth.register');
-    Route::post('/login', LoginController::class)
+Route::prefix('auth')->name('auth.')->group(function () {
+    Route::post('register', RegisterController::class)->name('register');
+    Route::post('login', LoginController::class)
         ->middleware('throttle:auth-login')
-        ->name('auth.login');
-    Route::post('/refresh', RefreshTokenController::class)
+        ->name('login');
+    Route::post('refresh', RefreshTokenController::class)
         ->middleware('throttle:auth-refresh')
-        ->name('auth.refresh');
-    Route::post('/forgot-password', PasswordResetLinkController::class)->name('auth.password.email');
-    Route::post('/reset-password', NewPasswordController::class)->name('auth.password.store');
-});
+        ->name('refresh');
+    Route::post('forgot-password', PasswordResetLinkController::class)->name('password.email');
+    Route::post('reset-password', NewPasswordController::class)->name('password.store');
 
-Route::post('/email-verifications', VerifyEmailController::class)
-    ->middleware(['signed:relative', 'throttle:6,1'])
-    ->name('verification.verify');
-
-Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
-    Route::prefix('/auth')->group(function () {
-        Route::post('/logout', LogoutController::class)->name('logout');
-        Route::get('/ping', function () {
+    Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
+        Route::post('logout', LogoutController::class)->name('logout');
+        Route::get('ping', function () {
             return ApiResponse::builder()
                 ->success(message: 'pong')
                 ->json();
         })->name('ping');
     });
+});
 
-    Route::post('/email-verification-notifications', EmailVerificationNotificationController::class)
+Route::post('email-verifications', VerifyEmailController::class)
+    ->middleware(['signed:relative', 'throttle:6,1'])
+    ->name('verification.verify');
+
+Route::middleware(['auth:sanctum', 'access-token'])->group(function () {
+    Route::post('email-verification-notifications', EmailVerificationNotificationController::class)
         ->middleware('throttle:6,1')
         ->name('verification.send');
 });

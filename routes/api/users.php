@@ -5,22 +5,23 @@ use App\Http\Controllers\Users\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function () {
-    Route::get('/users', [AdminUserController::class, 'index'])->middleware('admin')->name('users.index');
-    Route::post('/users', [AdminUserController::class, 'store'])->middleware('admin')->name('users.store');
-    Route::get('/users/me', UserController::class)->name('users.me');
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('', [AdminUserController::class, 'index'])->name('index');
+        Route::post('', [AdminUserController::class, 'store'])->middleware('admin')->name('store');
+        Route::get('me', UserController::class)->name('me');
 
-    Route::get('/users/{user:user_id}', [AdminUserController::class, 'show'])
-        ->whereUuid('user')
-        ->middleware(['admin', 'can:view,user'])
-        ->name('users.show');
+        Route::prefix('{user:user_id}')->whereUuid('user')->group(function () {
+            Route::get('', [AdminUserController::class, 'show'])
+                ->middleware(['admin', 'can:view,user'])
+                ->name('show');
 
-    Route::patch('/users/{user:user_id}', [AdminUserController::class, 'update'])
-        ->whereUuid('user')
-        ->middleware('can:update,user')
-        ->name('users.update');
+            Route::patch('', [AdminUserController::class, 'update'])
+                ->middleware('can:update,user')
+                ->name('update');
 
-    Route::delete('/users/{user:user_id}', [AdminUserController::class, 'destroy'])
-        ->whereUuid('user')
-        ->middleware(['admin', 'can:delete,user'])
-        ->name('users.destroy');
+            Route::delete('', [AdminUserController::class, 'destroy'])
+                ->middleware(['admin', 'can:delete,user'])
+                ->name('destroy');
+        });
+    });
 });

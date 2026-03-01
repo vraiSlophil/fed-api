@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -111,7 +112,7 @@ final class ApiExceptionHandler
             return false;
         });
 
-        $exceptions->reportable(function (ModelNotFoundException|NotFoundHttpException $e): bool {
+        $exceptions->reportable(function (ModelNotFoundException|NotFoundHttpException|MethodNotAllowedHttpException $e): bool {
             return false;
         });
 
@@ -211,7 +212,7 @@ final class ApiExceptionHandler
             return $response;
         });
 
-        $exceptions->renderable(function (ModelNotFoundException|NotFoundHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
+        $exceptions->renderable(function (ModelNotFoundException|NotFoundHttpException|MethodNotAllowedHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
             $requestId = $getRequestId($request);
             $logException($e, $requestId, $request, 'info');
 

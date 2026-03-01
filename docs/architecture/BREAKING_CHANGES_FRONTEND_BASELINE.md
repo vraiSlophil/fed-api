@@ -48,6 +48,12 @@ Canonical replacements:
 - Theme members:
   - `PATCH /api/themes/{theme}/members/{userId}` (e.g. `status`, `target_playground_id`)
   - `DELETE /api/themes/{theme}/members/{userId}` (remove member / self-leave)
+- Invitations:
+  - `POST /api/invitations`
+  - `GET /api/invitations`
+  - `GET /api/invitations/{invitation}`
+  - `PATCH /api/invitations/{invitation}` (accept/decline/cancel)
+  - `DELETE /api/invitations/{invitation}` (only `declined` / `canceled`)
 
 Removed endpoints:
 - `/api/users/{user}/block`
@@ -61,6 +67,7 @@ Removed endpoints:
 - `/api/themes/{theme}/members/{userId}/reactivate`
 - `/api/themes/{theme}/members/{userId}/move-to-playground`
 - `/api/themes/{theme}/leave`
+- `/api/themes/{theme}/members` (invitation creation moved to `/api/invitations`)
 
 ## 2. Behavioral changes (potentially visible)
 

@@ -26,6 +26,19 @@ API routes are organized by resource under `routes/api/*.php`.
 - Playgrounds: `PATCH /api/playgrounds/{playground}` with business field `is_default`.
 - Theme members: `PATCH /api/themes/{theme}/members/{userId}` with business fields such as `status` and `target_playground_id`.
 - Theme membership leave/remove: `DELETE /api/themes/{theme}/members/{userId}`.
+- Invitations: `POST /api/invitations`, `GET /api/invitations`, `GET /api/invitations/{invitation}`, `PATCH /api/invitations/{invitation}`, `DELETE /api/invitations/{invitation}`.
+
+### Invitation Response Modes
+
+`PATCH /api/invitations/{invitation}` supports two flows:
+- Authenticated UI flow: authenticated invitee can accept/decline without signed params.
+- Email-link flow: unauthenticated users must provide a valid signed URL.
+
+If a user is authenticated, account authorization is enforced first (signed params do not bypass policy).
+
+Invitation deletion rule:
+- hard delete allowed only when invitation status is `declined` or `canceled`.
+- otherwise, update status first via `PATCH`.
 
 ### Removed Action Endpoints (Breaking)
 
@@ -40,6 +53,16 @@ API routes are organized by resource under `routes/api/*.php`.
 - `/api/themes/{theme}/members/{userId}/reactivate`
 - `/api/themes/{theme}/members/{userId}/move-to-playground`
 - `/api/themes/{theme}/leave`
+- `/api/themes/{theme}/members` (invitation creation moved to `POST /api/invitations`)
+
+### Intentionally Non-Exposed Persisted Resources
+
+These resources exist in the database but are intentionally not exposed as public REST resources for now:
+- `task_dependencies`
+- `reminders`
+- `theme_templates`
+- `plans` / `user_subscriptions`
+- `audit_logs`
 
 ---
 
@@ -85,10 +108,11 @@ HOST_UID=$(id -u)
 HOST_GID=$(id -g)
 ```
 
-Once your `.env` file is in place, install dependencies (populate `vendor/` on the host through the bind mount):
+Once your `.env` file is in place, install dependencies (populate `vendor/` on the host through the bind mount).  
+Use `--no-deps` so `docker compose run` does not try to start `bootstrap` before `vendor/` exists:
 
 ```bash
-docker compose run --rm --remove-orphans laravel composer install
+docker compose run --rm --no-deps --build laravel composer install
 ```
 
 Required variables (minimum):
@@ -127,7 +151,7 @@ Notes:
 
 ```bash
 # generate APP_KEY before starting the app (required, otherwise encryption errors will happen)
-docker compose run --rm laravel php artisan key:generate
+docker compose run --rm --no-deps laravel php artisan key:generate
 ```
 
 ```bash

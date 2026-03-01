@@ -88,6 +88,17 @@ class InvitationService
     }
 
     /**
+     * Mark an invitation as canceled by the inviter/admin.
+     *
+     * @param  Invitation  $invitation  Invitation instance being processed by this method.
+     * @return void No return value.
+     */
+    public function markCanceled(Invitation $invitation): void
+    {
+        $invitation->update(['status' => 'canceled']);
+    }
+
+    /**
      * Expire a pending invitation when its expiration date has passed.
      *
      * @param  Invitation  $invitation  Invitation instance being processed by this method.

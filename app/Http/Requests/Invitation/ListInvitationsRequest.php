@@ -27,7 +27,8 @@ class ListInvitationsRequest extends FormRequest
     {
         return [
             ...OffsetPagination::queryRules(),
-            'status' => ['sometimes', 'string', Rule::in(['pending', 'accepted', 'declined', 'expired'])],
+            'status' => ['sometimes', 'string', Rule::in(['pending', 'accepted', 'declined', 'expired', 'canceled'])],
+            'scope' => ['sometimes', 'string', Rule::in(['inbox', 'outbox', 'all'])],
         ];
     }
 }

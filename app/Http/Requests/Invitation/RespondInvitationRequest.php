@@ -25,8 +25,8 @@ class RespondInvitationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', Rule::in(['accepted', 'declined'])],
-            'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id'],
+            'status' => ['required', 'string', Rule::in(['accepted', 'declined', 'canceled'])],
+            'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id', 'prohibited_unless:status,accepted'],
         ];
     }
 

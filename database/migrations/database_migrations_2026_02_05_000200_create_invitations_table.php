@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('invitable_type');
             $table->uuid('invitable_id');
             $table->json('payload')->nullable();
-            $table->enum('status', ['pending', 'accepted', 'declined', 'expired'])->default('pending');
+            $table->enum('status', ['pending', 'accepted', 'declined', 'expired', 'canceled'])->default('pending');
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
 
