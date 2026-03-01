@@ -53,9 +53,7 @@ class AdminUserController extends Controller
             return ApiResponse::builder()
                 ->success()
                 ->messageCode('theme.users.search.success')
-                ->data([
-                    'users' => $users,
-                ])
+                ->data($users->values()->all())
                 ->json();
         }
 

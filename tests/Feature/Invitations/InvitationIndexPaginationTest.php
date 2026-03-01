@@ -131,6 +131,58 @@ it('supports custom per_page in the standard contract', function () {
         ->assertJsonCount(7, 'data');
 });
 
+it('supports outbox scope when provided', function () {
+    $inviteeA = User::factory()->create();
+    $inviteeB = User::factory()->create();
+
+    $outboxInvitationA = createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $inviteeA, 'pending');
+    $outboxInvitationB = createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $inviteeB, 'pending');
+
+    $otherInviter = User::factory()->create();
+    $otherInviterPlayground = Playground::query()
+        ->where('user_id', $otherInviter->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+    $inboxInvitation = createPaginatedInvitationForInvitee($otherInviter, $otherInviterPlayground->playground_id, $this->inviter, 'pending');
+
+    Sanctum::actingAs($this->inviter, ['access']);
+
+    $response = $this->getJson('/api/invitations?scope=outbox');
+
+    $response->assertStatus(200)
+        ->assertJsonPath('meta.total', 2)
+        ->assertJsonCount(2, 'data');
+
+    $returnedIds = collect($response->json('data'))->pluck('invitation_id');
+    expect($returnedIds->contains($outboxInvitationA->invitation_id))->toBeTrue();
+    expect($returnedIds->contains($outboxInvitationB->invitation_id))->toBeTrue();
+    expect($returnedIds->contains($inboxInvitation->invitation_id))->toBeFalse();
+});
+
+it('supports all scope and returns inbox and outbox invitations', function () {
+    $invitee = User::factory()->create();
+    $outboxInvitation = createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'pending');
+
+    $otherInviter = User::factory()->create();
+    $otherInviterPlayground = Playground::query()
+        ->where('user_id', $otherInviter->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+    $inboxInvitation = createPaginatedInvitationForInvitee($otherInviter, $otherInviterPlayground->playground_id, $this->inviter, 'pending');
+
+    Sanctum::actingAs($this->inviter, ['access']);
+
+    $response = $this->getJson('/api/invitations?scope=all');
+
+    $response->assertStatus(200)
+        ->assertJsonPath('meta.total', 2)
+        ->assertJsonCount(2, 'data');
+
+    $returnedIds = collect($response->json('data'))->pluck('invitation_id');
+    expect($returnedIds->contains($outboxInvitation->invitation_id))->toBeTrue();
+    expect($returnedIds->contains($inboxInvitation->invitation_id))->toBeTrue();
+});
+
 it('returns 422 when per_page is lower than 1', function () {
     $invitee = User::factory()->create();
     Sanctum::actingAs($invitee, ['access']);

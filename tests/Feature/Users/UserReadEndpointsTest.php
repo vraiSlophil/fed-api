@@ -117,6 +117,8 @@ it('allows theme owners to search invitable users via GET /api/users?theme_id=&s
     $this->getJson('/api/users?theme_id='.$theme->theme_id.'&search=member-search')
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'theme.users.search.success')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.user_id', $searchUser->user_id)
         ->assertJsonFragment([
             'user_id' => $searchUser->user_id,
             'username' => $searchUser->username,

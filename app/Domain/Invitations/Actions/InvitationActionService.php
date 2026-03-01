@@ -41,16 +41,12 @@ class InvitationActionService
      */
     public function create(User $actor, array $validated, InvitationService $invitationService): Invitation
     {
-        $invitableType = $this->normalizeInvitableType((string) $validated['invitable_type']);
+        $this->normalizeInvitableType((string) $validated['invitable_type']);
 
         /** @var Theme $theme */
         $theme = Theme::query()
             ->where('theme_id', (string) $validated['invitable_id'])
             ->firstOrFail();
-
-        if ($invitableType !== Theme::class) {
-            throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
-        }
 
         if (! $theme->isOwnedBy($actor->user_id)) {
             throw new ApiException('permission.denied', [], 403, 'Only the owner can invite members');
