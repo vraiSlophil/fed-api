@@ -27,7 +27,7 @@ class ListAdminUsersRequest extends FormRequest
     {
         return [
             ...OffsetPagination::queryRules(),
-            'search' => ['sometimes', 'string', 'max:255'],
+            'search' => ['sometimes', 'string', 'min:3', 'max:255'],
             'theme_id' => ['sometimes', 'uuid', 'exists:themes,theme_id'],
             'role' => ['sometimes', 'integer', 'exists:roles,power'],
             'roles' => ['sometimes', 'string'],

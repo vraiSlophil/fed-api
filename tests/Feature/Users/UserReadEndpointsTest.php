@@ -92,6 +92,62 @@ it('forbids non-admin users from listing accounts via GET /api/users', function 
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
+it('allows theme owners to search invitable users via GET /api/users?theme_id=&search=', function () {
+    $owner = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $ownerPlayground = Playground::query()
+        ->where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $searchUser = User::factory()->create([
+        'username' => 'member-search-target',
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($owner, ['access']);
+
+    $this->getJson('/api/users?theme_id='.$theme->theme_id.'&search=member-search')
+        ->assertStatus(200)
+        ->assertJsonPath('message_code', 'theme.users.search.success')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.user_id', $searchUser->user_id)
+        ->assertJsonFragment([
+            'user_id' => $searchUser->user_id,
+            'username' => $searchUser->username,
+        ]);
+});
+
+it('forbids non-owner users from using theme member search mode', function () {
+    $owner = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $ownerPlayground = Playground::query()
+        ->where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $outsider = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    Sanctum::actingAs($outsider, ['access']);
+
+    $this->getJson('/api/users?theme_id='.$theme->theme_id.'&search=member')
+        ->assertStatus(403)
+        ->assertJsonPath('message_code', 'permission.denied');
+});
+
 it('rejects GET /api/users without authentication', function () {
     $this->getJson('/api/users')
         ->assertStatus(401)

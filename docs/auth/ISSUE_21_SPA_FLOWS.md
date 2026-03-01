@@ -8,7 +8,7 @@ It reflects the code in `routes/api/*.php` and current controllers/services.
 Goal of this implementation:
 - keep flows stateless (Bearer token + signed URLs, no session/cookies)
 - expose JSON-only endpoints under `/api/*`
-- keep invitation routes REST-like (`PATCH /api/invitations/{invitation}`)
+- expose invitations as a full REST resource (`POST/GET/GET by id/PATCH/DELETE`)
 - make frontend responsible for reading query params from email links, then calling API
 
 ## 2) Common response format
@@ -109,20 +109,26 @@ Errors:
 ### 4.1 Create invitation (theme owner)
 
 Endpoint:
-- `POST /api/themes/{theme}/members`
+- `POST /api/invitations`
 - middleware: `auth:sanctum`, `access-token`, `verified`
 
 Body:
 
 ```json
 {
-  "user_id": "uuid",
-  "can_view": true,
-  "can_update_theme": false,
-  "can_add_task": false,
-  "can_edit_task": false,
-  "can_delete_task": false,
-  "can_validate_task": false
+  "invitee_user_id": "uuid",
+  "invitable_type": "theme",
+  "invitable_id": "uuid",
+  "payload": {
+    "permissions": {
+      "can_view": true,
+      "can_update_theme": false,
+      "can_add_task": false,
+      "can_edit_task": false,
+      "can_delete_task": false,
+      "can_validate_task": false
+    }
+  }
 }
 ```
 
@@ -171,7 +177,8 @@ Endpoint:
 Query params:
 - `page` (default `1`)
 - `per_page` (default `15`, max `100`)
-- `status` (`pending|accepted|declined|expired`, default `pending`)
+- `status` (`pending|accepted|declined|expired|canceled`, default `pending`)
+- `scope` (`inbox|outbox|all`, default `inbox`)
 
 Example request:
 
@@ -232,14 +239,25 @@ Out-of-bounds page behavior:
 - keeps `meta.current_page` equal to requested page
 - sets `meta.has_next = false`
 
-### 4.3 Accept/decline invitation from signed link
+### 4.3 Update invitation status (dual mode)
 
 Endpoint:
 - `PATCH /api/invitations/{invitation}`
-- middleware: `auth:sanctum`, `access-token`, `signed:relative`, `throttle:6,1`
+- middleware: `throttle:6,1`
 
-Signed query params:
-- `status=accepted|declined`
+Status query param:
+- `status=accepted|declined|canceled`
+
+Email-link mode (unauthenticated):
+- requires valid signed query params (`expires`, `signature`)
+- supports only `accepted|declined`
+
+Authenticated mode:
+- can call endpoint without signature
+- `accepted|declined`: invitee only
+- `canceled`: inviter or admin
+
+Signed query params (email-link mode):
 - `expires`
 - `signature`
 
@@ -254,7 +272,7 @@ Optional body:
 Request examples:
 
 ```http
-PATCH /api/invitations/0f9a...a12?status=accepted&expires=1730000000&signature=...
+PATCH /api/invitations/0f9a...a12?status=accepted
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
@@ -263,12 +281,12 @@ Content-Type: application/json
 
 ```http
 PATCH /api/invitations/0f9a...a12?status=declined&expires=1730000000&signature=...
-Authorization: Bearer <access_token>
 ```
 
 Success:
 - `200 theme.invitation.accepted`
 - `200 theme.invitation.declined`
+- `200 theme.invitation.canceled`
 
 Accepted response contains created permission object:
 
@@ -289,17 +307,16 @@ Accepted response contains created permission object:
 ```
 
 Errors:
-- `401 auth.failed`
-- `403 signature.invalid`
-- `403 permission.denied` (authenticated user is not invitee)
+- `403 signature.invalid` (unauthenticated invalid/missing signature)
+- `403 permission.denied` (authenticated user unauthorized for requested transition)
 - `404 resource.not_found` (invitation not found, or invalid `target_playground_id` ownership check in accept path)
-- `409 invitation.already_responded`
+- `409 invitation.invalid_transition`
 - `410 invitation.expired`
 - `422 validation.invalid` (missing/invalid `status`, invalid body)
 - `400 invitation.invalid` (unsupported invitable type)
 
 Important front rule:
-- do not mutate signed query params (`status`, `expires`, `signature`), otherwise signature fails.
+- in email-link mode, do not mutate signed query params (`status`, `expires`, `signature`), otherwise signature fails.
 
 Important compatibility note:
 - issue #43 introduces pagination standardization and `GET /api/invitations`.
@@ -332,6 +349,8 @@ Invitation expiration:
 1. Parse query params from `/verify-email` and the configured invitation page (`/invite/{invitationId}` by default).
 2. Use `GET /api/invitations` (paginated) to populate invitation center.
 3. Call API endpoints with the exact signed query params.
-4. For invitation response, always send access token and `PATCH` with `status` in query.
+4. For invitation response, either:
+   - authenticated UI mode (`Authorization` header), or
+   - email-link mode (signed params, no authentication).
 5. Handle business codes (`message_code`) in UI, not only HTTP status.
 6. Handle `410 invitation.expired` as terminal state (show expired UI).

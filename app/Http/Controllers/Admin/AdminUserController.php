@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domain\Admin\Users\Actions\AdminUserActionService;
 use App\Domain\Admin\Users\Queries\AdminUserQueryService;
+use App\Domain\ThemeMembers\Queries\ThemeMemberQueryService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\User\ListAdminUsersRequest;
 use App\Http\Requests\Admin\User\StoreAdminUserRequest;
@@ -25,6 +26,7 @@ class AdminUserController extends Controller
     public function __construct(
         private readonly AdminUserQueryService $queryService,
         private readonly AdminUserActionService $actionService,
+        private readonly ThemeMemberQueryService $themeMemberQueryService,
     ) {}
 
     /**
@@ -35,9 +37,28 @@ class AdminUserController extends Controller
      */
     public function index(ListAdminUsersRequest $request): JsonResponse
     {
+        $validated = $request->validated();
+        $actor = $request->user();
+
+        if ($actor->role_power < 100) {
+            if (empty($validated['theme_id']) || empty($validated['search'])) {
+                throw new \Illuminate\Auth\Access\AuthorizationException('Admin or theme-member-search context required');
+            }
+
+            $theme = $this->themeMemberQueryService->findTheme((string) $validated['theme_id']);
+            $this->authorize('manageMembers', $theme);
+
+            $users = $this->themeMemberQueryService->searchUsers($theme, (string) $validated['search']);
+
+            return ApiResponse::builder()
+                ->success()
+                ->messageCode('theme.users.search.success')
+                ->data($users->values()->all())
+                ->json();
+        }
+
         $this->authorize('viewAny', User::class);
 
-        $validated = $request->validated();
         $pagination = OffsetPagination::extract($validated);
         $result = $this->queryService->paginate($validated, $pagination);
         $extras = $this->queryService->additionalStats();

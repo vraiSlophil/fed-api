@@ -2,80 +2,14 @@
 
 namespace App\Domain\ThemeMembers\Actions;
 
-use App\Domain\Invitations\Services\InvitationService;
 use App\Exceptions\ApiException;
 use App\Models\Auth\User;
-use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use App\Models\Themes\ThemeUserPermission;
 
 class ThemeMemberActionService
 {
-    /**
-     * Create a pending invitation for a user to join the theme.
-     *
-     * @param  User  $actor  Authenticated user who initiates the action.
-     * @param  Theme  $theme  Theme instance being read or mutated by this method.
-     * @param  array  $validated  Validated payload extracted from the request.
-     * @param  InvitationService  $invitationService  Service responsible for invitation operations.
-     * @return array Payload containing the created invitation and current member snapshot.
-     *
-     * @throws \App\Exceptions\ApiException When the operation cannot be completed.
-     */
-    public function inviteUser(User $actor, Theme $theme, array $validated, InvitationService $invitationService): array
-    {
-        if ($theme->owner_id === $validated['user_id']) {
-            throw new ApiException('permission.denied', [], 403, 'Cannot invite theme owner');
-        }
-
-        if (ThemeUserPermission::query()
-            ->where('theme_id', $theme->theme_id)
-            ->where('user_id', $validated['user_id'])
-            ->exists()) {
-            throw new ApiException('theme.member.already_exists', ['user_id' => $validated['user_id']], 409, 'User is already a member of this theme');
-        }
-
-        if (Invitation::query()
-            ->where('invitee_user_id', $validated['user_id'])
-            ->where('invitable_type', Theme::class)
-            ->where('invitable_id', $theme->theme_id)
-            ->where('status', 'pending')
-            ->exists()) {
-            throw new ApiException('theme.invitation.already_exists', ['user_id' => $validated['user_id']], 409, 'User has already been invited to this theme');
-        }
-
-        $invitedUser = User::query()->findOrFail($validated['user_id']);
-        $expiresAt = now()->addDays((int) config('invitations.expires_days', 7));
-
-        $invitation = Invitation::create([
-            'inviter_user_id' => $actor->user_id,
-            'invitee_user_id' => $invitedUser->user_id,
-            'invitable_type' => Theme::class,
-            'invitable_id' => $theme->theme_id,
-            'payload' => [
-                'model' => 'theme',
-                'permissions' => [
-                    'can_view' => $validated['can_view'],
-                    'can_update_theme' => $validated['can_update_theme'],
-                    'can_add_task' => $validated['can_add_task'],
-                    'can_edit_task' => $validated['can_edit_task'],
-                    'can_delete_task' => $validated['can_delete_task'],
-                    'can_validate_task' => $validated['can_validate_task'],
-                ],
-            ],
-            'status' => 'pending',
-            'expires_at' => $expiresAt,
-        ]);
-
-        $invitationService->sendCreatedEmail($invitation);
-
-        return [
-            'invitation' => $invitation,
-            'invited_user' => $invitedUser,
-        ];
-    }
-
     /**
      * Update permission flags for the specified theme member.
      *

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -111,7 +112,7 @@ final class ApiExceptionHandler
             return false;
         });
 
-        $exceptions->reportable(function (ModelNotFoundException|NotFoundHttpException $e): bool {
+        $exceptions->reportable(function (ModelNotFoundException|NotFoundHttpException|MethodNotAllowedHttpException $e): bool {
             return false;
         });
 
@@ -222,6 +223,25 @@ final class ApiExceptionHandler
             $response = ApiResponse::builder()
                 ->error(404, 'Not found')
                 ->messageCode('resource.not_found')
+                ->meta(['request_id' => $requestId])
+                ->build();
+
+            $response->headers->set('X-Request-Id', $requestId);
+
+            return $response;
+        });
+
+        $exceptions->renderable(function (MethodNotAllowedHttpException $e, $request) use ($getRequestId, $logException, $shouldRenderJson): ?\Illuminate\Http\JsonResponse {
+            $requestId = $getRequestId($request);
+            $logException($e, $requestId, $request, 'warning');
+
+            if (! $shouldRenderJson($request)) {
+                return null;
+            }
+
+            $response = ApiResponse::builder()
+                ->error(405, 'Method not allowed')
+                ->messageCode('method.not_allowed')
                 ->meta(['request_id' => $requestId])
                 ->build();
 
