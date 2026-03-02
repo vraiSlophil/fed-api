@@ -61,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
             $key = $request->ip();
 
             if (is_string($token) && $token !== '') {
-                $key .= '|'.sha1($token);
+                $key .= '|'.hash('sha256', $token);
             }
 
             return Limit::perMinute(10)->by($key);
@@ -77,7 +77,7 @@ class AppServiceProvider extends ServiceProvider
                 now()->addMinutes(Config::get('auth.verification.expire', 60)),
                 [
                     'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
+                    'hash' => hash('sha256', $notifiable->getEmailForVerification()),
                 ],
                 false
             );

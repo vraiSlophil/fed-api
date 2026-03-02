@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,6 +32,23 @@ return new class extends Migration
             $table->index(['theme_id', 'status']);
             $table->index('user_id');
         });
+
+        if (Schema::getConnection()->getDriverName() === 'pgsql') {
+            DB::statement(
+                'ALTER TABLE theme_user_permissions
+                ADD CONSTRAINT theme_user_permissions_view_required_for_actions_check
+                CHECK (
+                    can_view
+                    OR (
+                        NOT can_update_theme
+                        AND NOT can_add_task
+                        AND NOT can_edit_task
+                        AND NOT can_delete_task
+                        AND NOT can_validate_task
+                    )
+                )'
+            );
+        }
     }
 
     public function down(): void

@@ -16,7 +16,7 @@ it('verifies an email through a signed link (POST)', function () {
         now()->addMinutes(60),
         [
             'id' => $user->getKey(),
-            'hash' => sha1($user->getEmailForVerification()),
+            'hash' => hash('sha256', $user->getEmailForVerification()),
         ],
         false
     );
@@ -35,7 +35,7 @@ it('rejects an email verification link without a signature', function () {
 
     $this->postJson('/api/email-verifications', [
         'id' => $user->getKey(),
-        'hash' => sha1($user->getEmailForVerification()),
+        'hash' => hash('sha256', $user->getEmailForVerification()),
     ])->assertStatus(403);
 });
 
@@ -49,7 +49,7 @@ it('rejects an expired email verification link', function () {
         now()->subMinutes(10),
         [
             'id' => $user->getKey(),
-            'hash' => sha1($user->getEmailForVerification()),
+            'hash' => hash('sha256', $user->getEmailForVerification()),
         ],
         false
     );
@@ -87,7 +87,7 @@ it('returns already verified when the email is already confirmed', function () {
         now()->addMinutes(60),
         [
             'id' => $user->getKey(),
-            'hash' => sha1($user->getEmailForVerification()),
+            'hash' => hash('sha256', $user->getEmailForVerification()),
         ],
         false
     );
@@ -103,7 +103,7 @@ it('returns not found when the verification user does not exist', function () {
         now()->addMinutes(60),
         [
             'id' => (string) \Illuminate\Support\Str::uuid(),
-            'hash' => sha1('ghost@example.test'),
+            'hash' => hash('sha256', 'ghost@example.test'),
         ],
         false
     );

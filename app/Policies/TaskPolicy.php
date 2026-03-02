@@ -16,7 +16,7 @@ class TaskPolicy
      */
     public function view(User $user, Task $task): bool
     {
-        return $task->user_id === $user->user_id || $task->theme->canBeViewedBy($user->user_id);
+        return $task->theme->canBeViewedBy($user->user_id);
     }
 
     /**

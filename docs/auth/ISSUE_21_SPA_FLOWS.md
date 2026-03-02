@@ -66,7 +66,7 @@ The frontend must pass the exact signed query params it received in the email UR
 Example request:
 
 ```http
-POST /api/email-verifications?id=<user_id>&hash=<sha1_email>&expires=<timestamp>&signature=<sig>
+POST /api/email-verifications?id=<user_id>&hash=<sha256_email>&expires=<timestamp>&signature=<sig>
 Content-Type: application/json
 ```
 

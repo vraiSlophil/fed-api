@@ -103,7 +103,7 @@ class ThemeController extends Controller
     {
         $this->authorize('update', $theme);
 
-        $theme = $this->actionService->update($theme, $request->validated());
+        $theme = $this->actionService->update($request->user(), $theme, $request->validated());
 
         if (! $theme->isOwnedBy($request->user()->user_id)) {
             $theme->permissions = $theme->getPermissionsFor($request->user()->user_id);

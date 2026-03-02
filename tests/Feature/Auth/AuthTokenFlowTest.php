@@ -2,17 +2,18 @@
 
 use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
 
 it('login returns a token and allows calling a protected route', function () {
     $user = User::factory()->create([
-        'password' => bcrypt('secret-password'),
+        'password' => Hash::make('Secret-password1!'),
         'email_verified_at' => now(),
     ]);
 
     $login = $this->postJson('/api/auth/login', [
         'email' => $user->email,
-        'password' => 'secret-password',
+        'password' => 'Secret-password1!',
     ]);
 
     $login->assertStatus(200);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Invitation;
 
+use App\Domain\Themes\Support\ThemePermissionInvariant;
 use App\Models\Themes\Theme;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -39,5 +40,19 @@ class StoreInvitationRequest extends FormRequest
             'payload.permissions.can_validate_task' => ['required', 'boolean'],
             'expires_at' => ['nullable', 'date', 'after:now'],
         ];
+    }
+
+    /**
+     * Validate permission graph coherence after base validation succeeds.
+     *
+     * @throws \App\Exceptions\ApiException
+     */
+    protected function passedValidation(): void
+    {
+        $permissions = $this->validated('payload.permissions');
+
+        ThemePermissionInvariant::ensureCanViewForActionFlags(
+            is_array($permissions) ? $permissions : []
+        );
     }
 }

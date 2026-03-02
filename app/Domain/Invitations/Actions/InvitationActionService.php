@@ -3,6 +3,7 @@
 namespace App\Domain\Invitations\Actions;
 
 use App\Domain\Invitations\Services\InvitationService;
+use App\Domain\Themes\Support\ThemePermissionInvariant;
 use App\Exceptions\ApiException;
 use App\Invitations\Invitable;
 use App\Models\Auth\User;
@@ -76,6 +77,12 @@ class InvitationActionService
         $expiresAt = array_key_exists('expires_at', $validated) && $validated['expires_at']
             ? Carbon::parse((string) $validated['expires_at'])
             : now()->addDays((int) config('invitations.expires_days', 7));
+
+        $payload = $validated['payload'];
+        $permissions = is_array($payload) ? ($payload['permissions'] ?? []) : [];
+        ThemePermissionInvariant::ensureCanViewForActionFlags(
+            is_array($permissions) ? $permissions : []
+        );
 
         $invitation = Invitation::query()->create([
             'inviter_user_id' => $actor->user_id,

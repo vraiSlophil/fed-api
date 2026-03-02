@@ -2,6 +2,7 @@
 
 namespace App\Domain\ThemeMembers\Actions;
 
+use App\Domain\Themes\Support\ThemePermissionInvariant;
 use App\Exceptions\ApiException;
 use App\Models\Auth\User;
 use App\Models\Playgrounds\Playground;
@@ -28,6 +29,17 @@ class ThemeMemberActionService
             ->where('theme_id', $theme->theme_id)
             ->where('user_id', $userId)
             ->firstOrFail();
+
+        $finalPermissions = [
+            'can_view' => array_key_exists('can_view', $validated) ? (bool) $validated['can_view'] : (bool) $permission->can_view,
+            'can_update_theme' => array_key_exists('can_update_theme', $validated) ? (bool) $validated['can_update_theme'] : (bool) $permission->can_update_theme,
+            'can_add_task' => array_key_exists('can_add_task', $validated) ? (bool) $validated['can_add_task'] : (bool) $permission->can_add_task,
+            'can_edit_task' => array_key_exists('can_edit_task', $validated) ? (bool) $validated['can_edit_task'] : (bool) $permission->can_edit_task,
+            'can_delete_task' => array_key_exists('can_delete_task', $validated) ? (bool) $validated['can_delete_task'] : (bool) $permission->can_delete_task,
+            'can_validate_task' => array_key_exists('can_validate_task', $validated) ? (bool) $validated['can_validate_task'] : (bool) $permission->can_validate_task,
+        ];
+
+        ThemePermissionInvariant::ensureCanViewForActionFlags($finalPermissions);
 
         $updates = [];
         foreach ([
