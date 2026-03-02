@@ -28,16 +28,16 @@ it('supports combined self updates with identity, password, and avatar in one re
 
     $user = User::factory()->create([
         'email_verified_at' => now(),
-        'password' => bcrypt('old-password-123'),
+        'password' => Hash::make('Old-password-123!'),
     ]);
 
     Sanctum::actingAs($user, ['access']);
 
     $response = $this->patch("/api/users/{$user->user_id}", [
         'email' => 'updated-'.$user->user_id.'@example.com',
-        'current_password' => 'old-password-123',
-        'password' => 'new-password-123',
-        'password_confirmation' => 'new-password-123',
+        'current_password' => 'Old-password-123!',
+        'password' => 'New-password-123!',
+        'password_confirmation' => 'New-password-123!',
         'avatar' => UploadedFile::fake()->image('avatar.jpg'),
     ], [
         'Accept' => 'application/json',
@@ -48,7 +48,7 @@ it('supports combined self updates with identity, password, and avatar in one re
 
     $updated = $user->fresh();
     expect($updated->email_verified_at)->toBeNull();
-    expect(Hash::check('new-password-123', $updated->password))->toBeTrue();
+    expect(Hash::check('New-password-123!', $updated->password))->toBeTrue();
     expect($updated->avatar_path)->not->toBeNull();
     Storage::disk('public')->assertExists($updated->avatar_path);
 });

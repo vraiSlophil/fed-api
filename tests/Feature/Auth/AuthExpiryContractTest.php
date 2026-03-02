@@ -3,17 +3,18 @@
 use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 
 it('login returns access and refresh expiry metadata', function () {
     $user = User::factory()->create([
-        'password' => bcrypt('secret-password'),
+        'password' => Hash::make('Secret-password1!'),
         'email_verified_at' => now(),
     ]);
 
     $response = $this->postJson('/api/auth/login', [
         'email' => $user->email,
-        'password' => 'secret-password',
+        'password' => 'Secret-password1!',
     ]);
 
     $response->assertStatus(200);
@@ -38,8 +39,8 @@ it('register returns access and refresh expiry metadata', function () {
     $response = $this->postJson('/api/auth/register', [
         'username' => 'new-user-expiry',
         'email' => 'new-user-expiry@example.test',
-        'password' => 'secret-password',
-        'password_confirmation' => 'secret-password',
+        'password' => 'Secret-password1!',
+        'password_confirmation' => 'Secret-password1!',
     ]);
 
     $response->assertStatus(201);

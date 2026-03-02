@@ -2,15 +2,16 @@
 
 use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Laravel\Sanctum\PersonalAccessToken;
 
 it('password reset revokes all active tokens and invalidates previously issued access tokens', function () {
-    $oldPassword = 'old-password-123';
-    $newPassword = 'new-password-123';
+    $oldPassword = 'Old-password-123!';
+    $newPassword = 'New-password-123!';
 
     $user = User::factory()->create([
-        'password' => bcrypt($oldPassword),
+        'password' => Hash::make($oldPassword),
         'email_verified_at' => now(),
     ]);
 
@@ -62,11 +63,11 @@ it('password reset revokes all active tokens and invalidates previously issued a
 });
 
 it('user PATCH password update revokes all active tokens and invalidates the current access token', function () {
-    $oldPassword = 'current-password-123';
-    $newPassword = 'updated-password-123';
+    $oldPassword = 'Current-password-123!';
+    $newPassword = 'Updated-password-123!';
 
     $user = User::factory()->create([
-        'password' => bcrypt($oldPassword),
+        'password' => Hash::make($oldPassword),
         'email_verified_at' => now(),
     ]);
 
@@ -112,7 +113,7 @@ it('user PATCH password update revokes all active tokens and invalidates the cur
 });
 
 it('admin PATCH password update revokes all active tokens for the target user', function () {
-    $newPassword = 'admin-reset-password-123';
+    $newPassword = 'Admin-reset-password-123!';
 
     $admin = User::factory()->create([
         'role_power' => 100,
@@ -120,7 +121,7 @@ it('admin PATCH password update revokes all active tokens for the target user', 
     ]);
 
     $target = User::factory()->create([
-        'password' => bcrypt('target-password-123'),
+        'password' => Hash::make('Target-password-123!'),
         'email_verified_at' => now(),
     ]);
 
