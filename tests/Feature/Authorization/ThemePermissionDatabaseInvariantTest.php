@@ -5,8 +5,13 @@ use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use App\Models\Themes\ThemeUserPermission;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 it('enforces database check constraint on theme permission invariants', function () {
+    if (DB::connection()->getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('PostgreSQL-only CHECK constraint test');
+    }
+
     $owner = User::factory()->create();
     $ownerPlayground = Playground::query()
         ->where('user_id', $owner->user_id)

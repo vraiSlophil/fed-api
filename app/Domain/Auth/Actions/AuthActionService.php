@@ -262,7 +262,7 @@ class AuthActionService
             );
         }
 
-        $expectedHash = sha1($user->getEmailForVerification());
+        $expectedHash = hash('sha256', $user->getEmailForVerification());
         if (! hash_equals($expectedHash, $givenHash)) {
             throw new ApiException(
                 messageCode: 'auth.verification.invalid',

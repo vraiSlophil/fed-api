@@ -3,12 +3,15 @@
 namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class QueuedResetPassword extends ResetPassword implements ShouldQueue
 {
+    use Queueable;
+
     /**
      * Define queue names per notification channel.
      *

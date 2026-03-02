@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Invitation;
 
 use App\Domain\Themes\Support\ThemePermissionInvariant;
-use App\Exceptions\ApiException;
 use App\Models\Themes\Theme;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -46,7 +45,7 @@ class StoreInvitationRequest extends FormRequest
     /**
      * Validate permission graph coherence after base validation succeeds.
      *
-     * @throws ApiException
+     * @throws \App\Exceptions\ApiException
      */
     protected function passedValidation(): void
     {

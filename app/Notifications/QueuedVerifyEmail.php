@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Log;
@@ -11,7 +12,7 @@ use Throwable;
 
 class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
 {
-    public $tries = 3;
+    use Queueable;
 
     /**
      * Build the email-verification message for the notifiable user.
@@ -53,7 +54,7 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
             now()->addMinutes(config('auth.verification.expire', 60)),
             [
                 'id' => $notifiable->getKey(),
-                'hash' => sha1($notifiable->getEmailForVerification()),
+                'hash' => hash('sha256', $notifiable->getEmailForVerification()),
             ],
             false
         );
