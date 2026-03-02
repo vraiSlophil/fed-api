@@ -162,6 +162,7 @@ Main errors:
 - `404 resource.not_found` (theme/user not found)
 - `409 theme.member.already_exists`
 - `409 theme.invitation.already_exists` (pending invitation already exists)
+- `422 theme.permissions.invalid` (permission graph invariant violation)
 - `422 validation.invalid`
 
 Re-invite rule:
@@ -245,7 +246,7 @@ Endpoint:
 - `PATCH /api/invitations/{invitation}`
 - middleware: `throttle:6,1`
 
-Status query param:
+Status input (query or JSON body):
 - `status=accepted|declined|canceled`
 
 Email-link mode (unauthenticated):
@@ -321,6 +322,25 @@ Important front rule:
 Important compatibility note:
 - issue #43 introduces pagination standardization and `GET /api/invitations`.
 - it does **not** change the signed response endpoint contract (`PATCH /api/invitations/{invitation}`).
+
+### 4.4 Delete invitation
+
+Endpoint:
+- `DELETE /api/invitations/{invitation}`
+- middleware: `auth:sanctum`, `access-token`, `verified`
+
+Rules:
+- hard delete allowed only for `declined` or `canceled`
+- other statuses are rejected (`400 invitation.delete_not_allowed_status`)
+
+Success:
+- `204 No Content` (empty body)
+
+Errors:
+- `401 auth.failed`
+- `403 permission.denied`
+- `404 resource.not_found`
+- `400 invitation.delete_not_allowed_status`
 
 ## 5) Email links and frontend paths
 

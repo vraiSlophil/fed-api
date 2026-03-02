@@ -4,6 +4,7 @@ use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
 it('login returns access and refresh expiry metadata', function () {
@@ -35,6 +36,9 @@ it('login returns access and refresh expiry metadata', function () {
 
 it('register returns access and refresh expiry metadata', function () {
     Notification::fake();
+    Http::fake([
+        'api.pwnedpasswords.com/*' => Http::response('', 200),
+    ]);
 
     $response = $this->postJson('/api/auth/register', [
         'username' => 'new-user-expiry',

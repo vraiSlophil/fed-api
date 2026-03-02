@@ -42,16 +42,4 @@ class PlaygroundPolicy
     {
         return $playground->user_id === $user->user_id;
     }
-
-    /**
-     * Determine whether the user can view playground statistics.
-     *
-     * @param  User  $user  Current authenticated user used for authorization and ownership checks.
-     * @param  Playground  $playground  Playground targeted by the operation.
-     * @return bool True when the condition is met; otherwise, false.
-     */
-    public function stats(User $user, Playground $playground): bool
-    {
-        return $playground->user_id === $user->user_id;
-    }
 }

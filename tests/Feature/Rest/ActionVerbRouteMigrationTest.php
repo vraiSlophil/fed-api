@@ -143,6 +143,32 @@ it('sets default playground through PATCH and removes set-default action route',
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
+it('removes non-crud playground routes', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $playground = Playground::factory()->create([
+        'user_id' => $user->user_id,
+        'slug' => 'legacy-playground-route',
+        'is_default' => false,
+    ]);
+
+    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+
+    $this->getJson("/api/playgrounds/{$playground->playground_id}/themes")
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+
+    $this->getJson("/api/playgrounds/{$playground->playground_id}/stats")
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+
+    $this->getJson('/api/playgrounds/by-slug/legacy-playground-route')
+        ->assertStatus(404)
+        ->assertJsonPath('message_code', 'resource.not_found');
+});
+
 it('updates member status and target playground through PATCH and removes action routes', function () {
     $ctx = createOwnedThemeAndTask();
 

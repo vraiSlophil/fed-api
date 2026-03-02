@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Playground;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePlaygroundRequest extends FormRequest
 {
@@ -23,9 +24,16 @@ class StorePlaygroundRequest extends FormRequest
      */
     public function rules(): array
     {
+        $actorId = (string) $this->user()->user_id;
+
         return [
             'name' => ['required', 'string', 'max:120'],
-            'slug' => ['nullable', 'string', 'max:140'],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:140',
+                Rule::unique('playgrounds', 'slug')->where(fn ($query) => $query->where('user_id', $actorId)),
+            ],
             'icon' => ['nullable', 'string', 'max:50'],
             'color' => ['nullable', 'string', 'size:7', 'regex:/^#[0-9A-F]{6}$/i'],
             'background_color' => ['nullable', 'string', 'size:7', 'regex:/^#[0-9A-F]{6}$/i'],
