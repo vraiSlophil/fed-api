@@ -7,6 +7,11 @@ it('registers strict auth route names', function () {
     expect(Route::has('auth.ping'))->toBeTrue();
 });
 
+it('registers user stats route name and removes legacy user metrics route name', function () {
+    expect(Route::has('user.stats'))->toBeTrue();
+    expect(Route::has('user.metrics'))->toBeFalse();
+});
+
 it('registers explicit playground route names without generated names', function () {
     $expected = [
         'playgrounds.index',

@@ -25,7 +25,7 @@ class UpdateThemeRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'string', 'max:150'],
-            'color' => ['sometimes', 'string', 'size:7'],
+            'color' => ['sometimes', 'string', 'size:7', 'regex:/^#[0-9A-F]{6}$/i'],
             'playground_id' => ['sometimes', 'uuid', 'exists:playgrounds,playground_id'],
         ];
     }

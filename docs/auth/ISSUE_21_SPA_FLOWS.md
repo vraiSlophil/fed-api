@@ -246,12 +246,16 @@ Endpoint:
 - `PATCH /api/invitations/{invitation}`
 - middleware: `throttle:6,1`
 
-Status input (query or JSON body):
-- `status=accepted|declined|canceled`
+Authenticated mode input (JSON body only):
+- `status` (`accepted|declined|canceled`)
+- `target_playground_id` optional, only when `status=accepted`
 
 Email-link mode (unauthenticated):
 - requires valid signed query params (`expires`, `signature`)
+- `status` must be provided in query params (`accepted|declined`)
 - supports only `accepted|declined`
+- `status=canceled` returns `403 permission.denied`
+- body `status` is rejected (`422 validation.invalid`)
 
 Authenticated mode:
 - can call endpoint without signature
@@ -261,6 +265,7 @@ Authenticated mode:
 Signed query params (email-link mode):
 - `expires`
 - `signature`
+- `status`
 
 Optional body:
 
@@ -273,11 +278,11 @@ Optional body:
 Request examples:
 
 ```http
-PATCH /api/invitations/0f9a...a12?status=accepted
+PATCH /api/invitations/0f9a...a12
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
-{"target_playground_id":"f7f7...b01"}
+{"status":"accepted","target_playground_id":"f7f7...b01"}
 ```
 
 ```http
@@ -331,7 +336,7 @@ Endpoint:
 
 Rules:
 - hard delete allowed only for `declined` or `canceled`
-- other statuses are rejected (`400 invitation.delete_not_allowed_status`)
+- other statuses are rejected (`409 invitation.delete_not_allowed_status`)
 
 Success:
 - `204 No Content` (empty body)
@@ -340,7 +345,7 @@ Errors:
 - `401 auth.failed`
 - `403 permission.denied`
 - `404 resource.not_found`
-- `400 invitation.delete_not_allowed_status`
+- `409 invitation.delete_not_allowed_status`
 
 ## 5) Email links and frontend paths
 

@@ -90,6 +90,26 @@ it('rejects theme creation on non-owned playground', function () {
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
+it('validates hex color format on theme create', function () {
+    $owner = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $ownerPlayground = Playground::query()
+        ->where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    Sanctum::actingAs($owner, [TokenService::ACCESS_ABILITY]);
+
+    $this->postJson('/api/themes', [
+        'title' => 'Invalid color',
+        'color' => 'blue',
+        'playground_id' => $ownerPlayground->playground_id,
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
+});
+
 it('returns theme stats for owner and lists members for manageMembers owner', function () {
     $owner = User::factory()->create([
         'email_verified_at' => now(),
@@ -197,6 +217,31 @@ it('shows updates and deletes a theme for its owner', function () {
         ->assertNoContent();
 
     expect(Theme::query()->where('theme_id', $theme->theme_id)->exists())->toBeFalse();
+});
+
+it('validates hex color format on theme update', function () {
+    $owner = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $ownerPlayground = Playground::query()
+        ->where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+        'title' => 'Before title',
+        'color' => '#111111',
+    ]);
+
+    Sanctum::actingAs($owner, [TokenService::ACCESS_ABILITY]);
+
+    $this->patchJson("/api/themes/{$theme->theme_id}", [
+        'color' => '123456',
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
 });
 
 it('forbids outsider access to theme show update and delete', function () {

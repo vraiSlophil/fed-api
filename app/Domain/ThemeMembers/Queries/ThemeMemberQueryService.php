@@ -36,6 +36,20 @@ class ThemeMemberQueryService
         $users = User::query()
             ->whereNotNull('email_verified_at')
             ->where('user_id', '!=', $ownerId)
+            ->whereNotExists(function ($query) use ($theme): void {
+                $query->selectRaw('1')
+                    ->from('theme_user_permissions')
+                    ->whereColumn('theme_user_permissions.user_id', 'users.user_id')
+                    ->where('theme_user_permissions.theme_id', $theme->theme_id);
+            })
+            ->whereNotExists(function ($query) use ($theme): void {
+                $query->selectRaw('1')
+                    ->from('invitations')
+                    ->whereColumn('invitations.invitee_user_id', 'users.user_id')
+                    ->where('invitations.invitable_type', Theme::class)
+                    ->where('invitations.invitable_id', $theme->theme_id)
+                    ->where('invitations.status', 'pending');
+            })
             ->where(function ($query) use ($search): void {
                 $query->where('username', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")

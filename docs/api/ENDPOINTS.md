@@ -142,14 +142,20 @@ It is aligned with `routes/api/*.php` and the current controllers/requests.
 - Middleware: `throttle:6,1`
 - Path:
     - `{invitation}` uuid
-- Input (query/body merged by request):
-    - `status` (required: `accepted|declined|canceled`)
-    - `target_playground_id` (optional, accepted only)
 - Mode A (authenticated):
+    - body input only:
+        - `status` (required: `accepted|declined|canceled`)
+        - `target_playground_id` (optional, accepted only)
     - requires access token ability
     - `accepted|declined`: invitee
     - `canceled`: inviter or admin
 - Mode B (unauthenticated):
+    - signed query input:
+        - `status` (required: `accepted|declined`)
+    - optional body:
+        - `target_playground_id` (accepted only)
+    - body `status` is rejected (`422 validation.invalid`)
+    - `status=canceled` is rejected (`403 permission.denied`)
     - requires valid signed query
     - only `accepted|declined`
 - Success:
@@ -410,12 +416,15 @@ Protected middleware: `auth:sanctum`, `access-token`, `verified`
 - Success:
     - `200 stats.global.success`
 
-2. `GET /api/user/stats` (`user.metrics`)
+2. `GET /api/user/stats` (`user.stats`)
 
 - Query:
     - optional `period`: `7_days|30_days|3_months|6_months|12_months|all_time`
 - Success:
     - `200 user.metrics.retrieved`
+- Breaking change:
+    - route name `user.metrics` removed and replaced by `user.stats`
+    - no backward compatibility route is exposed
 
 ## Media
 
