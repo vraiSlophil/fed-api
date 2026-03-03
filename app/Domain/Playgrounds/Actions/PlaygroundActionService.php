@@ -7,7 +7,6 @@ use App\Models\Auth\User;
 use App\Models\Playgrounds\Playground;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class PlaygroundActionService
 {
@@ -22,7 +21,7 @@ class PlaygroundActionService
     {
         $playground = $user->playgrounds()->create([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] ?? Str::slug($validated['name']),
+            'slug' => $validated['slug'],
             'icon' => $validated['icon'] ?? null,
             'color' => $validated['color'] ?? '#6366F1',
             'background_color' => $validated['background_color'] ?? null,

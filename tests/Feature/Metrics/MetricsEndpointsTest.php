@@ -39,11 +39,11 @@ it('returns user metrics for a valid period and rejects invalid period', functio
 
     Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
 
-    $this->getJson('/api/user/metrics?period=30_days')
+    $this->getJson('/api/user/stats?period=30_days')
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'user.metrics.retrieved');
 
-    $this->getJson('/api/user/metrics?period=invalid')
+    $this->getJson('/api/user/stats?period=invalid')
         ->assertStatus(422)
         ->assertJsonPath('message_code', 'validation.invalid');
 });
@@ -75,7 +75,7 @@ it('requires authentication on metrics endpoints', function () {
         ->assertStatus(401)
         ->assertJsonPath('message_code', 'auth.failed');
 
-    $this->getJson('/api/user/metrics')
+    $this->getJson('/api/user/stats')
         ->assertStatus(401)
         ->assertJsonPath('message_code', 'auth.failed');
 });

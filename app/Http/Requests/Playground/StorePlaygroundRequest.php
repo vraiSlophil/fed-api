@@ -29,7 +29,7 @@ class StorePlaygroundRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:120'],
             'slug' => [
-                'nullable',
+                'required',
                 'string',
                 'max:140',
                 Rule::unique('playgrounds', 'slug')->where(fn ($query) => $query->where('user_id', $actorId)),

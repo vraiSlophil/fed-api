@@ -70,6 +70,18 @@ it('validates duplicate playground slug for the same owner on create', function 
         ->assertJsonPath('message_code', 'validation.invalid');
 });
 
+it('validates missing slug on create', function () {
+    $user = User::factory()->create();
+
+    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+
+    $this->postJson('/api/playgrounds', [
+        'name' => 'Client Workspace',
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
+});
+
 it('shows a playground by id for its owner', function () {
     $user = User::factory()->create();
     $playground = Playground::factory()->create([
@@ -169,6 +181,12 @@ it('updates a playground and validates duplicate slug on update', function () {
 
     $this->patchJson("/api/playgrounds/{$first->playground_id}", [
         'slug' => 'second-slug',
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
+
+    $this->patchJson("/api/playgrounds/{$first->playground_id}", [
+        'slug' => null,
     ])
         ->assertStatus(422)
         ->assertJsonPath('message_code', 'validation.invalid');

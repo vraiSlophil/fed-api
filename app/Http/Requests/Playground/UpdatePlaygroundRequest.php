@@ -31,7 +31,7 @@ class UpdatePlaygroundRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:120'],
             'slug' => [
-                'nullable',
+                'sometimes',
                 'string',
                 'max:140',
                 Rule::unique('playgrounds', 'slug')

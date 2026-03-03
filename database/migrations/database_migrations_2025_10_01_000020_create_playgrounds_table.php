@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('user_id');
 
             $table->string('name', 120);
-            $table->string('slug', 140)->nullable();           // Identifiant lisible dans les URL
+            $table->string('slug', 140);           // Identifiant lisible dans les URL
             $table->string('icon', 50)->nullable();
             $table->char('color', 7)->nullable();               // Couleur principale
             $table->char('background_color', 7)->nullable();    // Couleur de fond personnalisée
