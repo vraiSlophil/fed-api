@@ -162,6 +162,7 @@ Main errors:
 - `404 resource.not_found` (theme/user not found)
 - `409 theme.member.already_exists`
 - `409 theme.invitation.already_exists` (pending invitation already exists)
+- `422 theme.permissions.invalid` (permission graph invariant violation)
 - `422 validation.invalid`
 
 Re-invite rule:
@@ -245,12 +246,16 @@ Endpoint:
 - `PATCH /api/invitations/{invitation}`
 - middleware: `throttle:6,1`
 
-Status query param:
-- `status=accepted|declined|canceled`
+Authenticated mode input (JSON body only):
+- `status` (`accepted|declined|canceled`)
+- `target_playground_id` optional, only when `status=accepted`
 
 Email-link mode (unauthenticated):
 - requires valid signed query params (`expires`, `signature`)
+- `status` must be provided in query params (`accepted|declined`)
 - supports only `accepted|declined`
+- `status=canceled` returns `403 permission.denied`
+- body `status` is rejected (`422 validation.invalid`)
 
 Authenticated mode:
 - can call endpoint without signature
@@ -260,6 +265,7 @@ Authenticated mode:
 Signed query params (email-link mode):
 - `expires`
 - `signature`
+- `status`
 
 Optional body:
 
@@ -272,11 +278,11 @@ Optional body:
 Request examples:
 
 ```http
-PATCH /api/invitations/0f9a...a12?status=accepted
+PATCH /api/invitations/0f9a...a12
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
-{"target_playground_id":"f7f7...b01"}
+{"status":"accepted","target_playground_id":"f7f7...b01"}
 ```
 
 ```http
@@ -321,6 +327,25 @@ Important front rule:
 Important compatibility note:
 - issue #43 introduces pagination standardization and `GET /api/invitations`.
 - it does **not** change the signed response endpoint contract (`PATCH /api/invitations/{invitation}`).
+
+### 4.4 Delete invitation
+
+Endpoint:
+- `DELETE /api/invitations/{invitation}`
+- middleware: `auth:sanctum`, `access-token`, `verified`
+
+Rules:
+- hard delete allowed only for `declined` or `canceled`
+- other statuses are rejected (`409 invitation.delete_not_allowed_status`)
+
+Success:
+- `204 No Content` (empty body)
+
+Errors:
+- `401 auth.failed`
+- `403 permission.denied`
+- `404 resource.not_found`
+- `409 invitation.delete_not_allowed_status`
 
 ## 5) Email links and frontend paths
 

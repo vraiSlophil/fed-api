@@ -9,7 +9,6 @@ use App\Domain\Invitations\Services\InvitationService;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invitation\ListInvitationsRequest;
-use App\Http\Requests\Invitation\RespondInvitationRequest;
 use App\Http\Requests\Invitation\StoreInvitationRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\Invitations\Invitation;
@@ -17,8 +16,10 @@ use App\Models\Themes\Theme;
 use App\Support\Pagination\OffsetPagination;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Illuminate\Validation\ValidationException;
 
 class ThemeInvitationController extends Controller
 {
@@ -115,24 +116,26 @@ class ThemeInvitationController extends Controller
     /**
      * Apply invitation status changes from authenticated or signed-link requests.
      *
-     * @param  RespondInvitationRequest  $request  HTTP request carrying validated parameters for this endpoint.
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  Invitation  $invitation  Invitation instance being processed by this method.
      * @param  InvitationService  $invitationService  Service responsible for invitation operations.
      * @return JsonResponse JSON API response using the standard envelope.
      */
     public function respond(
-        RespondInvitationRequest $request,
+        Request $request,
         Invitation $invitation,
         InvitationService $invitationService,
     ): JsonResponse {
-        $validated = $request->validated();
-        $status = (string) $validated['status'];
         $user = $request->user('sanctum');
+        $validated = [];
 
         if ($user) {
             if (! $user->currentAccessToken() || ! $user->tokenCan(TokenService::ACCESS_ABILITY)) {
                 throw new AuthorizationException('Access token required');
             }
+
+            $validated = $this->validateAuthenticatedResponsePayload($request);
+            $status = (string) $validated['status'];
 
             if (in_array($status, ['accepted', 'declined'], true)) {
                 $this->authorize('respondAcceptDecline', $invitation);
@@ -140,18 +143,21 @@ class ThemeInvitationController extends Controller
                 $this->authorize('cancel', $invitation);
             }
         } else {
-            if ($status === 'canceled') {
-                throw new AuthorizationException('Authentication required to cancel invitation');
-            }
-
             if (! $request->hasValidSignatureWhileIgnoring([], false)) {
                 throw new InvalidSignatureException;
+            }
+
+            $validated = $this->validateSignedResponsePayload($request);
+            $status = (string) $validated['status'];
+
+            if ($status === 'canceled') {
+                throw new AuthorizationException('Authentication required to cancel invitation');
             }
         }
 
         $result = $this->actionService->respond(
             $invitation,
-            $status,
+            (string) $validated['status'],
             $validated['target_playground_id'] ?? null,
             $invitationService,
         );
@@ -231,5 +237,64 @@ class ThemeInvitationController extends Controller
                 'color' => $invitable instanceof Theme ? $invitable->color : null,
             ],
         ];
+    }
+
+    /**
+     * Validate authenticated invitation responses from request body only.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return array Validated response payload.
+     */
+    private function validateAuthenticatedResponsePayload(Request $request): array
+    {
+        $body = $this->bodyInput($request);
+
+        return validator($body, [
+            'status' => ['required', 'string', 'in:accepted,declined,canceled'],
+            'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id', 'prohibited_unless:status,accepted'],
+        ])->validate();
+    }
+
+    /**
+     * Validate guest invitation responses using signed query status.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return array Validated response payload.
+     *
+     * @throws ValidationException
+     */
+    private function validateSignedResponsePayload(Request $request): array
+    {
+        $body = $this->bodyInput($request);
+        if (array_key_exists('status', $body)) {
+            throw ValidationException::withMessages([
+                'status' => ['Status must be provided via signed query for unauthenticated requests.'],
+            ]);
+        }
+
+        return validator([
+            'status' => $request->query('status'),
+            'target_playground_id' => $body['target_playground_id'] ?? null,
+        ], [
+            'status' => ['required', 'string', 'in:accepted,declined,canceled'],
+            'target_playground_id' => ['nullable', 'uuid', 'exists:playgrounds,playground_id', 'prohibited_unless:status,accepted'],
+        ])->validate();
+    }
+
+    /**
+     * Return parsed body payload without query-string values.
+     *
+     * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
+     * @return array Parsed request body.
+     */
+    private function bodyInput(Request $request): array
+    {
+        if ($request->isJson()) {
+            $json = $request->json()->all();
+
+            return is_array($json) ? $json : [];
+        }
+
+        return $request->request->all();
     }
 }

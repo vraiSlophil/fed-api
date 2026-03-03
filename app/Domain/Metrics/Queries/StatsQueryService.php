@@ -49,14 +49,7 @@ class StatsQueryService
     {
         $sevenDaysAgo = now()->subDays(7);
 
-        $query = Task::query()->where(function ($query) use ($userId): void {
-            $query->where('user_id', $userId)
-                ->orWhereHas('theme.themeUserPermissions', function ($q) use ($userId): void {
-                    $q->where('user_id', $userId)
-                        ->where('can_view', true)
-                        ->where('status', 'active');
-                });
-        });
+        $query = Task::query()->visibleToUser($userId);
 
         if ($themeId) {
             $query->where('theme_id', $themeId);

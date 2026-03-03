@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Auth\User;
+use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
+use App\Models\Themes\ThemeUserPermission;
 use Laravel\Sanctum\Sanctum;
 
 it('returns the authenticated caller via GET /api/users/me', function () {
@@ -123,6 +125,74 @@ it('allows theme owners to search invitable users via GET /api/users?theme_id=&s
             'user_id' => $searchUser->user_id,
             'username' => $searchUser->username,
         ]);
+});
+
+it('excludes existing members and pending invitees from theme user search mode', function () {
+    $owner = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $ownerPlayground = Playground::query()
+        ->where('user_id', $owner->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+
+    $theme = Theme::factory()->create([
+        'owner_id' => $owner->user_id,
+        'playground_id' => $ownerPlayground->playground_id,
+    ]);
+
+    $existingMember = User::factory()->create([
+        'username' => 'invite-filter-member',
+        'email_verified_at' => now(),
+    ]);
+    $existingMemberPlayground = Playground::query()
+        ->where('user_id', $existingMember->user_id)
+        ->where('is_default', true)
+        ->firstOrFail();
+    ThemeUserPermission::factory()->create([
+        'theme_id' => $theme->theme_id,
+        'user_id' => $existingMember->user_id,
+        'target_playground_id' => $existingMemberPlayground->playground_id,
+        'can_view' => true,
+        'can_update_theme' => false,
+        'can_add_task' => false,
+        'can_edit_task' => false,
+        'can_delete_task' => false,
+        'can_validate_task' => false,
+        'status' => 'active',
+    ]);
+
+    $pendingInvitee = User::factory()->create([
+        'username' => 'invite-filter-pending',
+        'email_verified_at' => now(),
+    ]);
+    Invitation::factory()->create([
+        'inviter_user_id' => $owner->user_id,
+        'invitee_user_id' => $pendingInvitee->user_id,
+        'invitable_type' => Theme::class,
+        'invitable_id' => $theme->theme_id,
+        'status' => 'pending',
+    ]);
+
+    $eligibleUser = User::factory()->create([
+        'username' => 'invite-filter-eligible',
+        'email_verified_at' => now(),
+    ]);
+
+    Sanctum::actingAs($owner, ['access']);
+
+    $response = $this->getJson('/api/users?theme_id='.$theme->theme_id.'&search=invite-filter');
+
+    $response
+        ->assertStatus(200)
+        ->assertJsonPath('message_code', 'theme.users.search.success');
+
+    $userIds = collect($response->json('data'))->pluck('user_id')->all();
+
+    expect($userIds)->toContain($eligibleUser->user_id);
+    expect($userIds)->not->toContain($existingMember->user_id);
+    expect($userIds)->not->toContain($pendingInvitee->user_id);
 });
 
 it('forbids non-owner users from using theme member search mode', function () {

@@ -50,15 +50,8 @@ class TaskQueryService
     public function findVisibleTaskForUser(User $user, string $taskId): Task
     {
         return Task::query()
+            ->visibleToUser($user->user_id)
             ->where('task_id', $taskId)
-            ->whereHas('theme', function (Builder $query) use ($user): void {
-                $query->where('owner_id', $user->user_id)
-                    ->orWhereHas('themeUserPermissions', function (Builder $q) use ($user): void {
-                        $q->where('user_id', $user->user_id)
-                            ->where('can_view', true)
-                            ->where('status', 'active');
-                    });
-            })
             ->firstOrFail();
     }
 
@@ -71,14 +64,7 @@ class TaskQueryService
      */
     private function buildTasksQueryForUser(User $user, array $filters): Builder
     {
-        $query = Task::query()->whereHas('theme', function (Builder $query) use ($user): void {
-            $query->where('owner_id', $user->user_id)
-                ->orWhereHas('themeUserPermissions', function (Builder $q) use ($user): void {
-                    $q->where('user_id', $user->user_id)
-                        ->where('can_view', true)
-                        ->where('status', 'active');
-                });
-        });
+        $query = Task::query()->visibleToUser($user->user_id);
 
         $themeId = $filters['theme_id'] ?? null;
         if (is_string($themeId) && $themeId !== '') {

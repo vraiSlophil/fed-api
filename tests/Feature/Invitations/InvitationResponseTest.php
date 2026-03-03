@@ -63,7 +63,9 @@ it('accepts an invitation for an authenticated invitee without signed params', f
 
     Sanctum::actingAs($ctx['invitee'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'accepted',
+    ])
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'theme.invitation.accepted');
 
@@ -78,7 +80,9 @@ it('declines an invitation for an authenticated invitee without signed params', 
 
     Sanctum::actingAs($ctx['invitee'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=declined")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'declined',
+    ])
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'theme.invitation.declined');
 
@@ -106,16 +110,29 @@ it('uses current authenticated session over signature when account does not matc
     $otherUser = User::factory()->create();
     Sanctum::actingAs($otherUser, ['access']);
 
-    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'accepted'))
+    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'accepted'), [
+        'status' => 'accepted',
+    ])
         ->assertStatus(403)
         ->assertJsonPath('message_code', 'permission.denied');
+});
+
+it('requires status in body for authenticated requests even if query has status', function () {
+    $ctx = createThemeInvitationContext();
+    Sanctum::actingAs($ctx['invitee'], ['access']);
+
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
 });
 
 it('allows inviter to cancel a pending invitation', function () {
     $ctx = createThemeInvitationContext();
     Sanctum::actingAs($ctx['owner'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=canceled")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'canceled',
+    ])
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'theme.invitation.canceled');
 
@@ -129,7 +146,9 @@ it('allows admin to cancel a pending invitation', function () {
     ]);
     Sanctum::actingAs($admin, ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=canceled")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'canceled',
+    ])
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'theme.invitation.canceled');
 });
@@ -142,13 +161,25 @@ it('rejects cancel status for unauthenticated requests even with signature', fun
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
+it('rejects unauthenticated signed responses when status is provided in body', function () {
+    $ctx = createThemeInvitationContext();
+
+    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'accepted'), [
+        'status' => 'accepted',
+    ])
+        ->assertStatus(422)
+        ->assertJsonPath('message_code', 'validation.invalid');
+});
+
 it('rejects transition when invitation is already terminal', function () {
     $ctx = createThemeInvitationContext([
         'status' => 'declined',
     ]);
     Sanctum::actingAs($ctx['invitee'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'accepted',
+    ])
         ->assertStatus(409)
         ->assertJsonPath('message_code', 'invitation.invalid_transition');
 });
@@ -159,7 +190,9 @@ it('rejects expired invitation transition', function () {
     ]);
     Sanctum::actingAs($ctx['invitee'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'accepted',
+    ])
         ->assertStatus(410)
         ->assertJsonPath('message_code', 'invitation.expired');
 });
@@ -172,7 +205,8 @@ it('accepts invitation with explicit target playground for authenticated invitee
     ]);
     Sanctum::actingAs($ctx['invitee'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted", [
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'accepted',
         'target_playground_id' => $customPlayground->playground_id,
     ])->assertStatus(200);
 
@@ -190,7 +224,9 @@ it('rejects unsupported invitable type on acceptance', function () {
     ]);
     Sanctum::actingAs($ctx['invitee'], ['access']);
 
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'accepted',
+    ])
         ->assertStatus(400)
         ->assertJsonPath('message_code', 'invitation.invalid');
 });

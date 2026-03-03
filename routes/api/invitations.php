@@ -7,6 +7,7 @@ Route::prefix('invitations')->name('invitations.')->group(function () {
     Route::middleware(['auth:sanctum', 'access-token', 'verified'])->group(function () {
         Route::post('', [ThemeInvitationController::class, 'store'])->name('store');
         Route::get('', [ThemeInvitationController::class, 'index'])->name('index');
+
         Route::get('{invitation:invitation_id}', [ThemeInvitationController::class, 'show'])
             ->whereUuid('invitation')
             ->name('show');

@@ -26,7 +26,7 @@ Invalid values return `422` with `message_code: validation.invalid`.
 Each endpoint may define additional filters.
 
 Example for invitation listing:
-- `status`: `pending|accepted|declined|expired`
+- `status`: `pending|accepted|declined|expired|canceled`
 - default status for invitation center listing: `pending`
 
 ## Response Contract

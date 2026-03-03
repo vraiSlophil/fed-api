@@ -6,6 +6,7 @@ use App\Domain\Tasks\Enums\TaskStatus;
 use App\Models\Auth\User;
 use App\Models\Reminders\Reminder;
 use App\Models\Themes\Theme;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,6 +47,25 @@ class Task extends Model
         'completed_at' => 'datetime',
         'archived_at' => 'datetime',
     ];
+
+    /**
+     * Scope tasks visible to a user through theme ownership or active member permissions.
+     *
+     * @param  Builder  $query  Query builder instance used to compose the data access query.
+     * @param  string  $userId  Identifier of the user.
+     * @return Builder Configured query builder instance.
+     */
+    public function scopeVisibleToUser(Builder $query, string $userId): Builder
+    {
+        return $query->whereHas('theme', function (Builder $themeQuery) use ($userId): void {
+            $themeQuery->where('owner_id', $userId)
+                ->orWhereHas('themeUserPermissions', function (Builder $permissionQuery) use ($userId): void {
+                    $permissionQuery->where('user_id', $userId)
+                        ->where('can_view', true)
+                        ->where('status', 'active');
+                });
+        });
+    }
 
     /**
      * Determine whether the task has already been validated.

@@ -44,7 +44,12 @@ Canonical replacements:
 - Tasks:
   - `PATCH /api/tasks/{task}` (e.g. `status`, `archived_at`)
 - Playgrounds:
+  - `GET /api/playgrounds` (list owned playgrounds)
+  - `GET /api/playgrounds?slug={slug}` (read one owned playground by slug)
+  - `GET /api/playgrounds/{playground}` (read one owned playground by id)
+  - `POST /api/playgrounds`
   - `PATCH /api/playgrounds/{playground}` (e.g. `is_default`)
+  - `DELETE /api/playgrounds/{playground}`
 - Theme members:
   - `PATCH /api/themes/{theme}/members/{userId}` (e.g. `status`, `target_playground_id`)
   - `DELETE /api/themes/{theme}/members/{userId}` (remove member / self-leave)
@@ -63,6 +68,10 @@ Removed endpoints:
 - `/api/tasks/{task}/complete`
 - `/api/tasks/{task}/uncomplete`
 - `/api/playgrounds/{playground}/set-default`
+- `/api/playgrounds/{playground}/themes`
+- `/api/playgrounds/{playground}/stats`
+- `/api/playgrounds/by-slug/{playground}`
+- `/api/playgrounds/by-slug/{playground}/themes`
 - `/api/themes/{theme}/members/{userId}/deactivate`
 - `/api/themes/{theme}/members/{userId}/reactivate`
 - `/api/themes/{theme}/members/{userId}/move-to-playground`
@@ -89,6 +98,15 @@ Test routes in `web.php` are restricted to `local/testing`.
 
 Frontend impact:
 - Do not depend on these routes in shared dev/staging/prod environments.
+
+### 2.4 Playground lookup by slug moved to query filtering
+Lookup by slug is now done through the index route:
+
+- `GET /api/playgrounds?slug={slug}`
+
+Frontend impact:
+- Replace calls to `/api/playgrounds/by-slug/{slug}` with query-filtered index.
+- Expect a single `playground` object in `data` for slug lookups (not a list).
 
 ## 3. What does not change (important)
 - Main API envelope/format remains stable, but route URIs changed where listed in section 1.4.

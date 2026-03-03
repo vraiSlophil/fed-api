@@ -52,3 +52,18 @@ it('returns 204 with an empty body when deleting a theme', function () {
     $response->assertNoContent();
     expect($response->getContent())->toBe('');
 });
+
+it('returns 204 with an empty body when deleting a playground', function () {
+    $user = User::factory()->create();
+    $playground = Playground::factory()->create([
+        'user_id' => $user->user_id,
+        'is_default' => false,
+    ]);
+
+    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+
+    $response = $this->deleteJson("/api/playgrounds/{$playground->playground_id}");
+
+    $response->assertNoContent();
+    expect($response->getContent())->toBe('');
+});

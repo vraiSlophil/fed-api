@@ -25,7 +25,7 @@ class StoreThemeRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:150'],
-            'color' => ['required', 'string', 'size:7'],
+            'color' => ['required', 'string', 'size:7', 'regex:/^#[0-9A-F]{6}$/i'],
             'playground_id' => ['required', 'uuid', 'exists:playgrounds,playground_id'],
         ];
     }
