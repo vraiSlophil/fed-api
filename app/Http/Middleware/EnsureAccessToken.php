@@ -19,6 +19,7 @@ class EnsureAccessToken
      * @return Response Response returned by downstream middleware/controller.
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
+     * @throws \App\Exceptions\ApiException When the user is blocked.
      */
     public function handle(Request $request, Closure $next): Response
     {
