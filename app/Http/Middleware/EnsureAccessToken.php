@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Auth\Services\TokenService;
+use App\Exceptions\ApiException;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -18,12 +19,21 @@ class EnsureAccessToken
      * @return Response Response returned by downstream middleware/controller.
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException When the operation cannot be completed.
+     * @throws \App\Exceptions\ApiException When the user is blocked.
      */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
-        if (! $user || ! $user->tokenCan(TokenService::ACCESS_ABILITY)) {
+        if (! $user) {
+            throw new AuthorizationException('Access token required');
+        }
+
+        if ($user->isBlocked()) {
+            throw new ApiException('auth.blocked', [], 403, 'User blocked');
+        }
+
+        if (! $user->tokenCan(TokenService::ACCESS_ABILITY)) {
             throw new AuthorizationException('Access token required');
         }
 

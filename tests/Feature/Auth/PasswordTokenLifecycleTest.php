@@ -211,3 +211,94 @@ it('admin PATCH update without password does not revoke target user tokens', fun
         ->getJson('/api/auth/ping')
         ->assertStatus(200);
 });
+
+it('admin PATCH block revokes all active tokens and invalidates previously issued target tokens', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    $target = User::factory()->create([
+        'password' => Hash::make('Target-password-123!'),
+        'email_verified_at' => now(),
+        'blocked_at' => null,
+    ]);
+
+    $adminAccessToken = $admin->createToken(
+        'admin-access-token',
+        [TokenService::ACCESS_ABILITY],
+        now()->addMinutes(15)
+    )->plainTextToken;
+
+    $targetAccessToken = $target->createToken(
+        'target-access-token',
+        [TokenService::ACCESS_ABILITY],
+        now()->addMinutes(15)
+    )->plainTextToken;
+
+    $target->createToken(
+        'target-refresh-token',
+        [TokenService::REFRESH_ABILITY],
+        now()->addDays(30)
+    )->plainTextToken;
+
+    expect(PersonalAccessToken::where('tokenable_id', $target->getAuthIdentifier())->count())
+        ->toBe(2);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$adminAccessToken)
+        ->patchJson("/api/users/{$target->user_id}", [
+            'blocked_at' => now()->toISOString(),
+        ]);
+
+    $response->assertStatus(200);
+    expect($response->json('message_code'))->toBe('user.update.success');
+    expect(PersonalAccessToken::where('tokenable_id', $target->getAuthIdentifier())->count())
+        ->toBe(0);
+    expect(PersonalAccessToken::findToken($targetAccessToken))->toBeNull();
+
+    auth()->forgetGuards();
+    $expiredTargetSession = $this->withHeader('Authorization', 'Bearer '.$targetAccessToken)
+        ->getJson('/api/auth/ping');
+
+    $expiredTargetSession->assertStatus(401);
+    expect($expiredTargetSession->json('message_code'))->toBe('auth.failed');
+});
+
+it('a previously blocked user can login and receive tokens again after admin unblocks the account', function () {
+    $admin = User::factory()->create([
+        'role_power' => 100,
+        'email_verified_at' => now(),
+    ]);
+
+    $targetPassword = 'Target-password-123!';
+    $target = User::factory()->create([
+        'password' => Hash::make($targetPassword),
+        'email_verified_at' => now(),
+        'blocked_at' => now(),
+    ]);
+
+    $adminAccessToken = $admin->createToken(
+        'admin-access-token',
+        [TokenService::ACCESS_ABILITY],
+        now()->addMinutes(15)
+    )->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$adminAccessToken)
+        ->patchJson("/api/users/{$target->user_id}", [
+            'blocked_at' => null,
+        ]);
+
+    $response->assertStatus(200);
+    expect($response->json('message_code'))->toBe('user.update.success');
+    expect($response->json('data.blocked_at'))->toBeNull();
+
+    $login = $this->postJson('/api/auth/login', [
+        'email' => $target->email,
+        'password' => $targetPassword,
+    ]);
+
+    $login->assertStatus(200);
+    expect($login->json('message_code'))->toBe('auth.login.success');
+    expect($login->json('data.access_token'))->toBeString();
+    expect($login->json('data.refresh_token'))->toBeString();
+});

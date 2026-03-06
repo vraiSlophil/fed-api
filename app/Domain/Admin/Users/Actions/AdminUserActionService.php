@@ -65,6 +65,7 @@ class AdminUserActionService
     {
         $data = [];
         $isAdmin = $actor->role_power >= 100;
+        $wasBlocked = $target->blocked_at !== null;
 
         foreach (['username', 'email', 'first_name', 'last_name'] as $field) {
             if (array_key_exists($field, $validated)) {
@@ -103,7 +104,12 @@ class AdminUserActionService
             $target->update($data);
         }
 
-        if (array_key_exists('password', $data)) {
+        $shouldRevokeForPassword = array_key_exists('password', $data);
+        $shouldRevokeForBlock = array_key_exists('blocked_at', $data)
+            && $data['blocked_at'] !== null
+            && ! $wasBlocked;
+
+        if ($shouldRevokeForPassword || $shouldRevokeForBlock) {
             $this->tokenService->revokeAllTokensForUser((string) $target->getAuthIdentifier());
         }
 

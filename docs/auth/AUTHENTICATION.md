@@ -233,6 +233,11 @@ Middleware stack:
 - `auth:sanctum`
 - `access-token`
 
+Blocked-account enforcement:
+
+- If the authenticated user is blocked (`blocked_at` set), protected access-token routes return `403 auth.blocked`.
+- This blocked check is evaluated before access ability checks.
+
 #### `POST /auth/logout`
 
 Revokes all current user tokens.
@@ -244,6 +249,7 @@ Success:
 Errors:
 
 - `401 auth.failed`
+- `403 auth.blocked`
 - `403 permission.denied` (refresh token used on access-only route)
 
 #### `GET /auth/ping`
@@ -257,6 +263,7 @@ Success:
 Errors:
 
 - `401 auth.failed`
+- `403 auth.blocked`
 - `403 permission.denied`
 
 #### `POST /email-verification-notifications`
@@ -271,6 +278,7 @@ Success:
 Errors:
 
 - `401 auth.failed`
+- `403 auth.blocked`
 - `500 email.verification.failed`
 
 ## Related docs

@@ -75,15 +75,28 @@ It is aligned with `routes/api/*.php` and the current controllers/requests.
 
 ### Protected (`auth:sanctum`, `access-token`)
 
+Blocked-account enforcement:
+
+- If the authenticated user is blocked (`blocked_at` set), access-token routes return `403 auth.blocked`.
+- This blocked check runs before access ability checks.
+
 1. `POST /api/auth/logout` (`auth.logout`)
 
 - Success:
     - `200 auth.logout.success`
+- Errors:
+    - `401 auth.failed`
+    - `403 auth.blocked`
+    - `403 permission.denied` (refresh token used on access-only route)
 
 2. `GET /api/auth/ping` (`auth.ping`)
 
 - Success:
     - `200` (message `pong`)
+- Errors:
+    - `401 auth.failed`
+    - `403 auth.blocked`
+    - `403 permission.denied`
 
 3. `POST /api/email-verification-notifications` (`verification.send`)
 
@@ -91,6 +104,10 @@ It is aligned with `routes/api/*.php` and the current controllers/requests.
 - Success:
     - `200 email.verification.sent`
     - `200 email.verification.already_verified`
+- Errors:
+    - `401 auth.failed`
+    - `403 auth.blocked`
+    - `500 email.verification.failed`
 
 ## Invitations
 
