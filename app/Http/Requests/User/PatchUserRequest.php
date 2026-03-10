@@ -46,4 +46,20 @@ class PatchUserRequest extends FormRequest
                 : ['prohibited'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'username' => ['description' => 'Updated username.', 'example' => 'johnny'],
+            'email' => ['description' => 'Updated email address.', 'example' => 'johnny@example.com'],
+            'first_name' => ['description' => 'Updated first name.', 'example' => 'John'],
+            'last_name' => ['description' => 'Updated last name.', 'example' => 'Doe'],
+            'password' => ['description' => 'New password when rotating credentials.', 'example' => 'N3w!StrongPass'],
+            'password_confirmation' => ['description' => 'Repeat of the new password.', 'example' => 'N3w!StrongPass'],
+            'current_password' => ['description' => 'Current password required for self-service password changes.', 'example' => 'Str0ng!Passw0rd'],
+            'avatar' => ['description' => 'Optional avatar upload.', 'type' => 'file'],
+            'role_power' => ['description' => 'Admin-only role power update.', 'example' => 100],
+            'blocked_at' => ['description' => 'Admin-only block timestamp or null to unblock.', 'example' => null],
+        ];
+    }
 }

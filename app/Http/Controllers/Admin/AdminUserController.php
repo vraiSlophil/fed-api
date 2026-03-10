@@ -15,6 +15,11 @@ use App\Support\Pagination\OffsetPagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * User administration endpoints for authenticated users.
+ *
+ * @group Users
+ */
 class AdminUserController extends Controller
 {
     /**

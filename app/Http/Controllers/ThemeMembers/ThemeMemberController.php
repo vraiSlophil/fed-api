@@ -12,6 +12,11 @@ use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Theme membership endpoints for authenticated users.
+ *
+ * @group Themes
+ */
 class ThemeMemberController extends Controller
 {
     /**

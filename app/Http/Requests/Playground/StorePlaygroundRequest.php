@@ -41,4 +41,17 @@ class StorePlaygroundRequest extends FormRequest
             'is_default' => ['sometimes', 'boolean'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => ['description' => 'Display name of the playground.', 'example' => 'Home'],
+            'slug' => ['description' => 'User-scoped slug used for lookup.', 'example' => 'home'],
+            'icon' => ['description' => 'Optional icon identifier used by the frontend.', 'example' => 'house'],
+            'color' => ['description' => 'Optional primary color in hex format.', 'example' => '#2563EB'],
+            'background_color' => ['description' => 'Optional background color in hex format.', 'example' => '#EFF6FF'],
+            'style' => ['description' => 'Optional JSON style configuration for the playground.', 'example' => ['layout' => 'board']],
+            'is_default' => ['description' => 'Marks this playground as the user default.', 'example' => true],
+        ];
+    }
 }

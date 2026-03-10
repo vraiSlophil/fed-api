@@ -45,4 +45,17 @@ class UpdatePlaygroundRequest extends FormRequest
             'is_default' => ['sometimes', 'boolean'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => ['description' => 'Updated display name.', 'example' => 'Work'],
+            'slug' => ['description' => 'Updated user-scoped slug.', 'example' => 'work'],
+            'icon' => ['description' => 'Updated icon identifier.', 'example' => 'briefcase'],
+            'color' => ['description' => 'Updated primary color in hex format.', 'example' => '#059669'],
+            'background_color' => ['description' => 'Updated background color in hex format.', 'example' => '#ECFDF5'],
+            'style' => ['description' => 'Updated JSON style configuration.', 'example' => ['layout' => 'grid']],
+            'is_default' => ['description' => 'Whether the playground becomes the default one.', 'example' => false],
+        ];
+    }
 }

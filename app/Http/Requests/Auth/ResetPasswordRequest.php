@@ -29,4 +29,26 @@ class ResetPasswordRequest extends FormRequest
             'password' => ['required', 'string', 'confirmed', 'min:8'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'token' => [
+                'description' => 'Password reset token received by email.',
+                'example' => 'example-reset-token',
+            ],
+            'email' => [
+                'description' => 'Email address associated with the reset token.',
+                'example' => 'john@example.com',
+            ],
+            'password' => [
+                'description' => 'New password for the account.',
+                'example' => 'An0ther!StrongPass',
+            ],
+            'password_confirmation' => [
+                'description' => 'Repeat of the new password.',
+                'example' => 'An0ther!StrongPass',
+            ],
+        ];
+    }
 }

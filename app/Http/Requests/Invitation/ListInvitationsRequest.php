@@ -31,4 +31,26 @@ class ListInvitationsRequest extends FormRequest
             'scope' => ['sometimes', 'string', Rule::in(['inbox', 'outbox', 'all'])],
         ];
     }
+
+    public function queryParameters(): array
+    {
+        return [
+            'page' => [
+                'description' => 'Results page number.',
+                'example' => 1,
+            ],
+            'per_page' => [
+                'description' => 'Number of invitations per page.',
+                'example' => 15,
+            ],
+            'status' => [
+                'description' => 'Optional invitation status filter.',
+                'example' => 'pending',
+            ],
+            'scope' => [
+                'description' => 'Whether to list received invitations, sent invitations, or both.',
+                'example' => 'inbox',
+            ],
+        ];
+    }
 }

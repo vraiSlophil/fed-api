@@ -42,6 +42,41 @@ class StoreInvitationRequest extends FormRequest
         ];
     }
 
+    public function bodyParameters(): array
+    {
+        return [
+            'invitee_user_id' => [
+                'description' => 'User who should receive the invitation.',
+                'example' => '9ab53fb4-a4ae-44ec-a2ef-e0f9df9d5c6a',
+            ],
+            'invitable_type' => [
+                'description' => 'Currently only theme invitations are supported.',
+                'example' => 'theme',
+            ],
+            'invitable_id' => [
+                'description' => 'Identifier of the theme being shared.',
+                'example' => '278fdd58-2050-4556-9393-8195d1a4ed74',
+            ],
+            'payload' => [
+                'description' => 'Invitation payload carrying theme permission flags.',
+                'example' => [
+                    'permissions' => [
+                        'can_view' => true,
+                        'can_update_theme' => false,
+                        'can_add_task' => true,
+                        'can_edit_task' => true,
+                        'can_delete_task' => false,
+                        'can_validate_task' => false,
+                    ],
+                ],
+            ],
+            'expires_at' => [
+                'description' => 'Optional custom expiration date for the invitation.',
+                'example' => '2026-03-17T10:00:00+00:00',
+            ],
+        ];
+    }
+
     /**
      * Validate permission graph coherence after base validation succeeds.
      *

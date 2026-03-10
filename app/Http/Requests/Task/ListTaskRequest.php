@@ -35,4 +35,19 @@ class ListTaskRequest extends FormRequest
             'search' => ['sometimes', 'string', 'max:255'],
         ];
     }
+
+    public function queryParameters(): array
+    {
+        return [
+            'page' => ['description' => 'Results page number.', 'example' => 1],
+            'per_page' => ['description' => 'Number of tasks per page.', 'example' => 15],
+            'theme_id' => ['description' => 'Restrict the list to one theme.', 'example' => '278fdd58-2050-4556-9393-8195d1a4ed74'],
+            'status' => ['description' => 'Restrict the list to one canonical task status.', 'example' => 'todo'],
+            'statuses' => ['description' => 'Comma-separated list of statuses.', 'example' => 'todo,in_progress'],
+            'archived' => ['description' => 'Filter archived versus active tasks.', 'example' => false],
+            'validated' => ['description' => 'Filter tasks by validation state.', 'example' => true],
+            'sort' => ['description' => 'Sort direction.', 'example' => 'desc'],
+            'search' => ['description' => 'Free-text search applied to task titles.', 'example' => 'release'],
+        ];
+    }
 }

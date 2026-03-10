@@ -8,6 +8,11 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Authentication endpoints for authenticated users.
+ *
+ * @group Authentication
+ */
 class EmailVerificationNotificationController extends Controller
 {
     /**
