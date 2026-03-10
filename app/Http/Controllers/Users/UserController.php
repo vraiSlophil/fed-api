@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Users\UserResource;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,19 +21,9 @@ class UserController extends Controller
      * @param  Request  $request  Request that provides the currently authenticated user.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @response 200 {
-     *   "status": "success",
-     *   "message": "Ok",
-     *   "message_code": "auth.user.fetched",
-     *   "data": {
-     *     "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
-     *     "username": "john",
-     *     "email": "john@example.com",
-     *     "first_name": "John",
-     *     "last_name": "Doe",
-     *     "role_power": 0
-     *   }
-     * }
+     * @apiResource App\Http\Resources\Docs\Users\CurrentUserResponseResource
+     *
+     * @apiResourceModel App\Models\Auth\User
      *
      * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      */
@@ -40,7 +31,7 @@ class UserController extends Controller
     {
         return ApiResponse::builder()
             ->success()
-            ->data(auth()->user())
+            ->data(UserResource::make($request->user())->resolve())
             ->messageCode('auth.user.fetched')
             ->json();
     }

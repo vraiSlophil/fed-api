@@ -49,6 +49,7 @@ it('creates a playground for the authenticated user', function () {
     $response->assertStatus(201)
         ->assertJsonPath('message_code', 'playground.create.success')
         ->assertJsonPath('data.playground.user_id', $user->user_id)
+        ->assertJsonPath('data.playground.name', 'Client Workspace')
         ->assertJsonPath('data.playground.slug', 'client-workspace');
 });
 
@@ -95,7 +96,8 @@ it('shows a playground by id for its owner', function () {
     $this->getJson("/api/playgrounds/{$playground->playground_id}")
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'playground.show.success')
-        ->assertJsonPath('data.playground.playground_id', $playground->playground_id);
+        ->assertJsonPath('data.playground.playground_id', $playground->playground_id)
+        ->assertJsonPath('data.playground.name', $playground->name);
 });
 
 it('returns a single playground when filtering index by slug', function () {
@@ -177,6 +179,7 @@ it('updates a playground and validates duplicate slug on update', function () {
     ])
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'playground.update.success')
+        ->assertJsonPath('data.playground.name', 'Renamed')
         ->assertJsonPath('data.playground.slug', 'renamed-slug');
 
     $this->patchJson("/api/playgrounds/{$first->playground_id}", [

@@ -7,6 +7,9 @@ use App\Domain\ThemeMembers\Queries\ThemeMemberQueryService;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ThemeMember\UpdateThemeMemberPermissionsRequest;
+use App\Http\Resources\Themes\ThemeMemberResource;
+use App\Http\Resources\Themes\ThemePermissionFlagsResource;
+use App\Http\Resources\Themes\ThemePermissionResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
@@ -50,7 +53,7 @@ class ThemeMemberController extends Controller
             ->success()
             ->messageCode('theme.members.list.success')
             ->data([
-                'members' => $members,
+                'members' => ThemeMemberResource::collection($members)->resolve(),
             ])
             ->json();
     }
@@ -102,7 +105,7 @@ class ThemeMemberController extends Controller
                 ->success(200)
                 ->messageCode('theme.move.success', ['target_playground_id' => $validated['target_playground_id']])
                 ->data([
-                    'permission' => $permission,
+                    'permission' => ThemePermissionResource::make($permission)->resolve(),
                 ])
                 ->json();
         } else {
@@ -115,14 +118,7 @@ class ThemeMemberController extends Controller
             ->success(200)
             ->messageCode('theme.member.permissions.updated', ['user_id' => $userId])
             ->data([
-                'permissions' => [
-                    'can_view' => $permission->can_view,
-                    'can_update_theme' => $permission->can_update_theme,
-                    'can_add_task' => $permission->can_add_task,
-                    'can_edit_task' => $permission->can_edit_task,
-                    'can_delete_task' => $permission->can_delete_task,
-                    'can_validate_task' => $permission->can_validate_task,
-                ],
+                'permissions' => ThemePermissionFlagsResource::make($permission)->resolve(),
                 'status' => $permission->status,
                 'target_playground_id' => $permission->target_playground_id,
             ])

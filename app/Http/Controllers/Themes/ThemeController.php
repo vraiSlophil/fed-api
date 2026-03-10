@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Theme\ListThemeRequest;
 use App\Http\Requests\Theme\StoreThemeRequest;
 use App\Http\Requests\Theme\UpdateThemeRequest;
+use App\Http\Resources\Themes\ThemeResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
@@ -49,7 +50,7 @@ class ThemeController extends Controller
             ->success()
             ->messageCode('theme.list.success')
             ->data([
-                'themes' => $themes,
+                'themes' => ThemeResource::collection($themes)->resolve(),
             ])
             ->json();
     }
@@ -90,7 +91,7 @@ class ThemeController extends Controller
             ->success(201)
             ->messageCode('theme.create.success')
             ->data([
-                'theme' => $theme,
+                'theme' => ThemeResource::make($theme)->resolve(),
             ])
             ->json();
     }
@@ -117,7 +118,7 @@ class ThemeController extends Controller
             ->success()
             ->messageCode('theme.show.success')
             ->data([
-                'theme' => $theme,
+                'theme' => ThemeResource::make($theme)->resolve(),
             ])
             ->json();
     }
@@ -146,7 +147,7 @@ class ThemeController extends Controller
             ->success()
             ->messageCode('theme.update.success')
             ->data([
-                'theme' => $theme,
+                'theme' => ThemeResource::make($theme)->resolve(),
             ])
             ->json();
     }

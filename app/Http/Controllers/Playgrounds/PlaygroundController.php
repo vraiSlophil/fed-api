@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Playground\ListPlaygroundsRequest;
 use App\Http\Requests\Playground\StorePlaygroundRequest;
 use App\Http\Requests\Playground\UpdatePlaygroundRequest;
+use App\Http\Resources\Playgrounds\PlaygroundResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Playgrounds\Playground;
 use Illuminate\Http\JsonResponse;
@@ -46,7 +47,7 @@ class PlaygroundController extends Controller
      *     "playgrounds": [
      *       {
      *         "playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01",
-     *         "title": "Home",
+     *         "name": "Home",
      *         "slug": "home",
      *         "is_default": true,
      *         "themes_count": 3,
@@ -71,7 +72,7 @@ class PlaygroundController extends Controller
                 ->success()
                 ->messageCode('playground.show.success')
                 ->data([
-                    'playground' => $playground,
+                    'playground' => PlaygroundResource::make($playground)->resolve(),
                 ])
                 ->json();
         }
@@ -82,7 +83,7 @@ class PlaygroundController extends Controller
             ->success()
             ->messageCode('playground.list.success')
             ->data([
-                'playgrounds' => $playgrounds,
+                'playgrounds' => PlaygroundResource::collection($playgrounds)->resolve(),
             ])
             ->json();
     }
@@ -94,7 +95,7 @@ class PlaygroundController extends Controller
      * @param  Playground  $playground  Playground targeted by the operation.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"playground.show.success","data":{"playground":{"playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01","title":"Home","slug":"home","is_default":true}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"playground.show.success","data":{"playground":{"playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01","name":"Home","slug":"home","is_default":true}}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(Request $request, Playground $playground): JsonResponse
@@ -107,7 +108,7 @@ class PlaygroundController extends Controller
             ->success()
             ->messageCode('playground.show.success')
             ->data([
-                'playground' => $playground,
+                'playground' => PlaygroundResource::make($playground)->resolve(),
             ])
             ->json();
     }
@@ -118,7 +119,7 @@ class PlaygroundController extends Controller
      * @param  StorePlaygroundRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 201 resources/docs/responses/success.json {"message_code":"playground.create.success","data":{"playground":{"playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01","title":"Home","slug":"home","is_default":true}}}
+     * @responseFile 201 resources/docs/responses/success.json {"message_code":"playground.create.success","data":{"playground":{"playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01","name":"Home","slug":"home","is_default":true}}}
      * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function store(StorePlaygroundRequest $request): JsonResponse
@@ -129,7 +130,7 @@ class PlaygroundController extends Controller
             ->success(201)
             ->messageCode('playground.create.success')
             ->data([
-                'playground' => $playground,
+                'playground' => PlaygroundResource::make($playground)->resolve(),
             ])
             ->json();
     }
@@ -141,7 +142,7 @@ class PlaygroundController extends Controller
      * @param  Playground  $playground  Playground targeted by the operation.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"playground.update.success","data":{"playground":{"playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01","title":"Work","slug":"work","is_default":false}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"playground.update.success","data":{"playground":{"playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01","name":"Work","slug":"work","is_default":false}}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function update(UpdatePlaygroundRequest $request, Playground $playground): JsonResponse
@@ -154,7 +155,7 @@ class PlaygroundController extends Controller
             ->success()
             ->messageCode('playground.update.success')
             ->data([
-                'playground' => $playground,
+                'playground' => PlaygroundResource::make($playground)->resolve(),
             ])
             ->json();
     }

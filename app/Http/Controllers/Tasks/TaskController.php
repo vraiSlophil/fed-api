@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\ListTaskRequest;
 use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
+use App\Http\Resources\Tasks\TaskResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tasks\Task;
 use App\Support\Pagination\OffsetPagination;
@@ -39,32 +40,9 @@ class TaskController extends Controller
      * @param  ListTaskRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @response 200 {
-     *   "status": "success",
-     *   "message": "Ok",
-     *   "message_code": "task.list",
-     *   "data": [
-     *     {
-     *       "task_id": "4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f",
-     *       "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
-     *       "title": "Prepare release notes",
-     *       "status": "in_progress",
-     *       "archived_at": null,
-     *       "validated_at": null,
-     *       "created_at": "2026-03-10T10:00:00+00:00",
-     *       "updated_at": "2026-03-10T11:00:00+00:00"
-     *     }
-     *   ],
-     *   "meta": {
-     *     "current_page": 1,
-     *     "per_page": 15,
-     *     "total": 42,
-     *     "last_page": 3,
-     *     "from": 1,
-     *     "to": 15,
-     *     "has_next": true
-     *   }
-     * }
+     * @apiResourceCollection App\Http\Resources\Docs\Tasks\TaskIndexResponseCollection
+     *
+     * @apiResourceModel App\Models\Tasks\Task paginate=15
      *
      * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
@@ -82,7 +60,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('task.list', [])
-            ->data($tasks->items())
+            ->data(TaskResource::collection($tasks->items())->resolve())
             ->meta(OffsetPagination::meta($tasks))
             ->json();
     }
@@ -125,7 +103,7 @@ class TaskController extends Controller
             ->success(201, 'Created')
             ->messageCode('task.created', ['task' => $task->task_id])
             ->data([
-                'task' => $task,
+                'task' => TaskResource::make($task)->resolve(),
             ])
             ->json();
     }
@@ -150,7 +128,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.show', ['task' => $task->task_id])
             ->data([
-                'task' => $task,
+                'task' => TaskResource::make($task)->resolve(),
             ])
             ->json();
     }
@@ -175,7 +153,7 @@ class TaskController extends Controller
             ->success()
             ->messageCode('task.updated', ['task' => $task->task_id])
             ->data([
-                'task' => $task,
+                'task' => TaskResource::make($task)->resolve(),
             ])
             ->json();
     }
