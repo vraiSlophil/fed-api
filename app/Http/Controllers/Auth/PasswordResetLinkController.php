@@ -8,6 +8,11 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Authentication endpoints for public account lifecycle actions.
+ *
+ * @group Authentication
+ */
 class PasswordResetLinkController extends Controller
 {
     /**
@@ -22,6 +27,8 @@ class PasswordResetLinkController extends Controller
      *
      * @param  ForgotPasswordRequest  $request  Request carrying a validated account email.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @unauthenticated
      */
     public function __invoke(ForgotPasswordRequest $request): JsonResponse
     {

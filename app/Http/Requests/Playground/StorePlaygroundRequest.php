@@ -24,7 +24,7 @@ class StorePlaygroundRequest extends FormRequest
      */
     public function rules(): array
     {
-        $actorId = (string) $this->user()->user_id;
+        $actorId = (string) ($this->user()?->user_id ?? '00000000-0000-0000-0000-000000000000');
 
         return [
             'name' => ['required', 'string', 'max:120'],

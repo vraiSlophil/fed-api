@@ -8,6 +8,11 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Authentication endpoints for public account lifecycle actions.
+ *
+ * @group Authentication
+ */
 class LoginController extends Controller
 {
     /**
@@ -22,6 +27,25 @@ class LoginController extends Controller
      *
      * @param  LoginRequest  $request  Request carrying validated email/password credentials.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @unauthenticated
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "auth.login.success",
+     *   "data": {
+     *     "user": {
+     *       "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *       "username": "john",
+     *       "email": "john@example.com"
+     *     },
+     *     "access_token": "1|example-access-token",
+     *     "refresh_token": "2|example-refresh-token",
+     *     "access_expires_at": "2026-03-10T10:15:00+00:00",
+     *     "refresh_expires_at": "2026-04-09T10:00:00+00:00"
+     *   }
+     * }
      */
     public function __invoke(LoginRequest $request): JsonResponse
     {

@@ -8,6 +8,11 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Authentication endpoints for public account lifecycle actions.
+ *
+ * @group Authentication
+ */
 class NewPasswordController extends Controller
 {
     /**
@@ -22,6 +27,8 @@ class NewPasswordController extends Controller
      *
      * @param  ResetPasswordRequest  $request  Request carrying validated token, email, and new password fields.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @unauthenticated
      */
     public function __invoke(ResetPasswordRequest $request): JsonResponse
     {

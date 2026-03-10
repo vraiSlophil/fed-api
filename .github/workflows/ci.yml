@@ -73,3 +73,12 @@ jobs:
     with:
       # Run faster on push; run full (incl. seeders) on PR/manual.
       seed: ${{ github.event_name != 'push' }}
+
+  docs:
+    name: 📚 API Docs
+    needs: [gate, lint, test-backend]
+    if: ${{ !(github.event_name == 'push' && needs.gate.outputs.skip_push == 'true') && (github.event_name == 'pull_request' || github.ref_name == 'main' || github.ref_name == 'dev') }}
+    uses: ./.github/workflows/docs.yml
+    with:
+      upload_artifact: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev') }}
+      deploy_pages: ${{ github.event_name == 'push' && github.ref_name == 'main' }}

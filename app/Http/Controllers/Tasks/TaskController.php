@@ -15,6 +15,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
+/**
+ * Task management endpoints for authenticated users.
+ *
+ * @group Tasks
+ */
 class TaskController extends Controller
 {
     /**
@@ -58,6 +63,24 @@ class TaskController extends Controller
      *
      * @param  StoreTaskRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 201 {
+     *   "status": "success",
+     *   "message": "Created",
+     *   "message_code": "task.created",
+     *   "data": {
+     *     "task": {
+     *       "task_id": "4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f",
+     *       "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *       "title": "Prepare release notes",
+     *       "status": "todo",
+     *       "archived_at": null,
+     *       "validated_at": null,
+     *       "created_at": "2026-03-10T10:00:00+00:00",
+     *       "updated_at": "2026-03-10T10:00:00+00:00"
+     *     }
+     *   }
+     * }
      */
     public function store(StoreTaskRequest $request): JsonResponse
     {

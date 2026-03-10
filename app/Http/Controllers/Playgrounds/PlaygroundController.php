@@ -14,6 +14,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
+/**
+ * Playground endpoints for authenticated users.
+ *
+ * @group Playgrounds
+ */
 class PlaygroundController extends Controller
 {
     /**
@@ -32,6 +37,25 @@ class PlaygroundController extends Controller
      *
      * @param  ListPlaygroundsRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "playground.list.success",
+     *   "data": {
+     *     "playgrounds": [
+     *       {
+     *         "playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01",
+     *         "title": "Home",
+     *         "slug": "home",
+     *         "is_default": true,
+     *         "themes_count": 3,
+     *         "created_at": "2026-03-01T09:00:00+00:00",
+     *         "updated_at": "2026-03-01T09:00:00+00:00"
+     *       }
+     *     ]
+     *   }
+     * }
      */
     public function index(ListPlaygroundsRequest $request): JsonResponse
     {

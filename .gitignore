@@ -14,8 +14,10 @@
 /auth.json
 /node_modules
 /public/build
+/public/docs
 /public/hot
 /public/storage
+/.scribe
 /storage/*.key
 /storage/pail
 /vendor

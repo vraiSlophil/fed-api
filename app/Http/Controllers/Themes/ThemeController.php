@@ -13,6 +13,11 @@ use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
+/**
+ * Theme endpoints for authenticated users.
+ *
+ * @group Themes
+ */
 class ThemeController extends Controller
 {
     /**
@@ -51,6 +56,23 @@ class ThemeController extends Controller
      *
      * @param  StoreThemeRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 201 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "theme.create.success",
+     *   "data": {
+     *     "theme": {
+     *       "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *       "playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01",
+     *       "title": "Roadmap",
+     *       "color": "#2563EB",
+     *       "owner_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *       "created_at": "2026-03-10T10:00:00+00:00",
+     *       "updated_at": "2026-03-10T10:00:00+00:00"
+     *     }
+     *   }
+     * }
      */
     public function store(StoreThemeRequest $request): JsonResponse
     {

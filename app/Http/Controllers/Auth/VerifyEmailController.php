@@ -8,6 +8,11 @@ use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * Authentication endpoints for public account lifecycle actions.
+ *
+ * @group Authentication
+ */
 class VerifyEmailController extends Controller
 {
     /**
@@ -22,6 +27,8 @@ class VerifyEmailController extends Controller
      *
      * @param  VerifyEmailRequest  $request  Request carrying validated signed verification query parameters.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @unauthenticated
      */
     public function __invoke(VerifyEmailRequest $request): JsonResponse
     {

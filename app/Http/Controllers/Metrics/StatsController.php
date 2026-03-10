@@ -9,6 +9,11 @@ use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Metrics endpoints for authenticated users.
+ *
+ * @group Metrics
+ */
 class StatsController extends Controller
 {
     /**
@@ -23,6 +28,23 @@ class StatsController extends Controller
      *
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "stats.global.success",
+     *   "data": {
+     *     "total": 32,
+     *     "active": 24,
+     *     "archived": 8,
+     *     "todo": 10,
+     *     "in_progress": 7,
+     *     "done": 7,
+     *     "recently_created": 3,
+     *     "recently_completed": 2,
+     *     "completion_rate": 29.17
+     *   }
+     * }
      */
     public function globalStats(Request $request): JsonResponse
     {

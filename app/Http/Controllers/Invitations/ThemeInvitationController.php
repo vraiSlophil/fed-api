@@ -21,6 +21,11 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Invitation management endpoints for authenticated users and signed-link flows.
+ *
+ * @group Invitations
+ */
 class ThemeInvitationController extends Controller
 {
     /**
@@ -40,6 +45,34 @@ class ThemeInvitationController extends Controller
      * @param  StoreInvitationRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  InvitationService  $invitationService  Service responsible for invitation operations.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 201 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "theme.invite.sent",
+     *   "data": {
+     *     "invitation": {
+     *       "invitation_id": "3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a",
+     *       "status": "pending",
+     *       "created_at": "2026-03-10T10:00:00+00:00",
+     *       "expires_at": "2026-03-17T10:00:00+00:00",
+     *       "inviter": {
+     *         "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *         "username": "owner",
+     *         "email": "owner@example.com",
+     *         "first_name": "Owner",
+     *         "last_name": "User",
+     *         "avatar_path": null
+     *       },
+     *       "invitable": {
+     *         "type": "theme",
+     *         "id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *         "title": "Roadmap",
+     *         "color": "#2563EB"
+     *       }
+     *     }
+     *   }
+     * }
      */
     public function store(StoreInvitationRequest $request, InvitationService $invitationService): JsonResponse
     {

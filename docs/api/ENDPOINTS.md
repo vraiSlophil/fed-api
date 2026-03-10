@@ -1,123 +1,31 @@
-# API Endpoints Reference
+# API Endpoint Reference
 
-This document is the current API reference for `/api/*` routes.
-It is aligned with `routes/api/*.php` and the current controllers/requests.
+This file is now a transition note.
 
-## Global conventions
+The canonical API reference is generated from the Laravel codebase with Scribe:
 
-- Base path: `/api`
-- Response envelope: see [HTTP_RESPONSES.md](./HTTP_RESPONSES.md)
-- Pagination contract: see [PAGINATION.md](./PAGINATION.md)
-- Common protected middleware stack:
-    - `auth:sanctum`
-    - `access-token`
-- Some domains also require `verified` (email verified account).
+- local/static HTML: `public/docs/index.html`
+- OpenAPI source of truth: `public/docs/openapi.yaml`
+- generated Markdown export: `public/docs/reference.md`
 
-## Authentication and verification
+Use the generated docs instead of manually updating endpoint inventories in this file.
 
-### Public
+Regenerate locally:
 
-1. `POST /api/auth/register` (`auth.register`)
+```bash
+docker compose exec laravel composer docs:generate
+```
 
-- Middleware: none
-- Body:
-    - `username` (required)
-    - `email` (required, unique)
-    - `password` + `password_confirmation` (required)
-- Success:
-    - `201 auth.register.success`
+Validate the generated docs and OpenAPI spec:
 
-2. `POST /api/auth/login` (`auth.login`)
+```bash
+docker compose exec laravel composer docs:validate
+```
 
-- Middleware: `throttle:auth-login`
-- Body:
-    - `email` (required)
-    - `password` (required)
-- Success:
-    - `200 auth.login.success`
+Related conventions still documented by hand:
 
-3. `POST /api/auth/refresh` (`auth.refresh`)
-
-- Middleware: `throttle:auth-refresh`
-- Headers:
-    - `X-Refresh-Token: <token>` (preferred)
-    - fallback: `Authorization: Bearer <token>`
-- Success:
-    - `200 auth.refresh.success`
-
-4. `POST /api/auth/forgot-password` (`auth.password.email`)
-
-- Middleware: none
-- Body:
-    - `email` (required)
-- Success:
-    - `200 auth.reset_link.sent`
-
-5. `POST /api/auth/reset-password` (`auth.password.store`)
-
-- Middleware: none
-- Body:
-    - `token` (required)
-    - `email` (required)
-    - `password` + `password_confirmation` (required)
-- Success:
-    - `200 auth.reset.success`
-
-6. `POST /api/email-verifications` (`verification.verify`)
-
-- Middleware: `signed:relative`, `throttle:6,1`
-- Query:
-    - `id` (required, uuid)
-    - `hash` (required)
-- Success:
-    - `200 auth.verification.success`
-    - `200 auth.verification.already_verified`
-
-### Protected (`auth:sanctum`, `access-token`)
-
-Blocked-account enforcement:
-
-- If the authenticated user is blocked (`blocked_at` set), access-token routes return `403 auth.blocked`.
-- This blocked check runs before access ability checks.
-
-1. `POST /api/auth/logout` (`auth.logout`)
-
-- Success:
-    - `200 auth.logout.success`
-- Errors:
-    - `401 auth.failed`
-    - `403 auth.blocked`
-    - `403 permission.denied` (refresh token used on access-only route)
-
-2. `GET /api/auth/ping` (`auth.ping`)
-
-- Success:
-    - `200` (message `pong`)
-- Errors:
-    - `401 auth.failed`
-    - `403 auth.blocked`
-    - `403 permission.denied`
-
-3. `POST /api/email-verification-notifications` (`verification.send`)
-
-- Middleware: `throttle:6,1`
-- Success:
-    - `200 email.verification.sent`
-    - `200 email.verification.already_verified`
-- Errors:
-    - `401 auth.failed`
-    - `403 auth.blocked`
-    - `500 email.verification.failed`
-
-## Invitations
-
-### Protected (`auth:sanctum`, `access-token`, `verified`)
-
-1. `POST /api/invitations` (`invitations.store`)
-
-- Body:
-    - `invitee_user_id` (required, uuid)
-    - `invitable_type` (required, `theme` or `App\Models\Themes\Theme`)
+- response envelope: [HTTP_RESPONSES.md](./HTTP_RESPONSES.md)
+- pagination contract: [PAGINATION.md](./PAGINATION.md)
     - `invitable_id` (required, uuid)
     - `payload.permissions` object with required booleans:
         - `can_view`, `can_update_theme`, `can_add_task`, `can_edit_task`, `can_delete_task`, `can_validate_task`

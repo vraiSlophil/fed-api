@@ -56,6 +56,8 @@ Thank you for contributing! To keep the repository consistent and easy to review
 ## Documentation and changelog
 - Update relevant documentation and/or README when introducing new features or changing behavior.
 - For user-facing changes, consider adding an entry to the changelog or release notes.
+- For API changes, update the Scribe annotations/docblocks in controllers and validate the generated docs with `docker compose exec laravel composer docs:validate`.
+- Do not manually maintain `docs/api/ENDPOINTS.md` as a route inventory; the generated OpenAPI spec and Scalar site are the canonical API reference.
 
 ## Additional guidelines
 - Keep PRs small and focused — they are easier to review.

@@ -26,7 +26,7 @@ class UpdatePlaygroundRequest extends FormRequest
     {
         /** @var \App\Models\Playgrounds\Playground|null $playground */
         $playground = $this->route('playground');
-        $actorId = (string) $this->user()->user_id;
+        $actorId = (string) ($this->user()?->user_id ?? '00000000-0000-0000-0000-000000000000');
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:120'],
