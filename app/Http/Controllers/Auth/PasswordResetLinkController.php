@@ -9,9 +9,9 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Authentication endpoints for public account lifecycle actions.
- *
  * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
  */
 class PasswordResetLinkController extends Controller
 {
@@ -29,6 +29,9 @@ class PasswordResetLinkController extends Controller
      * @return JsonResponse JSON API response using the standard envelope.
      *
      * @unauthenticated
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"auth.reset_link.sent"}
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function __invoke(ForgotPasswordRequest $request): JsonResponse
     {

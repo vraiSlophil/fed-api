@@ -2,19 +2,22 @@
 
 namespace App\Http\Requests\Playground;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdatePlaygroundRequest extends FormRequest
 {
+    private const DOCS_ACTOR_ID = '00000000-0000-0000-0000-000000000000';
+
     /**
-     * Allow playground update payload validation.
+     * Allow playground update payload validation for authenticated requests and docs generation.
      *
-     * @return bool Always true because playground ownership checks run in policies/services.
+     * @return bool True when an authenticated actor or docs generation context is available.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null || $this->isGeneratingApiDocs();
     }
 
     /**
@@ -26,7 +29,7 @@ class UpdatePlaygroundRequest extends FormRequest
     {
         /** @var \App\Models\Playgrounds\Playground|null $playground */
         $playground = $this->route('playground');
-        $actorId = (string) ($this->user()?->user_id ?? '00000000-0000-0000-0000-000000000000');
+        $actorId = $this->resolveActorId();
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:120'],
@@ -46,6 +49,31 @@ class UpdatePlaygroundRequest extends FormRequest
         ];
     }
 
+    /**
+     * Resolve the actor used to scope per-user uniqueness rules.
+     *
+     * @throws AuthorizationException
+     */
+    private function resolveActorId(): string
+    {
+        $actorId = $this->user()?->user_id;
+
+        if ($actorId !== null) {
+            return (string) $actorId;
+        }
+
+        if ($this->isGeneratingApiDocs()) {
+            return self::DOCS_ACTOR_ID;
+        }
+
+        throw new AuthorizationException('Authentication required');
+    }
+
+    private function isGeneratingApiDocs(): bool
+    {
+        return (bool) config('app.generating_api_docs');
+    }
+
     public function bodyParameters(): array
     {
         return [
@@ -54,7 +82,7 @@ class UpdatePlaygroundRequest extends FormRequest
             'icon' => ['description' => 'Updated icon identifier.', 'example' => 'briefcase'],
             'color' => ['description' => 'Updated primary color in hex format.', 'example' => '#059669'],
             'background_color' => ['description' => 'Updated background color in hex format.', 'example' => '#ECFDF5'],
-            'style' => ['description' => 'Updated JSON style configuration.', 'example' => ['layout' => 'grid']],
+            'style' => ['description' => 'Updated JSON style configuration.'],
             'is_default' => ['description' => 'Whether the playground becomes the default one.', 'example' => false],
         ];
     }

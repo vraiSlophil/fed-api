@@ -53,6 +53,7 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'generating_api_docs' => (bool) env('GENERATING_API_DOCS', false),
     'frontend_url' => env('APP_FRONTEND_URL', 'http://localhost'),
     'frontend_verify_email_path' => env('APP_FRONTEND_VERIFY_EMAIL_PATH', '/verify-email'),
     'frontend_invitation_path' => env('APP_FRONTEND_INVITATION_PATH', '/invite/{invitationId}'),

@@ -1,0 +1,6 @@
+{
+  "status": "error",
+  "message": "Invalid signature",
+  "message_code": "signature.invalid",
+  "data": null
+}

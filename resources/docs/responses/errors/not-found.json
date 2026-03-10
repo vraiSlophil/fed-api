@@ -1,0 +1,6 @@
+{
+  "status": "error",
+  "message": "Resource not found",
+  "message_code": "resource.not_found",
+  "data": null
+}

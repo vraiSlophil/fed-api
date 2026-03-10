@@ -9,9 +9,9 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Authentication endpoints for public account lifecycle actions.
- *
  * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
  */
 class RegisterController extends Controller
 {
@@ -47,6 +47,8 @@ class RegisterController extends Controller
      *     "refresh_expires_at": "2026-04-09T10:00:00+00:00"
      *   }
      * }
+     *
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function __invoke(RegisterRequest $request): JsonResponse
     {

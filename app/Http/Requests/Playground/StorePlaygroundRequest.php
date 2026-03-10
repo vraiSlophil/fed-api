@@ -2,19 +2,22 @@
 
 namespace App\Http\Requests\Playground;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StorePlaygroundRequest extends FormRequest
 {
+    private const DOCS_ACTOR_ID = '00000000-0000-0000-0000-000000000000';
+
     /**
-     * Allow playground creation payload validation.
+     * Allow playground creation payload validation for authenticated requests and docs generation.
      *
-     * @return bool Always true because ownership is derived from the authenticated user.
+     * @return bool True when an authenticated actor or docs generation context is available.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null || $this->isGeneratingApiDocs();
     }
 
     /**
@@ -24,7 +27,7 @@ class StorePlaygroundRequest extends FormRequest
      */
     public function rules(): array
     {
-        $actorId = (string) ($this->user()?->user_id ?? '00000000-0000-0000-0000-000000000000');
+        $actorId = $this->resolveActorId();
 
         return [
             'name' => ['required', 'string', 'max:120'],
@@ -42,6 +45,31 @@ class StorePlaygroundRequest extends FormRequest
         ];
     }
 
+    /**
+     * Resolve the actor used to scope per-user uniqueness rules.
+     *
+     * @throws AuthorizationException
+     */
+    private function resolveActorId(): string
+    {
+        $actorId = $this->user()?->user_id;
+
+        if ($actorId !== null) {
+            return (string) $actorId;
+        }
+
+        if ($this->isGeneratingApiDocs()) {
+            return self::DOCS_ACTOR_ID;
+        }
+
+        throw new AuthorizationException('Authentication required');
+    }
+
+    private function isGeneratingApiDocs(): bool
+    {
+        return (bool) config('app.generating_api_docs');
+    }
+
     public function bodyParameters(): array
     {
         return [
@@ -50,7 +78,7 @@ class StorePlaygroundRequest extends FormRequest
             'icon' => ['description' => 'Optional icon identifier used by the frontend.', 'example' => 'house'],
             'color' => ['description' => 'Optional primary color in hex format.', 'example' => '#2563EB'],
             'background_color' => ['description' => 'Optional background color in hex format.', 'example' => '#EFF6FF'],
-            'style' => ['description' => 'Optional JSON style configuration for the playground.', 'example' => ['layout' => 'board']],
+            'style' => ['description' => 'Optional JSON style configuration for the playground.'],
             'is_default' => ['description' => 'Marks this playground as the user default.', 'example' => true],
         ];
     }

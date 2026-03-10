@@ -9,9 +9,9 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Authentication endpoints for public account lifecycle actions.
- *
  * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
  */
 class LoginController extends Controller
 {
@@ -46,6 +46,8 @@ class LoginController extends Controller
      *     "refresh_expires_at": "2026-04-09T10:00:00+00:00"
      *   }
      * }
+     *
+     * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      */
     public function __invoke(LoginRequest $request): JsonResponse
     {

@@ -16,9 +16,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * User administration endpoints for authenticated users.
- *
  * @group Users
+ *
+ * Endpoints for reading and mutating user accounts from the authenticated application context.
  */
 class AdminUserController extends Controller
 {
@@ -39,6 +39,67 @@ class AdminUserController extends Controller
      *
      * @param  ListAdminUsersRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "data": [
+     *     {
+     *       "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *       "username": "john",
+     *       "email": "john@example.com",
+     *       "first_name": "John",
+     *       "last_name": "Doe",
+     *       "role_power": 0,
+     *       "blocked_at": null,
+     *       "created_at": "2026-03-10T10:00:00+00:00",
+     *       "updated_at": "2026-03-10T10:00:00+00:00"
+     *     }
+     *   ],
+     *   "meta": {
+     *     "current_page": 1,
+     *     "per_page": 15,
+     *     "total": 84,
+     *     "last_page": 6,
+     *     "from": 1,
+     *     "to": 15,
+     *     "has_next": true,
+     *     "sorting": {
+     *       "sort_by": "created_at",
+     *       "sort_direction": "desc",
+     *       "available_sort_fields": [
+     *         "created_at",
+     *         "username",
+     *         "email"
+     *       ]
+     *     },
+     *     "filters": {
+     *       "search": null,
+     *       "theme_id": null,
+     *       "role": null,
+     *       "status": null,
+     *       "roles": null
+     *     },
+     *     "roles": [
+     *       {
+     *         "power": 100,
+     *         "name": "Admin"
+     *       }
+     *     ],
+     *     "stats": {
+     *       "total_users": 84,
+     *       "active_users": 82,
+     *       "blocked_users": 2,
+     *       "verified_users": 80,
+     *       "unverified_users": 4,
+     *       "created_last_7_days": 3,
+     *       "verified_last_7_days": 2,
+     *       "blocked_last_7_days": 1
+     *     }
+     *   }
+     * }
+     *
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function index(ListAdminUsersRequest $request): JsonResponse
     {
@@ -92,6 +153,9 @@ class AdminUserController extends Controller
      *
      * @param  StoreAdminUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 201 resources/docs/responses/success.json {"message_code":"user.create.success","data":{"user_id":"2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24","username":"john","email":"john@example.com"}}
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function store(StoreAdminUserRequest $request): JsonResponse
     {
@@ -112,6 +176,9 @@ class AdminUserController extends Controller
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"user.show.success","data":{"user":{"user_id":"2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24","username":"john","email":"john@example.com"},"additional_stats":{"themes_count":4,"tasks_count":32,"completed_tasks_count":19}}}
+     * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(Request $request, User $user): JsonResponse
     {
@@ -132,6 +199,9 @@ class AdminUserController extends Controller
      * @param  PatchUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"user.update.success","data":{"user_id":"2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24","username":"johnny","email":"johnny@example.com"}}
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function update(PatchUserRequest $request, User $user): JsonResponse
     {
@@ -160,6 +230,9 @@ class AdminUserController extends Controller
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"user.delete.success"}
+     * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function destroy(Request $request, User $user): JsonResponse
     {

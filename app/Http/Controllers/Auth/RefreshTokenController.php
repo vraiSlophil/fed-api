@@ -10,9 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Authentication endpoints for public account lifecycle actions.
- *
  * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
  */
 class RefreshTokenController extends Controller
 {
@@ -47,6 +47,8 @@ class RefreshTokenController extends Controller
      *     "refresh_expires_at": "2026-04-09T10:15:00+00:00"
      *   }
      * }
+     *
+     * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      */
     public function __invoke(Request $request): JsonResponse
     {

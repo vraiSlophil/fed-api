@@ -9,9 +9,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Authentication endpoints for authenticated users.
- *
  * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
  */
 class EmailVerificationNotificationController extends Controller
 {
@@ -27,6 +27,9 @@ class EmailVerificationNotificationController extends Controller
      *
      * @param  Request  $request  Request that provides the currently authenticated user.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"email.verification.sent"}
+     * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      */
     public function __invoke(Request $request): JsonResponse
     {

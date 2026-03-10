@@ -8,9 +8,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Read operations related to the current authenticated user.
- *
  * @group Users
+ *
+ * Endpoints for reading and mutating user accounts from the authenticated application context.
  */
 class UserController extends Controller
 {
@@ -33,6 +33,8 @@ class UserController extends Controller
      *     "role_power": 0
      *   }
      * }
+     *
+     * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      */
     public function __invoke(Request $request): JsonResponse
     {

@@ -11,15 +11,16 @@ mkdir -p "$DOCS_OUTPUT_DIR" "$SCRIBE_DIR"
 
 : "${APP_ENV:=local}"
 : "${APP_DEBUG:=false}"
-: "${DOCS_API_BASE_URL:=${APP_URL:-http://localhost:8000}}"
-: "${DB_CONNECTION:=sqlite}"
-: "${DB_DATABASE:=/tmp/fed-api-docs.sqlite}"
+: "${DOCS_API_BASE_URL:=https://api.fed.test}"
+DB_CONNECTION=sqlite
+DB_DATABASE=/tmp/fed-api-docs.sqlite
+: "${GENERATING_API_DOCS:=true}"
 : "${CACHE_STORE:=array}"
 : "${SESSION_DRIVER:=array}"
 : "${QUEUE_CONNECTION:=sync}"
 : "${MAIL_MAILER:=log}"
 
-export APP_ENV APP_DEBUG DOCS_API_BASE_URL DB_CONNECTION DB_DATABASE
+export APP_ENV APP_DEBUG DOCS_API_BASE_URL DB_CONNECTION DB_DATABASE GENERATING_API_DOCS
 export CACHE_STORE SESSION_DRIVER QUEUE_CONNECTION MAIL_MAILER
 
 if [ "$DB_CONNECTION" = "sqlite" ] && [ "$DB_DATABASE" != ":memory:" ]; then

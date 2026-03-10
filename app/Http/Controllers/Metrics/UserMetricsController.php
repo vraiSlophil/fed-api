@@ -9,9 +9,9 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Metrics endpoints for authenticated users.
- *
  * @group Metrics
+ *
+ * Endpoints that expose aggregate task and activity metrics for users and themes.
  */
 class UserMetricsController extends Controller
 {
@@ -81,6 +81,8 @@ class UserMetricsController extends Controller
      *     }
      *   }
      * }
+     *
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function getUserMetrics(UserMetricsRequest $request): JsonResponse
     {

@@ -8,19 +8,23 @@ use function Knuckles\Scribe\Config\removeStrategies;
 
 // Only the most common configs are shown. See the https://scribe.knuckles.wtf/laravel/reference/config for all.
 
+$loadScribeMarkdown = static function (string $path): string {
+    $absolutePath = resource_path("docs/scribe/{$path}");
+
+    return is_file($absolutePath)
+        ? trim((string) file_get_contents($absolutePath))
+        : '';
+};
+
 return [
     // The HTML <title> for the generated documentation.
     'title' => config('app.name').' API Reference',
 
     // A short description of your API. Will be included in the docs webpage, Postman collection and OpenAPI spec.
-    'description' => 'Generated API reference for the fed-webapp backend.',
+    'description' => $loadScribeMarkdown('openapi-description.md'),
 
     // Text to place in the "Introduction" section, right after the `description`. Markdown and HTML are supported.
-    'intro_text' => <<<'INTRO'
-            This reference is generated from the Laravel codebase and is the canonical source for the public `/api/*` contract.
-
-            Protected routes use access tokens unless stated otherwise. The refresh flow accepts a refresh token through `X-Refresh-Token` or a Bearer fallback on the dedicated refresh endpoint.
-        INTRO,
+    'intro_text' => $loadScribeMarkdown('intro.md'),
 
     // The base URL displayed in the docs.
     // If you're using `laravel` type, you can set this to a dynamic string, like '{{ config("app.tenant_url") }}' to get a dynamic base URL.
@@ -53,7 +57,7 @@ return [
     ],
 
     // The type of documentation output to generate.
-    // - "static" will generate a static HTMl page in the /public/docs folder,
+    // - "static" will generate a static HTML page in the /public/docs folder,
     // - "laravel" will generate the documentation as a Blade view, so you can add routing and authentication.
     // - "external_static" and "external_laravel" do the same as above, but pass the OpenAPI spec as a URL to an external UI template
     'type' => 'external_static',
@@ -127,7 +131,7 @@ return [
         'placeholder' => '{YOUR_ACCESS_TOKEN}',
 
         // Any extra authentication-related info for your users. Markdown and HTML are supported.
-        'extra_info' => 'Use a valid access token for protected routes. Refresh-token rotation is documented on `POST /api/auth/refresh` and uses `X-Refresh-Token` or a Bearer fallback on that endpoint only.',
+        'extra_info' => $loadScribeMarkdown('auth-extra-info.md'),
     ],
 
     // Example requests for each endpoint will be shown in each of these languages.
@@ -164,6 +168,8 @@ return [
         'version' => '3.0.3',
 
         'overrides' => [
+            'info.license.name' => 'MIT',
+            'info.license.url' => 'https://opensource.org/licenses/MIT',
             // 'info.version' => '2.0.0',
         ],
 

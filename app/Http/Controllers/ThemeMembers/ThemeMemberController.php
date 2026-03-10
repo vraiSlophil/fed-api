@@ -13,9 +13,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Theme membership endpoints for authenticated users.
- *
  * @group Themes
+ *
+ * Endpoints for reading and mutating theme members and permissions.
  */
 class ThemeMemberController extends Controller
 {
@@ -36,6 +36,9 @@ class ThemeMemberController extends Controller
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.members.list.success","data":{"members":[]}}
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function listMembers(Request $request, Theme $theme): JsonResponse
     {
@@ -59,6 +62,9 @@ class ThemeMemberController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @param  string  $userId  Identifier of the user.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.member.permissions.updated","data":{"permissions":{"can_view":true,"can_update_theme":false,"can_add_task":true,"can_edit_task":true,"can_delete_task":false,"can_validate_task":false},"status":"active","target_playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01"}}
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function updateMemberPermissions(
         UpdateThemeMemberPermissionsRequest $request,
@@ -130,6 +136,9 @@ class ThemeMemberController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @param  string  $userId  Identifier of the user.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.member.removed"}
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function removeMember(Request $request, Theme $theme, string $userId): JsonResponse
     {

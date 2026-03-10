@@ -58,8 +58,8 @@ class PatchUserRequest extends FormRequest
             'password_confirmation' => ['description' => 'Repeat of the new password.', 'example' => 'N3w!StrongPass'],
             'current_password' => ['description' => 'Current password required for self-service password changes.', 'example' => 'Str0ng!Passw0rd'],
             'avatar' => ['description' => 'Optional avatar upload.', 'type' => 'file'],
-            'role_power' => ['description' => 'Admin-only role power update.', 'example' => 100],
-            'blocked_at' => ['description' => 'Admin-only block timestamp or null to unblock.', 'example' => null],
+            'role_power' => ['description' => 'Admin-only role power update.', 'example' => '100'],
+            'blocked_at' => ['description' => 'Admin-only block timestamp. Send null to unblock the user.', 'example' => '2026-03-10T10:00:00+00:00'],
         ];
     }
 }

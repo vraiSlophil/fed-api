@@ -43,7 +43,7 @@ class StoreAdminUserRequest extends FormRequest
             'password_confirmation' => ['description' => 'Repeat of the password field.', 'example' => 'Adm1n!StrongPass'],
             'first_name' => ['description' => 'Optional first name.', 'example' => 'Jane'],
             'last_name' => ['description' => 'Optional last name.', 'example' => 'Admin'],
-            'role_power' => ['description' => 'Role power assigned to the user.', 'example' => 100],
+            'role_power' => ['description' => 'Role power assigned to the user.', 'example' => '100'],
             'avatar' => ['description' => 'Optional avatar image upload.', 'type' => 'file'],
         ];
     }
