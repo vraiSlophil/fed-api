@@ -150,12 +150,14 @@ docker compose up -d --build laravel queue-high queue-low scheduler
 Generate the docs locally:
 
 ```bash
+docker compose exec laravel npm ci
 docker compose exec laravel composer docs:generate
 ```
 
 Validate the generated docs and lint the OpenAPI spec:
 
 ```bash
+docker compose exec laravel npm ci
 docker compose exec laravel composer docs:validate
 ```
 

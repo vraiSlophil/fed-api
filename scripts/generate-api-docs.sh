@@ -31,4 +31,4 @@ fi
 php artisan config:clear --ansi
 php artisan route:clear --ansi
 php artisan scribe:generate --scribe-dir="$SCRIBE_DIR"
-npx widdershins "$DOCS_OUTPUT_DIR/openapi.yaml" -o "$DOCS_OUTPUT_DIR/reference.md"
+npx --no-install widdershins "$DOCS_OUTPUT_DIR/openapi.yaml" -o "$DOCS_OUTPUT_DIR/reference.md"
