@@ -7,11 +7,19 @@ use App\Domain\ThemeMembers\Queries\ThemeMemberQueryService;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ThemeMember\UpdateThemeMemberPermissionsRequest;
+use App\Http\Resources\Themes\ThemeMemberResource;
+use App\Http\Resources\Themes\ThemePermissionFlagsResource;
+use App\Http\Resources\Themes\ThemePermissionResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Themes\Theme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group Themes
+ *
+ * Endpoints for reading and mutating theme members and permissions.
+ */
 class ThemeMemberController extends Controller
 {
     /**
@@ -31,6 +39,9 @@ class ThemeMemberController extends Controller
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.members.list.success","data":{"members":[]}}
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function listMembers(Request $request, Theme $theme): JsonResponse
     {
@@ -42,7 +53,7 @@ class ThemeMemberController extends Controller
             ->success()
             ->messageCode('theme.members.list.success')
             ->data([
-                'members' => $members,
+                'members' => ThemeMemberResource::collection($members)->resolve(),
             ])
             ->json();
     }
@@ -54,6 +65,9 @@ class ThemeMemberController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @param  string  $userId  Identifier of the user.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.member.permissions.updated","data":{"permissions":{"can_view":true,"can_update_theme":false,"can_add_task":true,"can_edit_task":true,"can_delete_task":false,"can_validate_task":false},"status":"active","target_playground_id":"5e4f4aa4-a102-4878-8b86-9623a02f2f01"}}
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function updateMemberPermissions(
         UpdateThemeMemberPermissionsRequest $request,
@@ -91,7 +105,7 @@ class ThemeMemberController extends Controller
                 ->success(200)
                 ->messageCode('theme.move.success', ['target_playground_id' => $validated['target_playground_id']])
                 ->data([
-                    'permission' => $permission,
+                    'permission' => ThemePermissionResource::make($permission)->resolve(),
                 ])
                 ->json();
         } else {
@@ -104,14 +118,7 @@ class ThemeMemberController extends Controller
             ->success(200)
             ->messageCode('theme.member.permissions.updated', ['user_id' => $userId])
             ->data([
-                'permissions' => [
-                    'can_view' => $permission->can_view,
-                    'can_update_theme' => $permission->can_update_theme,
-                    'can_add_task' => $permission->can_add_task,
-                    'can_edit_task' => $permission->can_edit_task,
-                    'can_delete_task' => $permission->can_delete_task,
-                    'can_validate_task' => $permission->can_validate_task,
-                ],
+                'permissions' => ThemePermissionFlagsResource::make($permission)->resolve(),
                 'status' => $permission->status,
                 'target_playground_id' => $permission->target_playground_id,
             ])
@@ -125,6 +132,9 @@ class ThemeMemberController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @param  string  $userId  Identifier of the user.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.member.removed"}
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function removeMember(Request $request, Theme $theme, string $userId): JsonResponse
     {

@@ -28,4 +28,14 @@ class UserMetricsRequest extends FormRequest
             'period' => ['sometimes', 'string', Rule::in(['7_days', '30_days', '3_months', '6_months', '12_months', 'all_time'])],
         ];
     }
+
+    public function queryParameters(): array
+    {
+        return [
+            'period' => [
+                'description' => 'Reporting window used for user analytics.',
+                'example' => '12_months',
+            ],
+        ];
+    }
 }

@@ -281,12 +281,6 @@ Errors:
 - `403 auth.blocked`
 - `500 email.verification.failed`
 
-## Related docs
-
-Invitation flows moved to dedicated documentation:
-
-- `docs/auth/ISSUE_21_SPA_FLOWS.md`
-
 ## Maintenance command
 
 - `php artisan auth:prune-revoked-refresh`

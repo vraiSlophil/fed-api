@@ -1,0 +1,6 @@
+{
+  "status": "error",
+  "message": "Forbidden",
+  "message_code": "permission.denied",
+  "data": null
+}

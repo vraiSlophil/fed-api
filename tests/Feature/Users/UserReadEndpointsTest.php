@@ -18,7 +18,8 @@ it('returns the authenticated caller via GET /api/users/me', function () {
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'auth.user.fetched')
         ->assertJsonPath('data.user_id', $user->user_id)
-        ->assertJsonPath('data.email', $user->email);
+        ->assertJsonPath('data.email', $user->email)
+        ->assertJsonPath('data.role_power', $user->role_power);
 });
 
 it('rejects GET /api/users/me without authentication', function () {
@@ -42,8 +43,10 @@ it('allows admin users to list accounts via GET /api/users', function () {
     $this->getJson('/api/users')
         ->assertStatus(200)
         ->assertJsonPath('status', 'success')
+        ->assertJsonPath('meta.current_page', 1)
         ->assertJsonFragment([
             'user_id' => $listedUser->user_id,
+            'email' => $listedUser->email,
         ]);
 });
 

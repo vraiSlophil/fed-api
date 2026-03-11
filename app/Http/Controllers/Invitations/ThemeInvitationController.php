@@ -10,6 +10,7 @@ use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invitation\ListInvitationsRequest;
 use App\Http\Requests\Invitation\StoreInvitationRequest;
+use App\Http\Resources\Invitations\InvitationResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Invitations\Invitation;
 use App\Models\Themes\Theme;
@@ -21,6 +22,11 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @group Invitations
+ *
+ * Endpoints for creating, listing, inspecting, and deleting invitation resources.
+ */
 class ThemeInvitationController extends Controller
 {
     /**
@@ -40,6 +46,36 @@ class ThemeInvitationController extends Controller
      * @param  StoreInvitationRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  InvitationService  $invitationService  Service responsible for invitation operations.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @response 201 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "theme.invite.sent",
+     *   "data": {
+     *     "invitation": {
+     *       "invitation_id": "3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a",
+     *       "status": "pending",
+     *       "created_at": "2026-03-10T10:00:00+00:00",
+     *       "expires_at": "2026-03-17T10:00:00+00:00",
+     *       "inviter": {
+     *         "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *         "username": "owner",
+     *         "email": "owner@example.com",
+     *         "first_name": "Owner",
+     *         "last_name": "User",
+     *         "avatar_path": null
+     *       },
+     *       "invitable": {
+     *         "type": "theme",
+     *         "id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *         "title": "Roadmap",
+     *         "color": "#2563EB"
+     *       }
+     *     }
+     *   }
+     * }
+     *
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function store(StoreInvitationRequest $request, InvitationService $invitationService): JsonResponse
     {
@@ -56,12 +92,13 @@ class ThemeInvitationController extends Controller
         }
 
         $invitation = $this->actionService->create($request->user(), $validated, $invitationService);
+        $invitation->loadMissing(['inviter', 'invitable']);
 
         return ApiResponse::builder()
             ->success(201)
             ->messageCode('theme.invite.sent', ['email' => $invitation->invitee?->email])
             ->data([
-                'invitation' => $this->toInvitationItem($invitation),
+                'invitation' => InvitationResource::make($invitation)->resolve(),
             ])
             ->json();
     }
@@ -71,6 +108,12 @@ class ThemeInvitationController extends Controller
      *
      * @param  ListInvitationsRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @apiResourceCollection App\Http\Resources\Docs\Invitations\InvitationIndexResponseCollection
+     *
+     * @apiResourceModel App\Models\Invitations\Invitation paginate=15
+     *
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function index(ListInvitationsRequest $request): JsonResponse
     {
@@ -81,15 +124,10 @@ class ThemeInvitationController extends Controller
 
         $paginator = $this->queryService->paginateForUser($request->user(), $status, $scope, $pagination);
 
-        $items = collect($paginator->items())
-            ->map(fn (Invitation $invitation) => $this->toInvitationItem($invitation))
-            ->values()
-            ->all();
-
         return ApiResponse::builder()
             ->success()
             ->messageCode('invitation.list.success')
-            ->data($items)
+            ->data(InvitationResource::collection($paginator->items())->resolve())
             ->meta(OffsetPagination::meta($paginator))
             ->json();
     }
@@ -99,6 +137,9 @@ class ThemeInvitationController extends Controller
      *
      * @param  Invitation  $invitation  Invitation instance being processed by this method.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"invitation.show.success","data":{"invitation":{"invitation_id":"3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a","status":"pending"}}}
+     * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(Invitation $invitation): JsonResponse
     {
@@ -108,7 +149,7 @@ class ThemeInvitationController extends Controller
             ->success()
             ->messageCode('invitation.show.success')
             ->data([
-                'invitation' => $this->toInvitationItem($invitation->loadMissing(['inviter', 'invitable'])),
+                'invitation' => InvitationResource::make($invitation->loadMissing(['inviter', 'invitable']))->resolve(),
             ])
             ->json();
     }
@@ -197,6 +238,10 @@ class ThemeInvitationController extends Controller
      *
      * @param  Invitation  $invitation  Invitation instance being processed by this method.
      * @return Response HTTP response generated by the method.
+     *
+     * @response 204 scenario="No Content"
+     *
+     * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function destroy(Invitation $invitation): Response
     {
@@ -205,38 +250,6 @@ class ThemeInvitationController extends Controller
         $this->actionService->delete($invitation);
 
         return ApiResponse::noContent();
-    }
-
-    /**
-     * Transform an invitation model into the API response shape.
-     *
-     * @param  Invitation  $invitation  Invitation instance being processed by this method.
-     * @return array Serialized array representation of the resource.
-     */
-    private function toInvitationItem(Invitation $invitation): array
-    {
-        $invitable = $invitation->invitable;
-
-        return [
-            'invitation_id' => $invitation->invitation_id,
-            'status' => $invitation->status,
-            'created_at' => $invitation->created_at,
-            'expires_at' => $invitation->expires_at,
-            'inviter' => [
-                'user_id' => $invitation->inviter?->user_id,
-                'username' => $invitation->inviter?->username,
-                'email' => $invitation->inviter?->email,
-                'first_name' => $invitation->inviter?->first_name,
-                'last_name' => $invitation->inviter?->last_name,
-                'avatar_path' => $invitation->inviter?->avatar_path,
-            ],
-            'invitable' => [
-                'type' => strtolower(class_basename((string) $invitation->invitable_type)),
-                'id' => $invitation->invitable_id,
-                'title' => $invitable instanceof Theme ? $invitable->title : null,
-                'color' => $invitable instanceof Theme ? $invitable->color : null,
-            ],
-        ];
     }
 
     /**

@@ -9,6 +9,11 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
+ */
 class RefreshTokenController extends Controller
 {
     /**
@@ -25,6 +30,25 @@ class RefreshTokenController extends Controller
      * @return JsonResponse JSON API response using the standard envelope.
      *
      * @throws \App\Exceptions\ApiException When the operation cannot be completed.
+     *
+     * @unauthenticated
+     *
+     * @header X-Refresh-Token string optional Refresh token sent in a dedicated header. Example: 2|example-refresh-token
+     * @header Authorization string optional Bearer refresh token fallback used when the dedicated header is absent. Example: Bearer 2|example-refresh-token
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Ok",
+     *   "message_code": "auth.refresh.success",
+     *   "data": {
+     *     "access_token": "3|example-access-token",
+     *     "refresh_token": "4|example-refresh-token",
+     *     "access_expires_at": "2026-03-10T10:30:00+00:00",
+     *     "refresh_expires_at": "2026-04-09T10:15:00+00:00"
+     *   }
+     * }
+     *
+     * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      */
     public function __invoke(Request $request): JsonResponse
     {

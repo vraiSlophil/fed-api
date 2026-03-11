@@ -33,4 +33,18 @@ class StoreAdminUserRequest extends FormRequest
             'avatar' => ['nullable', 'image', 'max:2048'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'username' => ['description' => 'Username assigned to the created account.', 'example' => 'admin.jane'],
+            'email' => ['description' => 'Unique email address for the account.', 'example' => 'jane.admin@example.com'],
+            'password' => ['description' => 'Initial password for the account.', 'example' => 'Adm1n!StrongPass'],
+            'password_confirmation' => ['description' => 'Repeat of the password field.', 'example' => 'Adm1n!StrongPass'],
+            'first_name' => ['description' => 'Optional first name.', 'example' => 'Jane'],
+            'last_name' => ['description' => 'Optional last name.', 'example' => 'Admin'],
+            'role_power' => ['description' => 'Role power assigned to the user.', 'example' => '100'],
+            'avatar' => ['description' => 'Optional avatar image upload.', 'type' => 'file'],
+        ];
+    }
 }

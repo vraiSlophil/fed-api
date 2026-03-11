@@ -1,0 +1,105 @@
+name: 📚 API Docs
+
+on:
+  workflow_call:
+    inputs:
+      upload_artifact:
+        description: "Upload the generated docs as a workflow artifact."
+        required: false
+        type: boolean
+        default: false
+      deploy_pages:
+        description: "Deploy the generated static site to GitHub Pages."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-docs:
+    name: Build API docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite
+          coverage: none
+
+      - name: 📦 Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: 🔄 Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: 📥 Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: 📋 Copy docs environment
+        run: cp .env.example .env
+
+      - name: 🔑 Generate application key
+        run: php artisan key:generate --ansi
+
+      - name: 🗃️ Prepare temporary SQLite database
+        run: |
+          mkdir -p /tmp
+          touch /tmp/fed-api-docs.sqlite
+
+      - name: ✅ Generate and validate API docs
+        env:
+          DOCS_API_BASE_URL: ${{ vars.DOCS_API_BASE_URL != '' && vars.DOCS_API_BASE_URL || 'http://localhost:8000' }}
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/fed-api-docs.sqlite
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+          MAIL_MAILER: log
+        run: composer docs:validate
+
+      - name: ⚙️ Configure GitHub Pages
+        if: ${{ inputs.deploy_pages }}
+        uses: actions/configure-pages@v5
+
+      - name: 📦 Upload docs artifact
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs-${{ github.ref_name }}-${{ github.sha }}
+          path: public/docs
+          if-no-files-found: error
+
+      - name: 📄 Upload Pages artifact
+        if: ${{ inputs.deploy_pages }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public/docs
+
+  deploy-pages:
+    name: Deploy API docs
+    if: ${{ inputs.deploy_pages }}
+    needs: build-docs
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 🚀 Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

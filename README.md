@@ -1,68 +1,12 @@
 # fed-api
 
-Laravel REST API for the `fed-webapp` frontend.
+Laravel REST API.
 
 ---
 
 ## Overview
 
-This project provides the backend API used by the `fed-webapp` client application. It is designed to run locally via Docker (Laravel + PostgreSQL + PgAdmin).
-
----
-
-## API Routing Structure
-
-API routes are organized by resource under `routes/api/*.php`.
-
-- `routes/api.php` is a thin composition entrypoint that includes resource route files.
-- User endpoints are centralized under `/api/users...` (`users.index`, `users.me`, `users.show`, `users.update`, `users.destroy`, etc.).
-- Legacy `profile` and `admin/users` route groups are removed.
-- Action-verb mutation endpoints were removed in favor of resource-level contracts.
-
-### Resource Mutation Contracts
-
-- Users: `PATCH /api/users/{user}` with business fields such as `blocked_at`.
-- Tasks: `PATCH /api/tasks/{task}` with business fields such as `status` and `archived_at`.
-- Playgrounds: `PATCH /api/playgrounds/{playground}` with business field `is_default`.
-- Theme members: `PATCH /api/themes/{theme}/members/{userId}` with business fields such as `status` and `target_playground_id`.
-- Theme membership leave/remove: `DELETE /api/themes/{theme}/members/{userId}`.
-- Invitations: `POST /api/invitations`, `GET /api/invitations`, `GET /api/invitations/{invitation}`, `PATCH /api/invitations/{invitation}`, `DELETE /api/invitations/{invitation}`.
-
-### Invitation Response Modes
-
-`PATCH /api/invitations/{invitation}` supports two flows:
-- Authenticated UI flow: authenticated invitee can accept/decline without signed params.
-- Email-link flow: unauthenticated users must provide a valid signed URL.
-
-If a user is authenticated, account authorization is enforced first (signed params do not bypass policy).
-
-Invitation deletion rule:
-- hard delete allowed only when invitation status is `declined` or `canceled`.
-- otherwise, update status first via `PATCH`.
-
-### Removed Action Endpoints (Breaking)
-
-- `/api/users/{user}/block`
-- `/api/users/{user}/unblock`
-- `/api/tasks/{task}/archive`
-- `/api/tasks/{task}/restore`
-- `/api/tasks/{task}/complete`
-- `/api/tasks/{task}/uncomplete`
-- `/api/playgrounds/{playground}/set-default`
-- `/api/themes/{theme}/members/{userId}/deactivate`
-- `/api/themes/{theme}/members/{userId}/reactivate`
-- `/api/themes/{theme}/members/{userId}/move-to-playground`
-- `/api/themes/{theme}/leave`
-- `/api/themes/{theme}/members` (invitation creation moved to `POST /api/invitations`)
-
-### Intentionally Non-Exposed Persisted Resources
-
-These resources exist in the database but are intentionally not exposed as public REST resources for now:
-- `task_dependencies`
-- `reminders`
-- `theme_templates`
-- `plans` / `user_subscriptions`
-- `audit_logs`
+This project provides the backend API and runs locally via Docker (Laravel + PostgreSQL + PgAdmin).
 
 ---
 
@@ -190,6 +134,37 @@ docker compose exec laravel php artisan db:seed
 ```bash
 docker compose exec laravel php artisan test
 ```
+
+---
+
+## API Docs
+
+The generated OpenAPI documentation is the canonical API reference. Manual endpoint inventories in `docs/api/*` are no longer the source of truth.
+
+Generate the docs locally:
+
+```bash
+docker compose exec laravel composer docs:generate
+```
+
+Validate that the generated OpenAPI spec exists:
+
+```bash
+docker compose exec laravel composer docs:validate
+```
+
+Generated outputs are written to `public/docs` (gitignored):
+
+- `public/docs/index.html`
+- `public/docs/openapi.yaml`
+
+Set `DOCS_API_BASE_URL` in `.env` to control the server URL shown in the generated docs and OpenAPI spec.
+
+Supplementary AI-oriented docs are available in:
+
+- `docs/ai/README.md`
+- `docs/ai/DOMAIN_OVERVIEW.md`
+- `docs/ai/WORKFLOWS.md`
 
 ---
 

@@ -1,0 +1,11 @@
+{
+  "status": "error",
+  "message": "The given data was invalid.",
+  "message_code": "validation.invalid",
+  "data": null,
+  "errors": {
+    "field": [
+      "Validation message"
+    ]
+  }
+}

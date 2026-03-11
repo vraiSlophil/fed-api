@@ -9,12 +9,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\User\ListAdminUsersRequest;
 use App\Http\Requests\Admin\User\StoreAdminUserRequest;
 use App\Http\Requests\User\PatchUserRequest;
+use App\Http\Resources\Users\RoleResource;
+use App\Http\Resources\Users\UserResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Auth\User;
 use App\Support\Pagination\OffsetPagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group Users
+ *
+ * Endpoints for reading and mutating user accounts from the authenticated application context.
+ */
 class AdminUserController extends Controller
 {
     /**
@@ -34,6 +41,12 @@ class AdminUserController extends Controller
      *
      * @param  ListAdminUsersRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @apiResourceCollection App\Http\Resources\Docs\Users\AdminUserIndexResponseCollection
+     *
+     * @apiResourceModel App\Models\Auth\User paginate=15
+     *
+     * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function index(ListAdminUsersRequest $request): JsonResponse
     {
@@ -53,7 +66,7 @@ class AdminUserController extends Controller
             return ApiResponse::builder()
                 ->success()
                 ->messageCode('theme.users.search.success')
-                ->data($users->values()->all())
+                ->data(UserResource::collection($users->values())->resolve())
                 ->json();
         }
 
@@ -68,7 +81,7 @@ class AdminUserController extends Controller
 
         return ApiResponse::builder()
             ->success()
-            ->data($users->items())
+            ->data(UserResource::collection($users->items())->resolve())
             ->meta([
                 ...OffsetPagination::meta($users),
                 'sorting' => [
@@ -77,7 +90,8 @@ class AdminUserController extends Controller
                     'available_sort_fields' => $result['allowed_sort_fields'],
                 ],
                 'filters' => $result['filters'],
-                ...$extras,
+                'roles' => RoleResource::collection($extras['roles'])->resolve(),
+                'stats' => $extras['stats'],
             ])
             ->json();
     }
@@ -87,6 +101,9 @@ class AdminUserController extends Controller
      *
      * @param  StoreAdminUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 201 resources/docs/responses/success.json {"message_code":"user.create.success","data":{"user_id":"2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24","username":"john","email":"john@example.com"}}
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function store(StoreAdminUserRequest $request): JsonResponse
     {
@@ -97,7 +114,7 @@ class AdminUserController extends Controller
         return ApiResponse::builder()
             ->success(201)
             ->messageCode('user.create.success')
-            ->data($user)
+            ->data(UserResource::make($user)->resolve())
             ->json();
     }
 
@@ -107,6 +124,12 @@ class AdminUserController extends Controller
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @apiResource App\Http\Resources\Docs\Users\AdminUserShowResponseResource
+     *
+     * @apiResourceModel App\Models\Auth\User
+     *
+     * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(Request $request, User $user): JsonResponse
     {
@@ -117,7 +140,10 @@ class AdminUserController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('user.show.success')
-            ->data($data)
+            ->data([
+                'user' => UserResource::make($data['user'])->resolve(),
+                'additional_stats' => $data['additional_stats'],
+            ])
             ->json();
     }
 
@@ -127,6 +153,9 @@ class AdminUserController extends Controller
      * @param  PatchUserRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"user.update.success","data":{"user_id":"2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24","username":"johnny","email":"johnny@example.com"}}
+     * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function update(PatchUserRequest $request, User $user): JsonResponse
     {
@@ -138,14 +167,14 @@ class AdminUserController extends Controller
             return ApiResponse::builder()
                 ->success()
                 ->messageCode('user.update.email')
-                ->data($result['user'])
+                ->data(UserResource::make($result['user'])->resolve())
                 ->json();
         }
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('user.update.success')
-            ->data($result['user'])
+            ->data(UserResource::make($result['user'])->resolve())
             ->json();
     }
 
@@ -155,6 +184,9 @@ class AdminUserController extends Controller
      * @param  Request  $request  HTTP request carrying validated parameters for this endpoint.
      * @param  User  $user  User account resolved from the route and targeted by this action.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"user.delete.success"}
+     * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function destroy(Request $request, User $user): JsonResponse
     {

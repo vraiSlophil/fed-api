@@ -46,4 +46,19 @@ class ListAdminUsersRequest extends FormRequest
             'sort' => ['sometimes', 'string', Rule::in(['asc', 'desc'])],
         ];
     }
+
+    public function queryParameters(): array
+    {
+        return [
+            'page' => ['description' => 'Results page number.', 'example' => 1],
+            'per_page' => ['description' => 'Number of users per page.', 'example' => 15],
+            'search' => ['description' => 'Free-text search applied to user attributes.', 'example' => 'john'],
+            'theme_id' => ['description' => 'Theme context used for invitation search mode.', 'example' => '278fdd58-2050-4556-9393-8195d1a4ed74'],
+            'role' => ['description' => 'Filter by role power.', 'example' => 100],
+            'roles' => ['description' => 'Comma-separated list of role powers.', 'example' => '0,100'],
+            'status' => ['description' => 'Filter by account state.', 'example' => 'active'],
+            'sort_by' => ['description' => 'Sortable field name.', 'example' => 'created_at'],
+            'sort' => ['description' => 'Sort direction.', 'example' => 'desc'],
+        ];
+    }
 }

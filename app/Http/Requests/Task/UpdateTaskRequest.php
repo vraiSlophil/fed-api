@@ -29,4 +29,13 @@ class UpdateTaskRequest extends FormRequest
             'archived_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'title' => ['description' => 'Updated task title.', 'example' => 'Ship the release'],
+            'status' => ['description' => 'Updated canonical task status.', 'example' => 'in_progress'],
+            'archived_at' => ['description' => 'Archive timestamp or null to restore the task.', 'example' => null],
+        ];
+    }
 }

@@ -34,4 +34,18 @@ class UpdateThemeMemberPermissionsRequest extends FormRequest
             'target_playground_id' => ['sometimes', 'required', 'uuid', 'exists:playgrounds,playground_id'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'can_view' => ['description' => 'Whether the member can view the theme.', 'example' => true],
+            'can_update_theme' => ['description' => 'Whether the member can edit theme metadata.', 'example' => false],
+            'can_add_task' => ['description' => 'Whether the member can create tasks.', 'example' => true],
+            'can_edit_task' => ['description' => 'Whether the member can update tasks.', 'example' => true],
+            'can_delete_task' => ['description' => 'Whether the member can delete tasks.', 'example' => false],
+            'can_validate_task' => ['description' => 'Whether the member can validate completed tasks.', 'example' => false],
+            'status' => ['description' => 'Membership status.', 'example' => 'active'],
+            'target_playground_id' => ['description' => 'Playground used by the member for this shared theme.', 'example' => '5e4f4aa4-a102-4878-8b86-9623a02f2f01'],
+        ];
+    }
 }

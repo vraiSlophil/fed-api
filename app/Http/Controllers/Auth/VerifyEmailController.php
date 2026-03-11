@@ -8,6 +8,11 @@ use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @group Authentication
+ *
+ * Endpoints for access tokens, refresh tokens, email verification, and credential recovery.
+ */
 class VerifyEmailController extends Controller
 {
     /**
@@ -22,6 +27,11 @@ class VerifyEmailController extends Controller
      *
      * @param  VerifyEmailRequest  $request  Request carrying validated signed verification query parameters.
      * @return JsonResponse JSON API response using the standard envelope.
+     *
+     * @unauthenticated
+     *
+     * @responseFile 200 resources/docs/responses/success.json {"message":"Email verified","message_code":"auth.verification.success"}
+     * @responseFile 403 resources/docs/responses/errors/invalid-signature.json
      */
     public function __invoke(VerifyEmailRequest $request): JsonResponse
     {

@@ -27,4 +27,14 @@ class ListPlaygroundsRequest extends FormRequest
             'slug' => ['sometimes', 'string', 'max:140'],
         ];
     }
+
+    public function queryParameters(): array
+    {
+        return [
+            'slug' => [
+                'description' => 'When provided, returns the playground matching this slug for the current user.',
+                'example' => 'home',
+            ],
+        ];
+    }
 }

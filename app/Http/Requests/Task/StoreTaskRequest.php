@@ -29,4 +29,13 @@ class StoreTaskRequest extends FormRequest
             'status' => ['sometimes', 'string', 'in:todo,in_progress,done'],
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'theme_id' => ['description' => 'Theme that will own the task.', 'example' => '278fdd58-2050-4556-9393-8195d1a4ed74'],
+            'title' => ['description' => 'Human-readable task title.', 'example' => 'Prepare release notes'],
+            'status' => ['description' => 'Initial task status.', 'example' => 'todo'],
+        ];
+    }
 }

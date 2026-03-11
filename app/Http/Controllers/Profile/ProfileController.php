@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\UpdateProfileAvatarRequest;
 use App\Http\Requests\Profile\UpdateProfilePasswordRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Resources\Users\ProfileUserResource;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,13 +35,7 @@ class ProfileController extends Controller
             ->success()
             ->messageCode('profile.show.success')
             ->data([
-                'user' => [
-                    'username' => $user->username,
-                    'email' => $user->email,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
-                    'avatar_path' => $user->avatar_path,
-                ],
+                'user' => ProfileUserResource::make($user)->resolve(),
             ])
             ->json();
     }
@@ -60,7 +55,7 @@ class ProfileController extends Controller
                 ->success()
                 ->messageCode('profile.update.email_changed', ['email_verification_sent' => true])
                 ->data([
-                    'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at']),
+                    'user' => ProfileUserResource::make($user)->resolve(),
                 ])
                 ->json();
         }
@@ -69,7 +64,7 @@ class ProfileController extends Controller
             ->success()
             ->messageCode('profile.update.success')
             ->data([
-                'user' => $user->only(['username', 'email', 'first_name', 'last_name', 'avatar_path', 'email_verified_at']),
+                'user' => ProfileUserResource::make($user)->resolve(),
             ])
             ->json();
     }

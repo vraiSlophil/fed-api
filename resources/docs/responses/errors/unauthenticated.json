@@ -1,0 +1,6 @@
+{
+  "status": "error",
+  "message": "Unauthenticated.",
+  "message_code": "auth.failed",
+  "data": null
+}

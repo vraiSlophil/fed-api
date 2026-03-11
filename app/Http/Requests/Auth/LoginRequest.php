@@ -32,6 +32,20 @@ class LoginRequest extends FormRequest
         ];
     }
 
+    public function bodyParameters(): array
+    {
+        return [
+            'email' => [
+                'description' => 'Email address of the account to authenticate.',
+                'example' => 'john@example.com',
+            ],
+            'password' => [
+                'description' => 'Plain-text password for the account.',
+                'example' => 'Str0ng!Passw0rd',
+            ],
+        ];
+    }
+
     /**
      * Authenticate credentials from the validated request.
      *

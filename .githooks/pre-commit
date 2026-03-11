@@ -7,7 +7,7 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   elif command -v docker-compose >/dev/null 2>&1; then
     COMPOSE="docker-compose"
   else
-    echo "docker compose not found; skipping lint." >&2
+    echo "docker compose not found; skipping pint." >&2
     exit 0
   fi
 
@@ -23,16 +23,16 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   STAGED_PHP=$(git diff --name-only --cached --diff-filter=ACM -- '*.php' | tr '\n' ' ')
 
   if [ -n "$STAGED_PHP" ]; then
-    echo "Running composer lint on staged PHP files..."
-    run_in_container "composer lint -- $STAGED_PHP"
+    echo "Running composer pint on staged PHP files..."
+    run_in_container "composer pint -- $STAGED_PHP"
     # Ré‑ajoute les modifs de Pint au commit courant
     git add $STAGED_PHP
   else
-    echo "No staged PHP files; skipping lint."
+    echo "No staged PHP files; skipping pint."
   fi
   exit 0
 fi
 
-echo "Docker is not available/running; cannot run lint in container." >&2
+echo "Docker is not available/running; cannot run pint in container." >&2
 echo "Start Docker, or bypass with: git commit --no-verify" >&2
 exit 1
