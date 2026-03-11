@@ -1,12 +1,12 @@
 # fed-api
 
-Laravel REST API for the `fed-webapp` frontend.
+Laravel REST API.
 
 ---
 
 ## Overview
 
-This project provides the backend API used by the `fed-webapp` client application. It is designed to run locally via Docker (Laravel + PostgreSQL + PgAdmin).
+This project provides the backend API and runs locally via Docker (Laravel + PostgreSQL + PgAdmin).
 
 ---
 
@@ -141,23 +141,15 @@ docker compose exec laravel php artisan test
 
 The generated OpenAPI documentation is the canonical API reference. Manual endpoint inventories in `docs/api/*` are no longer the source of truth.
 
-Rebuild the PHP container once after pulling the docs tooling changes so the `laravel` service gets Node.js and npm:
-
-```bash
-docker compose up -d --build laravel queue-high queue-low scheduler
-```
-
 Generate the docs locally:
 
 ```bash
-docker compose exec laravel npm ci
 docker compose exec laravel composer docs:generate
 ```
 
-Validate the generated docs and lint the OpenAPI spec:
+Validate that the generated OpenAPI spec exists:
 
 ```bash
-docker compose exec laravel npm ci
 docker compose exec laravel composer docs:validate
 ```
 
@@ -165,9 +157,14 @@ Generated outputs are written to `public/docs` (gitignored):
 
 - `public/docs/index.html`
 - `public/docs/openapi.yaml`
-- `public/docs/reference.md`
 
 Set `DOCS_API_BASE_URL` in `.env` to control the server URL shown in the generated docs and OpenAPI spec.
+
+Supplementary AI-oriented docs are available in:
+
+- `docs/ai/README.md`
+- `docs/ai/DOMAIN_OVERVIEW.md`
+- `docs/ai/WORKFLOWS.md`
 
 ---
 

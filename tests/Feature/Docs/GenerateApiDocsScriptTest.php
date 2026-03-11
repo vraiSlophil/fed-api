@@ -23,9 +23,6 @@ SH;
 
     file_put_contents($binDirectory.'/php', $stub);
     chmod($binDirectory.'/php', 0755);
-    file_put_contents($binDirectory.'/npx', $stub);
-    chmod($binDirectory.'/npx', 0755);
-
     $process = new Process(
         ['sh', './scripts/generate-api-docs.sh'],
         base_path(),
@@ -70,9 +67,6 @@ SH;
 
     file_put_contents($binDirectory.'/php', $stub);
     chmod($binDirectory.'/php', 0755);
-    file_put_contents($binDirectory.'/npx', $stub);
-    chmod($binDirectory.'/npx', 0755);
-
     $process = new Process(
         ['sh', './scripts/generate-api-docs.sh'],
         base_path(),
