@@ -49,7 +49,6 @@ return [
             // Exclude these routes even if they matched the rules above.
             'exclude' => [
                 'auth.ping',
-                'invitations.respond',
                 'media.show',
                 'theme.members.store',
             ],

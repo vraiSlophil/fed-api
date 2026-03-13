@@ -5,7 +5,6 @@ use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use App\Models\Themes\ThemeUserPermission;
-use Illuminate\Support\Facades\URL;
 use Laravel\Sanctum\Sanctum;
 
 function createThemeInvitationContext(array $invitationOverrides = []): array
@@ -45,19 +44,6 @@ function createThemeInvitationContext(array $invitationOverrides = []): array
     return compact('owner', 'theme', 'invitee', 'invitation');
 }
 
-function signedInvitationUrl(string $invitationId, string $status): string
-{
-    return URL::temporarySignedRoute(
-        'invitations.respond',
-        now()->addMinutes(60),
-        [
-            'invitation' => $invitationId,
-            'status' => $status,
-        ],
-        false
-    );
-}
-
 it('accepts an invitation for an authenticated invitee without signed params', function () {
     $ctx = createThemeInvitationContext();
 
@@ -89,32 +75,22 @@ it('declines an invitation for an authenticated invitee without signed params', 
     expect($ctx['invitation']->fresh()->status)->toBe('declined');
 });
 
-it('accepts an invitation without authentication when signature is valid', function () {
+it('returns 401 for unauthenticated invitation responses', function () {
     $ctx = createThemeInvitationContext();
 
-    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'accepted'))
-        ->assertStatus(200)
-        ->assertJsonPath('message_code', 'theme.invitation.accepted');
-});
-
-it('rejects unauthenticated invitation response without valid signature', function () {
-    $ctx = createThemeInvitationContext();
-
-    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
-        ->assertStatus(403)
-        ->assertJsonPath('message_code', 'signature.invalid');
-});
-
-it('uses current authenticated session over signature when account does not match invitee', function () {
-    $ctx = createThemeInvitationContext();
-    $otherUser = User::factory()->create();
-    Sanctum::actingAs($otherUser, ['access']);
-
-    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'accepted'), [
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
         'status' => 'accepted',
     ])
-        ->assertStatus(403)
-        ->assertJsonPath('message_code', 'permission.denied');
+        ->assertUnauthorized()
+        ->assertJsonPath('message_code', 'auth.failed');
+});
+
+it('returns 401 for unauthenticated invitation responses when legacy signed-link parameters are present', function () {
+    $ctx = createThemeInvitationContext();
+
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted&expires=1773136800&signature=legacy")
+        ->assertUnauthorized()
+        ->assertJsonPath('message_code', 'auth.failed');
 });
 
 it('requires status in body for authenticated requests even if query has status', function () {
@@ -124,6 +100,19 @@ it('requires status in body for authenticated requests even if query has status'
     $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}?status=accepted")
         ->assertStatus(422)
         ->assertJsonPath('message_code', 'validation.invalid');
+});
+
+it('forbids plain authenticated invitation responses for unrelated users', function () {
+    $ctx = createThemeInvitationContext();
+    $otherUser = User::factory()->create();
+
+    Sanctum::actingAs($otherUser, ['access']);
+
+    $this->patchJson("/api/invitations/{$ctx['invitation']->invitation_id}", [
+        'status' => 'accepted',
+    ])
+        ->assertForbidden()
+        ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('allows inviter to cancel a pending invitation', function () {
@@ -151,24 +140,6 @@ it('allows admin to cancel a pending invitation', function () {
     ])
         ->assertStatus(200)
         ->assertJsonPath('message_code', 'theme.invitation.canceled');
-});
-
-it('rejects cancel status for unauthenticated requests even with signature', function () {
-    $ctx = createThemeInvitationContext();
-
-    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'canceled'))
-        ->assertStatus(403)
-        ->assertJsonPath('message_code', 'permission.denied');
-});
-
-it('rejects unauthenticated signed responses when status is provided in body', function () {
-    $ctx = createThemeInvitationContext();
-
-    $this->patchJson(signedInvitationUrl($ctx['invitation']->invitation_id, 'accepted'), [
-        'status' => 'accepted',
-    ])
-        ->assertStatus(422)
-        ->assertJsonPath('message_code', 'validation.invalid');
 });
 
 it('rejects transition when invitation is already terminal', function () {
@@ -229,4 +200,16 @@ it('rejects unsupported invitable type on acceptance', function () {
     ])
         ->assertStatus(400)
         ->assertJsonPath('message_code', 'invitation.invalid');
+});
+
+it('returns 404 when the invitation to respond to does not exist', function () {
+    $ctx = createThemeInvitationContext();
+
+    Sanctum::actingAs($ctx['invitee'], ['access']);
+
+    $this->patchJson('/api/invitations/11111111-1111-1111-1111-111111111111', [
+        'status' => 'accepted',
+    ])
+        ->assertNotFound()
+        ->assertJsonPath('message_code', 'resource.not_found');
 });

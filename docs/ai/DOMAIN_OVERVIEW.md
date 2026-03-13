@@ -31,9 +31,8 @@
 
 - Used to grant access to a theme.
 - Created by an authenticated, verified user with permission to manage theme members.
-- Can be responded to either:
-  - by an authenticated user
-  - or by a signed public link on `PATCH /api/invitations/{invitation_id}`
+- Invitation emails open a frontend deep link, typically `/invite/{invitationId}`, with an optional UI-only `intent` query.
+- The actual invitation response is applied only by an authenticated API call on `PATCH /api/invitations/{invitation}`.
 
 ### Metrics
 

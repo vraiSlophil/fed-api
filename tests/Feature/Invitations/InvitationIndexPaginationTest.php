@@ -36,6 +36,12 @@ beforeEach(function () {
     $this->inviterPlaygroundId = $inviterDefaultPlayground->playground_id;
 });
 
+it('returns 401 when invitation listing is requested without authentication', function () {
+    $this->getJson('/api/invitations')
+        ->assertUnauthorized()
+        ->assertJsonPath('message_code', 'auth.failed');
+});
+
 it('returns default paginated invitations with standard contract and user isolation', function () {
     $invitee = User::factory()->create();
     $otherInvitee = User::factory()->create();

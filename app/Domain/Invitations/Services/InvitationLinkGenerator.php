@@ -3,54 +3,31 @@
 namespace App\Domain\Invitations\Services;
 
 use App\Models\Invitations\Invitation;
-use Illuminate\Support\Facades\URL;
 
 class InvitationLinkGenerator
 {
     /**
-     * Build signed accept/decline links for an invitation.
+     * Build frontend deep links for invitation email entry points.
      *
      * @param  Invitation  $invitation  Invitation instance being processed by this method.
      * @return array Structured set of generated links.
      */
-    public function buildSignedLinks(Invitation $invitation): array
+    public function buildInboxLinks(Invitation $invitation): array
     {
-        $expiresAt = $invitation->expires_at;
-
-        $acceptSignedUrl = URL::temporarySignedRoute(
-            'invitations.respond',
-            $expiresAt,
-            [
-                'invitation' => $invitation->invitation_id,
-                'status' => 'accepted',
-            ],
-            false
-        );
-
-        $declineSignedUrl = URL::temporarySignedRoute(
-            'invitations.respond',
-            $expiresAt,
-            [
-                'invitation' => $invitation->invitation_id,
-                'status' => 'declined',
-            ],
-            false
-        );
-
         return [
-            'accept' => $this->buildFrontendInvitationUrl($acceptSignedUrl, $invitation->invitation_id),
-            'decline' => $this->buildFrontendInvitationUrl($declineSignedUrl, $invitation->invitation_id),
+            'accept' => $this->buildFrontendInvitationUrl($invitation->invitation_id, 'accept'),
+            'decline' => $this->buildFrontendInvitationUrl($invitation->invitation_id, 'decline'),
         ];
     }
 
     /**
-     * Convert a signed API URL into the frontend invitation URL format.
+     * Build the frontend invitation URL with an optional UI-only intent.
      *
-     * @param  string  $signedApiUrl  Absolute URL passed to downstream logic.
      * @param  string  $invitationId  Identifier of the invitation.
-     * @return string Frontend invitation URL that preserves the signed query string.
+     * @param  ?string  $intent  Optional frontend-only action hint.
+     * @return string Frontend invitation URL that routes users into the invitation screen.
      */
-    private function buildFrontendInvitationUrl(string $signedApiUrl, string $invitationId): string
+    private function buildFrontendInvitationUrl(string $invitationId, ?string $intent = null): string
     {
         $frontendBase = rtrim((string) config('app.frontend_url'), '/');
         $pathTemplate = (string) config('app.frontend_invitation_path', '/invite/{invitationId}');
@@ -61,8 +38,12 @@ class InvitationLinkGenerator
                 : $pathTemplate);
 
         $frontendPath = '/'.ltrim($frontendPath, '/');
-        $query = parse_url($signedApiUrl, PHP_URL_QUERY);
+        $frontendUrl = $frontendBase.$frontendPath;
 
-        return $query ? $frontendBase.$frontendPath.'?'.$query : $frontendBase.$frontendPath;
+        if ($intent === null) {
+            return $frontendUrl;
+        }
+
+        return $frontendUrl.'?'.http_build_query(['intent' => $intent]);
     }
 }

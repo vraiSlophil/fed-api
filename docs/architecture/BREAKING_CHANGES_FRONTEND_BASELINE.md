@@ -1,6 +1,7 @@
 # Breaking Changes Backend -> Frontend Baseline
 
 Date: 2026-02-22  
+Updated: 2026-03-13  
 Scope: Laravel 12 backend rearchitecture (modular monolith), without redesigning the global JSON response envelope.
 
 ## 1. Breaking changes (frontend)
@@ -23,12 +24,20 @@ Stats payloads now expose `in_progress` (not `doing`) for task counters.
 Frontend impact:
 - Replace `stats.doing` access with `stats.in_progress`.
 
-### 1.3 Signed invitation route parameter
-The signed backend route uses `invitation` (explicit route-model binding) instead of `invitationId`.
+### 1.3 Invitation email links are frontend deep links, not public mutation URLs
+Invitation emails no longer represent a public API mutation flow. They open the frontend invitation screen and let the user respond only after authentication.
 
 Frontend impact:
-- If your router/client parses signed URLs, do not depend on `invitationId`.
-- Use the signed URL exactly as provided by the API, without rewriting parameter names.
+- Treat invitation email links as frontend navigation only.
+- Preserve the invitation identifier from the frontend path and the optional `intent=accept|decline` query as UI state only.
+- After login and, if needed, email verification, fetch the invitation through `GET /api/invitations/{invitation}` or the inbox list.
+- Submit the final response through authenticated `PATCH /api/invitations/{invitation}` with a JSON body.
+- Do not send `status`, `target_playground_id`, `expires`, or `signature` through the query string as part of the API response contract.
+
+Backend contract impact:
+- `PATCH /api/invitations/{invitation}` is now an authenticated, verified business endpoint only.
+- Invitation emails may still include an `intent` query on the frontend URL, but that is not trusted by the backend and does not mutate state.
+- The frontend invitation path remains configurable through `APP_FRONTEND_INVITATION_PATH`, typically `/invite/{invitationId}`.
 
 ### 1.4 Action-verb mutation endpoints removed (REST contracts)
 Mutation routes based on action verbs have been removed.
@@ -57,7 +66,7 @@ Canonical replacements:
   - `POST /api/invitations`
   - `GET /api/invitations`
   - `GET /api/invitations/{invitation}`
-  - `PATCH /api/invitations/{invitation}` (accept/decline/cancel)
+  - `PATCH /api/invitations/{invitation}` (authenticated only; send `status` and optional `target_playground_id` in the JSON body)
   - `DELETE /api/invitations/{invitation}` (only `declined` / `canceled`)
 
 Removed endpoints:
@@ -116,7 +125,7 @@ Frontend impact:
 ## 4. Frontend migration checklist
 1. Replace all `doing` usages with `in_progress` (types, UI, filters, tests).
 2. Verify statistics screens (`in_progress` expected).
-3. Verify invitation flows with signed URLs provided by the API.
+3. Implement the invitation email deep-link flow in the frontend: preserve the invitation URL through auth, load the invitation after auth, and answer through authenticated `PATCH`.
 4. Replace calls to removed action endpoints with PATCH/DELETE resource contracts.
 5. Verify standardized handling of `403` and `422`.
 6. Re-run core E2E flows: login, task listing, task status update, invitations, stats.

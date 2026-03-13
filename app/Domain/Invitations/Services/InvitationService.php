@@ -17,7 +17,7 @@ class InvitationService
     /**
      * Initialize the service with invitation-link generation utilities.
      *
-     * @param  InvitationLinkGenerator  $linkGenerator  Helper that builds signed accept/decline invitation links.
+     * @param  InvitationLinkGenerator  $linkGenerator  Helper that builds frontend invitation deep links.
      */
     public function __construct(
         private readonly InvitationLinkGenerator $linkGenerator
@@ -43,7 +43,7 @@ class InvitationService
             throw new ApiException('invitation.invalid', [], 400, 'Unsupported invitation type');
         }
 
-        $links = $this->linkGenerator->buildSignedLinks($invitation);
+        $links = $this->linkGenerator->buildInboxLinks($invitation);
 
         try {
             Mail::to($invitation->invitee->email)
