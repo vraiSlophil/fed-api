@@ -8,7 +8,6 @@ use Laravel\Sanctum\PersonalAccessToken;
 it('login returns a token and allows calling a protected route', function () {
     $user = User::factory()->create([
         'password' => Hash::make('Secret-password1!'),
-        'email_verified_at' => now(),
     ]);
 
     $login = $this->postJson('/api/auth/login', [
@@ -16,24 +15,22 @@ it('login returns a token and allows calling a protected route', function () {
         'password' => 'Secret-password1!',
     ]);
 
-    $login->assertStatus(200);
+    $login->assertOk();
     expect($login->json('data.access_token'))->toBeString();
 
     $token = $login->json('data.access_token');
 
     $this->withHeader('Authorization', 'Bearer '.$token)
         ->getJson('/api/auth/ping')
-        ->assertStatus(200);
+        ->assertOk();
 });
 
 it('a protected route returns 401 without a token', function () {
-    $this->getJson('/api/auth/ping')->assertStatus(401);
+    $this->getJson('/api/auth/ping')->assertUnauthorized();
 });
 
 it('logout revokes the current token (database deletion)', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $token = $user->createToken('test-token')->plainTextToken;
 
@@ -43,7 +40,7 @@ it('logout revokes the current token (database deletion)', function () {
 
     $this->withHeader('Authorization', 'Bearer '.$token)
         ->postJson('/api/auth/logout')
-        ->assertStatus(200);
+        ->assertOk();
 
     // The token must be deleted from the database (source of truth).
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
@@ -51,9 +48,7 @@ it('logout revokes the current token (database deletion)', function () {
 });
 
 it('a refresh token cannot access protected routes', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshToken = $user->createToken(
         'refresh-token',
@@ -63,5 +58,5 @@ it('a refresh token cannot access protected routes', function () {
 
     $this->withHeader('Authorization', 'Bearer '.$refreshToken)
         ->getJson('/api/auth/ping')
-        ->assertStatus(403);
+        ->assertForbidden();
 });

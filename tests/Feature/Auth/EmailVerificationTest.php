@@ -4,7 +4,6 @@ use App\Models\Auth\User;
 use App\Notifications\QueuedVerifyEmail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
-use Laravel\Sanctum\Sanctum;
 
 it('verifies an email through a signed link (POST)', function () {
     $user = User::factory()->create([
@@ -22,7 +21,7 @@ it('verifies an email through a signed link (POST)', function () {
     );
 
     $this->postJson($url)
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'auth.verification.success');
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
@@ -36,7 +35,7 @@ it('rejects an email verification link without a signature', function () {
     $this->postJson('/api/email-verifications', [
         'id' => $user->getKey(),
         'hash' => hash('sha256', $user->getEmailForVerification()),
-    ])->assertStatus(403);
+    ])->assertForbidden();
 });
 
 it('rejects an expired email verification link', function () {
@@ -54,7 +53,7 @@ it('rejects an expired email verification link', function () {
         false
     );
 
-    $this->postJson($url)->assertStatus(403);
+    $this->postJson($url)->assertForbidden();
 });
 
 it('rejects an email verification link with an invalid hash', function () {
@@ -78,9 +77,7 @@ it('rejects an email verification link with an invalid hash', function () {
 });
 
 it('returns already verified when the email is already confirmed', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $url = URL::temporarySignedRoute(
         'verification.verify',
@@ -93,7 +90,7 @@ it('returns already verified when the email is already confirmed', function () {
     );
 
     $this->postJson($url)
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'auth.verification.already_verified');
 });
 
@@ -109,7 +106,7 @@ it('returns not found when the verification user does not exist', function () {
     );
 
     $this->postJson($url)
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
@@ -120,10 +117,10 @@ it('sends the verification email notification', function () {
         'email_verified_at' => null,
     ]);
 
-    Sanctum::actingAs($user, ['access']);
+    actingAsAccessUser($user);
 
     $this->postJson('/api/email-verification-notifications')
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'email.verification.sent');
 
     Notification::assertSentTo($user, QueuedVerifyEmail::class);
@@ -131,21 +128,19 @@ it('sends the verification email notification', function () {
 
 it('rejects the verification notification request without authentication', function () {
     $this->postJson('/api/email-verification-notifications')
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
 it('returns already verified and does not send a notification', function () {
     Notification::fake();
 
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
-    Sanctum::actingAs($user, ['access']);
+    actingAsAccessUser($user);
 
     $this->postJson('/api/email-verification-notifications')
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'email.verification.already_verified');
 
     Notification::assertNothingSent();

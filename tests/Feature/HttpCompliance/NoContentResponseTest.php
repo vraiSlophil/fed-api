@@ -1,11 +1,9 @@
 <?php
 
-use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use App\Models\Playgrounds\Playground;
 use App\Models\Tasks\Task;
 use App\Models\Themes\Theme;
-use Laravel\Sanctum\Sanctum;
 
 it('returns 204 with an empty body when deleting a task', function () {
     $user = User::factory()->create();
@@ -25,7 +23,7 @@ it('returns 204 with an empty body when deleting a task', function () {
         'status' => 'todo',
     ]);
 
-    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($user);
 
     $response = $this->deleteJson("/api/tasks/{$task->task_id}");
 
@@ -45,7 +43,7 @@ it('returns 204 with an empty body when deleting a theme', function () {
         'playground_id' => $playground->playground_id,
     ]);
 
-    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($user);
 
     $response = $this->deleteJson("/api/themes/{$theme->theme_id}");
 
@@ -60,7 +58,7 @@ it('returns 204 with an empty body when deleting a playground', function () {
         'is_default' => false,
     ]);
 
-    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($user);
 
     $response = $this->deleteJson("/api/playgrounds/{$playground->playground_id}");
 

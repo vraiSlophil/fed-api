@@ -5,7 +5,6 @@ use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
 use Illuminate\Support\Facades\Mail;
-use Laravel\Sanctum\Sanctum;
 
 function invitationPayload(Theme $theme, string $inviteeUserId): array
 {
@@ -53,10 +52,10 @@ it('allows re-invitation after a decline', function () {
         'expires_at' => now()->addDays(2),
     ]);
 
-    Sanctum::actingAs($owner, ['access']);
+    actingAsAccessUser($owner);
 
     $this->postJson('/api/invitations', invitationPayload($theme, $invitee->user_id))
-        ->assertStatus(201);
+        ->assertCreated();
 });
 
 it('rejects a duplicate pending invitation', function () {
@@ -74,12 +73,12 @@ it('rejects a duplicate pending invitation', function () {
 
     $invitee = User::factory()->create();
 
-    Sanctum::actingAs($owner, ['access']);
+    actingAsAccessUser($owner);
 
     $payload = invitationPayload($theme, $invitee->user_id);
 
     $this->postJson('/api/invitations', $payload)
-        ->assertStatus(201);
+        ->assertCreated();
 
     $this->postJson('/api/invitations', $payload)
         ->assertStatus(409)
@@ -100,7 +99,7 @@ it('rejects invitation creation without authentication', function () {
     $invitee = User::factory()->create();
 
     $this->postJson('/api/invitations', invitationPayload($theme, $invitee->user_id))
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
@@ -115,10 +114,10 @@ it('rejects inviting the theme owner', function () {
         'playground_id' => $ownerPlayground->playground_id,
     ]);
 
-    Sanctum::actingAs($owner, ['access']);
+    actingAsAccessUser($owner);
 
     $this->postJson('/api/invitations', invitationPayload($theme, $owner->user_id))
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
@@ -134,14 +133,14 @@ it('rejects invitation payload with action permissions when can_view is false', 
     ]);
 
     $invitee = User::factory()->create();
-    Sanctum::actingAs($owner, ['access']);
+    actingAsAccessUser($owner);
 
     $payload = invitationPayload($theme, $invitee->user_id);
     $payload['payload']['permissions']['can_view'] = false;
     $payload['payload']['permissions']['can_edit_task'] = true;
 
     $this->postJson('/api/invitations', $payload)
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJsonPath('message_code', 'theme.permissions.invalid');
 });
 
@@ -176,7 +175,7 @@ it('rejects inviting a user who is already a theme member', function () {
         'status' => 'active',
     ]);
 
-    Sanctum::actingAs($owner, ['access']);
+    actingAsAccessUser($owner);
 
     $this->postJson('/api/invitations', invitationPayload($theme, $invitee->user_id))
         ->assertStatus(409)
@@ -194,10 +193,10 @@ it('returns 404 on removed POST /api/themes/{theme}/members invitation endpoint'
     ]);
     $invitee = User::factory()->create();
 
-    Sanctum::actingAs($owner, ['access']);
+    actingAsAccessUser($owner);
 
     $this->postJson("/api/themes/{$theme->theme_id}/members", [
         'user_id' => $invitee->user_id,
-    ])->assertStatus(404)
+    ])->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });

@@ -5,7 +5,6 @@ use App\Models\Auth\User;
 
 it('returns auth.blocked for blocked users calling access-token routes with an access token', function () {
     $user = User::factory()->create([
-        'email_verified_at' => now(),
         'blocked_at' => now(),
     ]);
 
@@ -17,13 +16,12 @@ it('returns auth.blocked for blocked users calling access-token routes with an a
 
     $this->withHeader('Authorization', 'Bearer '.$accessToken)
         ->getJson('/api/auth/ping')
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'auth.blocked');
 });
 
 it('returns auth.blocked for blocked users calling access-token routes with a refresh token', function () {
     $user = User::factory()->create([
-        'email_verified_at' => now(),
         'blocked_at' => now(),
     ]);
 
@@ -35,6 +33,6 @@ it('returns auth.blocked for blocked users calling access-token routes with a re
 
     $this->withHeader('Authorization', 'Bearer '.$refreshToken)
         ->getJson('/api/auth/ping')
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'auth.blocked');
 });

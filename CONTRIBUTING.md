@@ -49,9 +49,18 @@ Thank you for contributing! To keep the repository consistent and easy to review
     - Restrict who can push to protected branches (e.g., `dev`, `main`).
 
 ## Tests
-- Add or update tests for behavioral changes.
-- Make sure tests run locally and pass in CI.
-- For API changes, include feature tests that cover allowed and forbidden scenarios where applicable.
+- Add or update tests for every behavioral change.
+- Run tests locally with the canonical command: `docker compose exec laravel composer test`.
+- Use PostgreSQL only. Do not introduce SQLite-only assumptions in the normal suite.
+- Prefer feature tests for behavior and HTTP contracts. Use unit tests only for pure logic or repository/testing guardrails.
+- Place tests under:
+    - `tests/Feature/<Domain>/...Test.php` for behavior
+    - `tests/Unit/...Test.php` for pure logic and meta/architecture checks
+- For bug fixes, add at least one regression test and keep the exposed success path covered when the behavior remains public.
+- For new features or changed behavior, cover the happy path and the relevant illegal paths (`401`, `403`, `404`, `422`, etc.) when they apply.
+- Use factories first. Seed only explicit deterministic seeders when the test genuinely needs reference data.
+- Do not use bare `$this->seed()`, `protected $seed = true`, `protected $seeder`, `DatabaseSeeder`, or `CompleteDataSeeder` in tests.
+- Keep quantities visible in the test setup instead of hiding them in shared demo seeders.
 
 ## Documentation and changelog
 - Update relevant documentation and/or README when introducing new features or changing behavior.

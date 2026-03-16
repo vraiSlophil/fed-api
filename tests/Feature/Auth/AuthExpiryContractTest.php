@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Notification;
 it('login returns access and refresh expiry metadata', function () {
     $user = User::factory()->create([
         'password' => Hash::make('Secret-password1!'),
-        'email_verified_at' => now(),
     ]);
 
     $response = $this->postJson('/api/auth/login', [
@@ -18,7 +17,7 @@ it('login returns access and refresh expiry metadata', function () {
         'password' => 'Secret-password1!',
     ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
 
     $accessExpiresAt = $response->json('data.access_expires_at');
     $refreshExpiresAt = $response->json('data.refresh_expires_at');
@@ -47,7 +46,7 @@ it('register returns access and refresh expiry metadata', function () {
         'password_confirmation' => 'Secret-password1!',
     ]);
 
-    $response->assertStatus(201);
+    $response->assertCreated();
 
     $accessExpiresAt = $response->json('data.access_expires_at');
     $refreshExpiresAt = $response->json('data.refresh_expires_at');
@@ -64,9 +63,7 @@ it('register returns access and refresh expiry metadata', function () {
 });
 
 it('refresh returns access and refresh expiry metadata', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshToken = $user->createToken(
         'refresh-token',
@@ -77,7 +74,7 @@ it('refresh returns access and refresh expiry metadata', function () {
     $response = $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(200);
+    $response->assertOk();
 
     $accessExpiresAt = $response->json('data.access_expires_at');
     $refreshExpiresAt = $response->json('data.refresh_expires_at');
@@ -94,9 +91,7 @@ it('refresh returns access and refresh expiry metadata', function () {
 });
 
 it('expired access token is rejected on protected routes', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $expiredAccessToken = $user->createToken(
         'expired-access-token',
@@ -107,6 +102,6 @@ it('expired access token is rejected on protected routes', function () {
     $response = $this->withHeader('Authorization', 'Bearer '.$expiredAccessToken)
         ->getJson('/api/auth/ping');
 
-    $response->assertStatus(401);
+    $response->assertUnauthorized();
     expect($response->json('message_code'))->toBe('auth.failed');
 });

@@ -12,7 +12,6 @@ it('password reset revokes all active tokens and invalidates previously issued a
 
     $user = User::factory()->create([
         'password' => Hash::make($oldPassword),
-        'email_verified_at' => now(),
     ]);
 
     $accessToken = $user->createToken(
@@ -32,7 +31,7 @@ it('password reset revokes all active tokens and invalidates previously issued a
 
     $this->withHeader('Authorization', 'Bearer '.$accessToken)
         ->getJson('/api/auth/ping')
-        ->assertStatus(200);
+        ->assertOk();
 
     $resetToken = Password::createToken($user);
 
@@ -43,7 +42,7 @@ it('password reset revokes all active tokens and invalidates previously issued a
         'password_confirmation' => $newPassword,
     ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('auth.reset.success');
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBe(0);
@@ -53,13 +52,13 @@ it('password reset revokes all active tokens and invalidates previously issued a
     $expiredSession = $this->withHeader('Authorization', 'Bearer '.$accessToken)
         ->getJson('/api/auth/ping');
 
-    $expiredSession->assertStatus(401);
+    $expiredSession->assertUnauthorized();
     expect($expiredSession->json('message_code'))->toBe('auth.failed');
 
     $this->postJson('/api/auth/login', [
         'email' => $user->email,
         'password' => $newPassword,
-    ])->assertStatus(200);
+    ])->assertOk();
 });
 
 it('user PATCH password update revokes all active tokens and invalidates the current access token', function () {
@@ -68,7 +67,6 @@ it('user PATCH password update revokes all active tokens and invalidates the cur
 
     $user = User::factory()->create([
         'password' => Hash::make($oldPassword),
-        'email_verified_at' => now(),
     ]);
 
     $accessToken = $user->createToken(
@@ -93,7 +91,7 @@ it('user PATCH password update revokes all active tokens and invalidates the cur
             'password_confirmation' => $newPassword,
         ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('user.update.success');
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
         ->toBe(0);
@@ -103,13 +101,13 @@ it('user PATCH password update revokes all active tokens and invalidates the cur
     $expiredSession = $this->withHeader('Authorization', 'Bearer '.$accessToken)
         ->getJson('/api/auth/ping');
 
-    $expiredSession->assertStatus(401);
+    $expiredSession->assertUnauthorized();
     expect($expiredSession->json('message_code'))->toBe('auth.failed');
 
     $this->postJson('/api/auth/login', [
         'email' => $user->email,
         'password' => $newPassword,
-    ])->assertStatus(200);
+    ])->assertOk();
 });
 
 it('admin PATCH password update revokes all active tokens for the target user', function () {
@@ -117,12 +115,10 @@ it('admin PATCH password update revokes all active tokens for the target user', 
 
     $admin = User::factory()->create([
         'role_power' => 100,
-        'email_verified_at' => now(),
     ]);
 
     $target = User::factory()->create([
         'password' => Hash::make('Target-password-123!'),
-        'email_verified_at' => now(),
     ]);
 
     $adminAccessToken = $admin->createToken(
@@ -152,7 +148,7 @@ it('admin PATCH password update revokes all active tokens for the target user', 
             'password_confirmation' => $newPassword,
         ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('user.update.success');
     expect(PersonalAccessToken::where('tokenable_id', $target->getAuthIdentifier())->count())
         ->toBe(0);
@@ -162,19 +158,16 @@ it('admin PATCH password update revokes all active tokens for the target user', 
     $expiredTargetSession = $this->withHeader('Authorization', 'Bearer '.$targetAccessToken)
         ->getJson('/api/auth/ping');
 
-    $expiredTargetSession->assertStatus(401);
+    $expiredTargetSession->assertUnauthorized();
     expect($expiredTargetSession->json('message_code'))->toBe('auth.failed');
 });
 
 it('admin PATCH update without password does not revoke target user tokens', function () {
     $admin = User::factory()->create([
         'role_power' => 100,
-        'email_verified_at' => now(),
     ]);
 
-    $target = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $target = User::factory()->create();
 
     $adminAccessToken = $admin->createToken(
         'admin-access-token',
@@ -202,25 +195,23 @@ it('admin PATCH update without password does not revoke target user tokens', fun
             'first_name' => 'UpdatedByAdmin',
         ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('user.update.success');
     expect(PersonalAccessToken::where('tokenable_id', $target->getAuthIdentifier())->count())
         ->toBe(2);
 
     $this->withHeader('Authorization', 'Bearer '.$targetAccessToken)
         ->getJson('/api/auth/ping')
-        ->assertStatus(200);
+        ->assertOk();
 });
 
 it('admin PATCH block revokes all active tokens and invalidates previously issued target tokens', function () {
     $admin = User::factory()->create([
         'role_power' => 100,
-        'email_verified_at' => now(),
     ]);
 
     $target = User::factory()->create([
         'password' => Hash::make('Target-password-123!'),
-        'email_verified_at' => now(),
         'blocked_at' => null,
     ]);
 
@@ -250,7 +241,7 @@ it('admin PATCH block revokes all active tokens and invalidates previously issue
             'blocked_at' => now()->toISOString(),
         ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('user.update.success');
     expect(PersonalAccessToken::where('tokenable_id', $target->getAuthIdentifier())->count())
         ->toBe(0);
@@ -260,20 +251,18 @@ it('admin PATCH block revokes all active tokens and invalidates previously issue
     $expiredTargetSession = $this->withHeader('Authorization', 'Bearer '.$targetAccessToken)
         ->getJson('/api/auth/ping');
 
-    $expiredTargetSession->assertStatus(401);
+    $expiredTargetSession->assertUnauthorized();
     expect($expiredTargetSession->json('message_code'))->toBe('auth.failed');
 });
 
 it('a previously blocked user can login and receive tokens again after admin unblocks the account', function () {
     $admin = User::factory()->create([
         'role_power' => 100,
-        'email_verified_at' => now(),
     ]);
 
     $targetPassword = 'Target-password-123!';
     $target = User::factory()->create([
         'password' => Hash::make($targetPassword),
-        'email_verified_at' => now(),
         'blocked_at' => now(),
     ]);
 
@@ -288,7 +277,7 @@ it('a previously blocked user can login and receive tokens again after admin unb
             'blocked_at' => null,
         ]);
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('user.update.success');
     expect($response->json('data.blocked_at'))->toBeNull();
 
@@ -297,7 +286,7 @@ it('a previously blocked user can login and receive tokens again after admin unb
         'password' => $targetPassword,
     ]);
 
-    $login->assertStatus(200);
+    $login->assertOk();
     expect($login->json('message_code'))->toBe('auth.login.success');
     expect($login->json('data.access_token'))->toBeString();
     expect($login->json('data.refresh_token'))->toBeString();

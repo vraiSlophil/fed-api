@@ -1,13 +1,11 @@
 <?php
 
-use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Tasks\Task;
 use App\Models\Themes\Theme;
 use App\Models\Themes\ThemeUserPermission;
-use Laravel\Sanctum\Sanctum;
 
 function createThemeContext(): array
 {
@@ -151,46 +149,46 @@ function createMemberOwnedTaskContext(string $memberStatus = 'active'): array
 it('forbids member without can_edit_task from updating task', function () {
     $ctx = createThemeContext();
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'title' => 'Updated by member',
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('allows owner to update task', function () {
     $ctx = createThemeContext();
 
-    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['owner']);
 
     $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'title' => 'Updated by owner',
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.task.title', 'Updated by owner');
 });
 
 it('forbids member without can_update_theme from updating theme', function () {
     $ctx = createThemeContext();
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
         'title' => 'Unauthorized update',
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('allows active member with can_view to view theme', function () {
     $ctx = createThemeContext();
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->getJson("/api/themes/{$ctx['theme']->theme_id}")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.theme.theme_id', $ctx['theme']->theme_id);
 });
 
@@ -198,29 +196,29 @@ it('requires authentication for protected theme endpoint', function () {
     $ctx = createThemeContext();
 
     $this->getJson("/api/themes/{$ctx['theme']->theme_id}")
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
 it('forbids revoked members from updating tasks even with full flags', function () {
     $ctx = createRevokedMemberContext();
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'title' => 'Should not be allowed',
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('forbids users with pending invitation from viewing theme before acceptance', function () {
     $ctx = createPendingInvitationContext();
 
-    Sanctum::actingAs($ctx['invitee'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['invitee']);
 
     $this->getJson("/api/themes/{$ctx['theme']->theme_id}")
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
@@ -232,12 +230,12 @@ it('allows members with can_update_theme to update title', function () {
         ->where('user_id', $ctx['member']->user_id)
         ->update(['can_update_theme' => true]);
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
         'title' => 'Member allowed title update',
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.theme.title', 'Member allowed title update');
 });
 
@@ -254,12 +252,12 @@ it('forbids members from changing theme playground through patch', function () {
         ->where('is_default', true)
         ->firstOrFail();
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
         'playground_id' => $memberDefaultPlayground->playground_id,
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
@@ -271,12 +269,12 @@ it('allows owners to move theme to another owned playground', function () {
         'is_default' => false,
     ]);
 
-    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['owner']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
         'playground_id' => $newOwnerPlayground->playground_id,
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.theme.playground_id', $newOwnerPlayground->playground_id);
 });
 
@@ -289,26 +287,26 @@ it('rejects owner theme move to a playground they do not own', function () {
         ->where('is_default', true)
         ->firstOrFail();
 
-    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['owner']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}", [
         'playground_id' => $otherPlayground->playground_id,
     ])
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
 it('forbids revoked members from viewing tasks they created in the theme', function () {
     $ctx = createMemberOwnedTaskContext('revoked');
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->getJson("/api/tasks/{$ctx['task']->task_id}")
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 
     $this->getJson('/api/tasks?theme_id='.$ctx['theme']->theme_id)
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
@@ -320,13 +318,13 @@ it('forbids removed members from viewing tasks in a former theme', function () {
         ->where('user_id', $ctx['member']->user_id)
         ->delete();
 
-    Sanctum::actingAs($ctx['member'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['member']);
 
     $this->getJson("/api/tasks/{$ctx['task']->task_id}")
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 
     $this->getJson('/api/tasks?theme_id='.$ctx['theme']->theme_id)
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });

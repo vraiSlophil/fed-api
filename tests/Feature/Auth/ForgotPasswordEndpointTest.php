@@ -6,14 +6,12 @@ use Illuminate\Support\Facades\Notification;
 it('sends a reset link for existing users', function () {
     Notification::fake();
 
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $this->postJson('/api/auth/forgot-password', [
         'email' => $user->email,
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'auth.reset_link.sent');
 });
 
@@ -29,6 +27,6 @@ it('validates forgot-password payload', function () {
     $this->postJson('/api/auth/forgot-password', [
         'email' => 'not-an-email',
     ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJsonPath('message_code', 'validation.invalid');
 });

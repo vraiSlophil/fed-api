@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 class CompleteDataSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Run the demo dataset seeder used for local exploration, not automated tests.
      */
     public function run(): void
     {

@@ -4,7 +4,6 @@ use App\Models\Auth\User;
 use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
-use Laravel\Sanctum\Sanctum;
 
 function createInvitationCrudContext(array $invitationOverrides = []): array
 {
@@ -45,30 +44,30 @@ function createInvitationCrudContext(array $invitationOverrides = []): array
 
 it('returns invitation details for inviter', function () {
     $ctx = createInvitationCrudContext();
-    Sanctum::actingAs($ctx['owner'], ['access']);
+    actingAsAccessUser($ctx['owner']);
 
     $this->getJson("/api/invitations/{$ctx['invitation']->invitation_id}")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'invitation.show.success')
         ->assertJsonPath('data.invitation.invitation_id', $ctx['invitation']->invitation_id);
 });
 
 it('returns invitation details for invitee', function () {
     $ctx = createInvitationCrudContext();
-    Sanctum::actingAs($ctx['invitee'], ['access']);
+    actingAsAccessUser($ctx['invitee']);
 
     $this->getJson("/api/invitations/{$ctx['invitation']->invitation_id}")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.invitation.invitation_id', $ctx['invitation']->invitation_id);
 });
 
 it('forbids invitation details for unrelated users', function () {
     $ctx = createInvitationCrudContext();
     $outsider = User::factory()->create();
-    Sanctum::actingAs($outsider, ['access']);
+    actingAsAccessUser($outsider);
 
     $this->getJson("/api/invitations/{$ctx['invitation']->invitation_id}")
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
@@ -76,10 +75,10 @@ it('allows hard delete for declined invitations', function () {
     $ctx = createInvitationCrudContext([
         'status' => 'declined',
     ]);
-    Sanctum::actingAs($ctx['invitee'], ['access']);
+    actingAsAccessUser($ctx['invitee']);
 
     $this->deleteJson("/api/invitations/{$ctx['invitation']->invitation_id}")
-        ->assertStatus(204);
+        ->assertNoContent();
 
     expect(Invitation::query()->where('invitation_id', $ctx['invitation']->invitation_id)->exists())->toBeFalse();
 });
@@ -88,10 +87,10 @@ it('allows hard delete for canceled invitations', function () {
     $ctx = createInvitationCrudContext([
         'status' => 'canceled',
     ]);
-    Sanctum::actingAs($ctx['owner'], ['access']);
+    actingAsAccessUser($ctx['owner']);
 
     $this->deleteJson("/api/invitations/{$ctx['invitation']->invitation_id}")
-        ->assertStatus(204);
+        ->assertNoContent();
 
     expect(Invitation::query()->where('invitation_id', $ctx['invitation']->invitation_id)->exists())->toBeFalse();
 });
@@ -100,7 +99,7 @@ it('rejects hard delete for pending invitations', function () {
     $ctx = createInvitationCrudContext([
         'status' => 'pending',
     ]);
-    Sanctum::actingAs($ctx['owner'], ['access']);
+    actingAsAccessUser($ctx['owner']);
 
     $this->deleteJson("/api/invitations/{$ctx['invitation']->invitation_id}")
         ->assertStatus(409)
@@ -111,7 +110,7 @@ it('rejects hard delete for accepted invitations', function () {
     $ctx = createInvitationCrudContext([
         'status' => 'accepted',
     ]);
-    Sanctum::actingAs($ctx['owner'], ['access']);
+    actingAsAccessUser($ctx['owner']);
 
     $this->deleteJson("/api/invitations/{$ctx['invitation']->invitation_id}")
         ->assertStatus(409)

@@ -17,12 +17,12 @@ it('returns 404 for missing media files', function () {
     Storage::fake('public');
 
     $this->getJson('/api/media/missing/file.txt')
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
 it('returns 404 for path traversal attempts', function () {
     $this->getJson('/api/media/../.env')
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });

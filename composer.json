@@ -65,8 +65,7 @@
             "@php artisan pail --timeout=0"
         ],
         "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "sh ./scripts/test.sh"
         ],
         "docs:generate": [
             "sh ./scripts/generate-api-docs.sh"
