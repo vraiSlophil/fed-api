@@ -15,7 +15,7 @@ This project provides the backend API and runs locally via Docker (Laravel + Pos
 - Language: PHP 8.5
 - Framework: Laravel 12
 - Database: PostgreSQL 18
-- Tooling / CI: Docker Compose, Composer, Pest (via `php artisan test`)
+- Tooling / CI: Docker Compose, Composer, Pest (via `composer test`)
 
 ---
 
@@ -39,7 +39,7 @@ cd fed-api
 
 ## Configuration
 
-This project uses a `.env` file. Start by copying the example file:
+This project uses `.env` for the application runtime and a dedicated committed `.env.testing` file for automated tests.
 
 ```bash
 cp .env.example .env
@@ -110,6 +110,14 @@ docker compose up -d --build
 # docker compose run --rm laravel php artisan optimize:clear
 ```
 
+The bootstrap step also provisions the dedicated PostgreSQL test database from [`.env.testing`](/home/nathan/PhpstormProjects/fed-api/.env.testing) so local test runs never share the development schema.
+
+If your PostgreSQL volume already existed before this test baseline, run the provisioning script once after pulling the change:
+
+```bash
+docker compose exec laravel sh ./scripts/ensure-postgres-databases.sh
+```
+
 > workers and scheduler start automatically with docker compose:
 >
 > - queue-high: emails-verification, emails-password-reset
@@ -127,13 +135,34 @@ Optional seeders:
 docker compose exec laravel php artisan db:seed
 ```
 
+`db:seed` is for local demo/reference data only. CI and automated tests do not seed `DatabaseSeeder` or `CompleteDataSeeder`.
+
 ---
 
 ## Testing
 
+The canonical backend test command is:
+
 ```bash
-docker compose exec laravel php artisan test
+docker compose exec laravel composer test
 ```
+
+Useful variants:
+
+```bash
+docker compose exec laravel composer test -- --compact
+docker compose exec laravel composer test -- --filter=InvitationResponseTest
+docker compose exec laravel composer test -- tests/Feature/Invitations/InvitationResponseTest.php
+```
+
+Testing conventions:
+
+- PostgreSQL is the only supported backend for local and CI test runs.
+- `composer test` is the only documented entrypoint; it clears cached config before forwarding arguments to `php artisan test`.
+- Feature tests are the default for behavior and HTTP contracts.
+- Unit tests are reserved for pure logic and repository guardrails.
+- Use factories first. Seeders are allowed only when a test calls an explicit deterministic class for stable reference data.
+- Do not rely on `DatabaseSeeder`, `CompleteDataSeeder`, or hidden volume state for tests.
 
 ---
 

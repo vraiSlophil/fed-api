@@ -1,18 +1,14 @@
 <?php
 
-use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use App\Models\Playgrounds\Playground;
 use App\Models\Tasks\Task;
 use App\Models\Themes\Theme;
 use App\Models\Themes\ThemeUserPermission;
-use Laravel\Sanctum\Sanctum;
 
 function createOwnedThemeAndTask(): array
 {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
 
     $ownerDefaultPlayground = Playground::query()
         ->where('user_id', $owner->user_id)
@@ -42,42 +38,40 @@ function createOwnedThemeAndTask(): array
 it('updates task archived_at through PATCH and removes action verb task routes', function () {
     $ctx = createOwnedThemeAndTask();
 
-    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['owner']);
 
     $archiveResponse = $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'archived_at' => now()->toISOString(),
     ]);
 
-    $archiveResponse->assertStatus(200);
+    $archiveResponse->assertOk();
     expect($archiveResponse->json('data.task.archived_at'))->not->toBeNull();
 
     $restoreResponse = $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'archived_at' => null,
     ]);
 
-    $restoreResponse->assertStatus(200);
+    $restoreResponse->assertOk();
     expect($restoreResponse->json('data.task.archived_at'))->toBeNull();
 
     $this->postJson("/api/tasks/{$ctx['task']->task_id}/archive")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
     $this->postJson("/api/tasks/{$ctx['task']->task_id}/restore")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
     $this->postJson("/api/tasks/{$ctx['task']->task_id}/complete")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
     $this->postJson("/api/tasks/{$ctx['task']->task_id}/uncomplete")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
 it('allows validator-only members to transition done status but not edit fields', function () {
     $ctx = createOwnedThemeAndTask();
 
-    $validator = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $validator = User::factory()->create();
 
     $validatorDefaultPlayground = Playground::query()
         ->where('user_id', $validator->user_id)
@@ -97,25 +91,23 @@ it('allows validator-only members to transition done status but not edit fields'
         'status' => 'active',
     ]);
 
-    Sanctum::actingAs($validator, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($validator);
 
     $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'status' => 'done',
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.task.status', 'done');
 
     $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'title' => 'validator-cannot-edit-title',
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('sets default playground through PATCH and removes set-default action route', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $currentDefault = Playground::query()
         ->where('user_id', $user->user_id)
@@ -127,26 +119,24 @@ it('sets default playground through PATCH and removes set-default action route',
         'is_default' => false,
     ]);
 
-    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($user);
 
     $this->patchJson("/api/playgrounds/{$secondary->playground_id}", [
         'is_default' => true,
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'playground.update.success');
 
     expect($secondary->fresh()->is_default)->toBeTrue();
     expect($currentDefault->fresh()->is_default)->toBeFalse();
 
     $this->postJson("/api/playgrounds/{$secondary->playground_id}/set-default")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
 it('removes non-crud playground routes', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $playground = Playground::factory()->create([
         'user_id' => $user->user_id,
@@ -154,27 +144,25 @@ it('removes non-crud playground routes', function () {
         'is_default' => false,
     ]);
 
-    Sanctum::actingAs($user, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($user);
 
     $this->getJson("/api/playgrounds/{$playground->playground_id}/themes")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 
     $this->getJson("/api/playgrounds/{$playground->playground_id}/stats")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 
     $this->getJson('/api/playgrounds/by-slug/legacy-playground-route')
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
 it('updates member status and target playground through PATCH and removes action routes', function () {
     $ctx = createOwnedThemeAndTask();
 
-    $member = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $member = User::factory()->create();
 
     $memberDefaultPlayground = Playground::query()
         ->where('user_id', $member->user_id)
@@ -194,19 +182,19 @@ it('updates member status and target playground through PATCH and removes action
         'status' => 'active',
     ]);
 
-    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['owner']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}", [
         'status' => 'revoked',
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.status', 'revoked');
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}", [
         'status' => 'active',
-    ])->assertStatus(200);
+    ])->assertOk();
 
-    Sanctum::actingAs($member, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($member);
 
     $newTargetPlayground = Playground::factory()->create([
         'user_id' => $member->user_id,
@@ -216,26 +204,26 @@ it('updates member status and target playground through PATCH and removes action
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}", [
         'target_playground_id' => $newTargetPlayground->playground_id,
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'theme.move.success');
 
     $this->postJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}/deactivate")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
     $this->postJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}/reactivate")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}/move-to-playground", [
         'target_playground_id' => $newTargetPlayground->playground_id,
     ])
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
     $this->postJson("/api/themes/{$ctx['theme']->theme_id}/leave")
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 
     $this->deleteJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'theme.member.left');
 
     expect(ThemeUserPermission::query()
@@ -247,9 +235,7 @@ it('updates member status and target playground through PATCH and removes action
 it('rejects incoherent member permission graph on PATCH /api/themes/{theme}/members/{userId}', function () {
     $ctx = createOwnedThemeAndTask();
 
-    $member = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $member = User::factory()->create();
 
     $memberDefaultPlayground = Playground::query()
         ->where('user_id', $member->user_id)
@@ -269,12 +255,12 @@ it('rejects incoherent member permission graph on PATCH /api/themes/{theme}/memb
         'status' => 'active',
     ]);
 
-    Sanctum::actingAs($ctx['owner'], [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($ctx['owner']);
 
     $this->patchJson("/api/themes/{$ctx['theme']->theme_id}/members/{$member->user_id}", [
         'can_view' => false,
         'can_edit_task' => true,
     ])
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJsonPath('message_code', 'theme.permissions.invalid');
 });

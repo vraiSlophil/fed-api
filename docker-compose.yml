@@ -36,7 +36,7 @@ services:
 
     bootstrap:
         <<: *laravel-common
-        command: sh -c "php artisan migrate --force && php artisan optimize:clear"
+        command: sh -c "sh ./scripts/ensure-postgres-databases.sh && php artisan migrate --force && php artisan optimize:clear"
         restart: "no"
 
     # Service Laravel (application web)

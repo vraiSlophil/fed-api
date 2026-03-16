@@ -9,14 +9,12 @@ use Laravel\Sanctum\PersonalAccessToken;
 it('refresh fails when the refresh token is missing', function () {
     $response = $this->postJson('/api/auth/refresh');
 
-    $response->assertStatus(401);
+    $response->assertUnauthorized();
     expect($response->json('message_code'))->toBe('auth.refresh.missing');
 });
 
 it('refresh fails when the refresh token is invalid', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $accessToken = $user->createToken(
         'access-token',
@@ -27,14 +25,12 @@ it('refresh fails when the refresh token is invalid', function () {
     $response = $this->withHeader('X-Refresh-Token', $accessToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(401);
+    $response->assertUnauthorized();
     expect($response->json('message_code'))->toBe('auth.refresh.invalid');
 });
 
 it('refresh returns a new access/refresh pair and invalidates the previous refresh token', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshExpiresAt = CarbonImmutable::now()->addDays(30);
     $refreshToken = $user->createToken(
@@ -46,7 +42,7 @@ it('refresh returns a new access/refresh pair and invalidates the previous refre
     $response = $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('data.access_token'))->toBeString();
     expect($response->json('data.refresh_token'))->toBeString();
 
@@ -55,9 +51,7 @@ it('refresh returns a new access/refresh pair and invalidates the previous refre
 });
 
 it('refresh locks the token to prevent concurrent refresh calls', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshToken = $user->createToken(
         'refresh-token',
@@ -76,7 +70,7 @@ it('refresh locks the token to prevent concurrent refresh calls', function () {
 
     $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh')
-        ->assertStatus(200);
+        ->assertOk();
 
     $capturing = false;
 
@@ -92,9 +86,7 @@ it('refresh locks the token to prevent concurrent refresh calls', function () {
 it('refresh accepts token reuse within the grace window', function () {
     config(['auth_tokens.refresh_reuse_grace_seconds' => 30]);
 
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshToken = $user->createToken(
         'refresh-token',
@@ -104,21 +96,19 @@ it('refresh accepts token reuse within the grace window', function () {
 
     $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh')
-        ->assertStatus(200);
+        ->assertOk();
 
     $response = $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(200);
+    $response->assertOk();
     expect($response->json('message_code'))->toBe('auth.refresh.success');
 });
 
 it('refresh detects refresh token reuse and revokes all tokens', function () {
     config(['auth_tokens.refresh_reuse_grace_seconds' => 0]);
 
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshToken = $user->createToken(
         'refresh-token',
@@ -128,12 +118,12 @@ it('refresh detects refresh token reuse and revokes all tokens', function () {
 
     $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh')
-        ->assertStatus(200);
+        ->assertOk();
 
     $response = $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(401);
+    $response->assertUnauthorized();
     expect($response->json('message_code'))->toBe('auth.refresh.reused');
 
     expect(PersonalAccessToken::where('tokenable_id', $user->getAuthIdentifier())->count())
@@ -141,9 +131,7 @@ it('refresh detects refresh token reuse and revokes all tokens', function () {
 });
 
 it('refresh fails when the refresh token is expired', function () {
-    $user = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
     $refreshExpiresAt = CarbonImmutable::now()->subMinute();
     $refreshToken = $user->createToken(
@@ -155,13 +143,12 @@ it('refresh fails when the refresh token is expired', function () {
     $response = $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(401);
+    $response->assertUnauthorized();
     expect($response->json('message_code'))->toBe('auth.refresh.expired');
 });
 
 it('refresh returns auth.blocked when the user is blocked', function () {
     $user = User::factory()->create([
-        'email_verified_at' => now(),
         'blocked_at' => now(),
     ]);
 
@@ -175,6 +162,6 @@ it('refresh returns auth.blocked when the user is blocked', function () {
     $response = $this->withHeader('X-Refresh-Token', $refreshToken)
         ->postJson('/api/auth/refresh');
 
-    $response->assertStatus(403);
+    $response->assertForbidden();
     expect($response->json('message_code'))->toBe('auth.blocked');
 });

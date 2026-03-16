@@ -4,7 +4,6 @@ use App\Models\Auth\User;
 use App\Models\Invitations\Invitation;
 use App\Models\Playgrounds\Playground;
 use App\Models\Themes\Theme;
-use Laravel\Sanctum\Sanctum;
 
 function createPaginatedInvitationForInvitee(User $inviter, string $inviterPlaygroundId, User $invitee, string $status = 'pending'): Invitation
 {
@@ -59,11 +58,11 @@ it('returns default paginated invitations with standard contract and user isolat
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'accepted');
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'declined');
 
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $response = $this->getJson('/api/invitations');
 
-    $response->assertStatus(200)
+    $response->assertOk()
         ->assertJsonPath('message_code', 'invitation.list.success')
         ->assertJsonPath('meta.current_page', 1)
         ->assertJsonPath('meta.per_page', 15)
@@ -123,10 +122,10 @@ it('supports custom per_page in the standard contract', function () {
         createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'pending');
     }
 
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $this->getJson('/api/invitations?per_page=7')
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('meta.current_page', 1)
         ->assertJsonPath('meta.per_page', 7)
         ->assertJsonPath('meta.total', 20)
@@ -151,11 +150,11 @@ it('supports outbox scope when provided', function () {
         ->firstOrFail();
     $inboxInvitation = createPaginatedInvitationForInvitee($otherInviter, $otherInviterPlayground->playground_id, $this->inviter, 'pending');
 
-    Sanctum::actingAs($this->inviter, ['access']);
+    actingAsAccessUser($this->inviter);
 
     $response = $this->getJson('/api/invitations?scope=outbox');
 
-    $response->assertStatus(200)
+    $response->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonCount(2, 'data');
 
@@ -176,11 +175,11 @@ it('supports all scope and returns inbox and outbox invitations', function () {
         ->firstOrFail();
     $inboxInvitation = createPaginatedInvitationForInvitee($otherInviter, $otherInviterPlayground->playground_id, $this->inviter, 'pending');
 
-    Sanctum::actingAs($this->inviter, ['access']);
+    actingAsAccessUser($this->inviter);
 
     $response = $this->getJson('/api/invitations?scope=all');
 
-    $response->assertStatus(200)
+    $response->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonCount(2, 'data');
 
@@ -191,19 +190,19 @@ it('supports all scope and returns inbox and outbox invitations', function () {
 
 it('returns 422 when per_page is lower than 1', function () {
     $invitee = User::factory()->create();
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $this->getJson('/api/invitations?per_page=0')
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJsonPath('message_code', 'validation.invalid');
 });
 
 it('returns 422 when per_page exceeds the max', function () {
     $invitee = User::factory()->create();
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $this->getJson('/api/invitations?per_page=101')
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJsonPath('message_code', 'validation.invalid');
 });
 
@@ -214,10 +213,10 @@ it('returns empty items for out of bounds page while preserving pagination metad
         createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'pending');
     }
 
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $this->getJson('/api/invitations?page=999&per_page=2')
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('meta.current_page', 999)
         ->assertJsonPath('meta.per_page', 2)
         ->assertJsonPath('meta.total', 3)
@@ -238,11 +237,11 @@ it('supports status filter when provided', function () {
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'declined');
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'canceled');
 
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $response = $this->getJson('/api/invitations?status=accepted');
 
-    $response->assertStatus(200)
+    $response->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonCount(2, 'data');
 
@@ -252,10 +251,10 @@ it('supports status filter when provided', function () {
 
 it('returns 422 when status filter is invalid', function () {
     $invitee = User::factory()->create();
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $this->getJson('/api/invitations?status=wrong')
-        ->assertStatus(422)
+        ->assertUnprocessable()
         ->assertJsonPath('message_code', 'validation.invalid');
 });
 
@@ -265,10 +264,10 @@ it('supports canceled status filter when provided', function () {
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'canceled');
     createPaginatedInvitationForInvitee($this->inviter, $this->inviterPlaygroundId, $invitee, 'pending');
 
-    Sanctum::actingAs($invitee, ['access']);
+    actingAsAccessUser($invitee);
 
     $this->getJson('/api/invitations?status=canceled')
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.status', 'canceled');
 });

@@ -70,9 +70,6 @@ jobs:
     needs: [gate, lint]
     if: ${{ !(github.event_name == 'push' && needs.gate.outputs.skip_push == 'true') }}
     uses: ./.github/workflows/tests-backend.yml
-    with:
-      # Run faster on push; run full (incl. seeders) on PR/manual.
-      seed: ${{ github.event_name != 'push' }}
 
   docs:
     name: 📚 API Docs

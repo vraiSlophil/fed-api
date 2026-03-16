@@ -1,12 +1,10 @@
 <?php
 
-use App\Domain\Auth\Services\TokenService;
 use App\Models\Auth\User;
 use App\Models\Playgrounds\Playground;
 use App\Models\Tasks\Task;
 use App\Models\Themes\Theme;
 use App\Models\Themes\ThemeUserPermission;
-use Laravel\Sanctum\Sanctum;
 
 function createThemeForTaskEndpoints(User $owner): Theme
 {
@@ -33,12 +31,10 @@ function createTaskForTaskEndpoints(Theme $theme, User $author, array $overrides
 }
 
 it('creates tasks and lists them through task index', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
 
-    Sanctum::actingAs($owner, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($owner);
 
     $storeResponse = $this->postJson('/api/tasks', [
         'theme_id' => $theme->theme_id,
@@ -46,26 +42,22 @@ it('creates tasks and lists them through task index', function () {
         'status' => 'todo',
     ]);
 
-    $storeResponse->assertStatus(201)
+    $storeResponse->assertCreated()
         ->assertJsonPath('message_code', 'task.created');
 
     $taskId = (string) $storeResponse->json('data.task.task_id');
 
     $this->getJson('/api/tasks?theme_id='.$theme->theme_id.'&page=1&per_page=15')
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'task.list')
         ->assertJsonFragment(['task_id' => $taskId]);
 });
 
 it('forbids task creation when user cannot add task in the theme', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
 
-    $member = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $member = User::factory()->create();
     $memberPlayground = Playground::query()
         ->where('user_id', $member->user_id)
         ->where('is_default', true)
@@ -84,68 +76,60 @@ it('forbids task creation when user cannot add task in the theme', function () {
         'status' => 'active',
     ]);
 
-    Sanctum::actingAs($member, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($member);
 
     $this->postJson('/api/tasks', [
         'theme_id' => $theme->theme_id,
         'title' => 'Forbidden create',
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('returns 404 when filtering task list on an inaccessible theme', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
 
-    $outsider = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
-    Sanctum::actingAs($outsider, [TokenService::ACCESS_ABILITY]);
+    $outsider = User::factory()->create();
+    actingAsAccessUser($outsider);
 
     $this->getJson('/api/tasks?theme_id='.$theme->theme_id)
-        ->assertStatus(404)
+        ->assertNotFound()
         ->assertJsonPath('message_code', 'resource.not_found');
 });
 
 it('requires authentication for task index and store', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
 
     $this->getJson('/api/tasks')
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 
     $this->postJson('/api/tasks', [
         'theme_id' => $theme->theme_id,
         'title' => 'No auth',
     ])
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 });
 
 it('shows updates and deletes a task for the owner', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
     $task = createTaskForTaskEndpoints($theme, $owner);
 
-    Sanctum::actingAs($owner, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($owner);
 
     $this->getJson("/api/tasks/{$task->task_id}")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'task.show')
         ->assertJsonPath('data.task.task_id', $task->task_id);
 
     $this->patchJson("/api/tasks/{$task->task_id}", [
         'title' => 'Task updated by owner',
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'task.updated')
         ->assertJsonPath('data.task.title', 'Task updated by owner');
 
@@ -156,43 +140,35 @@ it('shows updates and deletes a task for the owner', function () {
 });
 
 it('forbids outsider access to task show update and delete', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
     $task = createTaskForTaskEndpoints($theme, $owner);
 
-    $outsider = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $outsider = User::factory()->create();
 
-    Sanctum::actingAs($outsider, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($outsider);
 
     $this->getJson("/api/tasks/{$task->task_id}")
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 
     $this->patchJson("/api/tasks/{$task->task_id}", [
         'title' => 'No permission',
     ])
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 
     $this->deleteJson("/api/tasks/{$task->task_id}")
-        ->assertStatus(403)
+        ->assertForbidden()
         ->assertJsonPath('message_code', 'permission.denied');
 });
 
 it('allows member with task permissions to show update and delete a task', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
     $task = createTaskForTaskEndpoints($theme, $owner);
 
-    $member = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $member = User::factory()->create();
     $memberPlayground = Playground::query()
         ->where('user_id', $member->user_id)
         ->where('is_default', true)
@@ -211,16 +187,16 @@ it('allows member with task permissions to show update and delete a task', funct
         'status' => 'active',
     ]);
 
-    Sanctum::actingAs($member, [TokenService::ACCESS_ABILITY]);
+    actingAsAccessUser($member);
 
     $this->getJson("/api/tasks/{$task->task_id}")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('message_code', 'task.show');
 
     $this->patchJson("/api/tasks/{$task->task_id}", [
         'title' => 'Task updated by member',
     ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertJsonPath('data.task.title', 'Task updated by member');
 
     $this->deleteJson("/api/tasks/{$task->task_id}")
@@ -228,23 +204,21 @@ it('allows member with task permissions to show update and delete a task', funct
 });
 
 it('requires authentication for task show update and destroy', function () {
-    $owner = User::factory()->create([
-        'email_verified_at' => now(),
-    ]);
+    $owner = User::factory()->create();
     $theme = createThemeForTaskEndpoints($owner);
     $task = createTaskForTaskEndpoints($theme, $owner);
 
     $this->getJson("/api/tasks/{$task->task_id}")
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 
     $this->patchJson("/api/tasks/{$task->task_id}", [
         'title' => 'No auth patch',
     ])
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 
     $this->deleteJson("/api/tasks/{$task->task_id}")
-        ->assertStatus(401)
+        ->assertUnauthorized()
         ->assertJsonPath('message_code', 'auth.failed');
 });
