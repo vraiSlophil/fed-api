@@ -22,11 +22,11 @@ class InvitationCreated extends Mailable
     public string $declineLink;
 
     /**
-     * Initialize the mailable with invitation context and action links.
+     * Initialize the mailable with invitation context and frontend entry links.
      *
      * @param  Invitation  $invitation  Invitation model used to render invite context.
-     * @param  string  $acceptLink  Absolute URL used to accept the invitation.
-     * @param  string  $declineLink  Absolute URL used to decline the invitation.
+     * @param  string  $acceptLink  Absolute URL that opens the invitation flow prefilled for acceptance.
+     * @param  string  $declineLink  Absolute URL that opens the invitation flow prefilled for refusal.
      */
     public function __construct(Invitation $invitation, string $acceptLink, string $declineLink)
     {

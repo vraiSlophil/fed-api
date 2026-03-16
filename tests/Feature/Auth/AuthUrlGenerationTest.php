@@ -41,7 +41,7 @@ it('builds verification email links from the frontend url and configured path', 
         ->toContain('signature=');
 });
 
-it('builds invitation response links from the frontend url and configured path', function () {
+it('builds invitation inbox links from the frontend url and configured path', function () {
     config()->set('app.frontend_url', 'https://front.example.test');
     config()->set('app.frontend_invitation_path', '/invite/{invitationId}');
 
@@ -63,15 +63,11 @@ it('builds invitation response links from the frontend url and configured path',
         'expires_at' => now()->addDay(),
     ]);
 
-    $links = app(InvitationLinkGenerator::class)->buildSignedLinks($invitation);
+    $links = app(InvitationLinkGenerator::class)->buildInboxLinks($invitation);
 
     expect($links['accept'])
-        ->toStartWith('https://front.example.test/invite/'.$invitation->invitation_id.'?')
-        ->toContain('status=accepted')
-        ->toContain('signature=');
+        ->toBe('https://front.example.test/invite/'.$invitation->invitation_id.'?intent=accept');
 
     expect($links['decline'])
-        ->toStartWith('https://front.example.test/invite/'.$invitation->invitation_id.'?')
-        ->toContain('status=declined')
-        ->toContain('signature=');
+        ->toBe('https://front.example.test/invite/'.$invitation->invitation_id.'?intent=decline');
 });
