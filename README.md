@@ -110,7 +110,7 @@ docker compose up -d --build
 # docker compose run --rm laravel php artisan optimize:clear
 ```
 
-The bootstrap step also provisions the dedicated PostgreSQL test database from [`.env.testing`](/home/nathan/PhpstormProjects/fed-api/.env.testing) so local test runs never share the development schema.
+The bootstrap step also provisions the dedicated PostgreSQL test database from [`.env.testing`](./.env.testing) so local test runs never share the development schema.
 
 If your PostgreSQL volume already existed before this test baseline, run the provisioning script once after pulling the change:
 
