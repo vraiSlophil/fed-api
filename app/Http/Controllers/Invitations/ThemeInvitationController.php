@@ -48,25 +48,23 @@ class ThemeInvitationController extends Controller
      *   "message": "Ok",
      *   "message_code": "theme.invite.sent",
      *   "data": {
-     *     "invitation": {
-     *       "invitation_id": "3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a",
-     *       "status": "pending",
-     *       "created_at": "2026-03-10T10:00:00+00:00",
-     *       "expires_at": "2026-03-17T10:00:00+00:00",
-     *       "inviter": {
-     *         "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
-     *         "username": "owner",
-     *         "email": "owner@example.com",
-     *         "first_name": "Owner",
-     *         "last_name": "User",
-     *         "avatar_path": null
-     *       },
-     *       "invitable": {
-     *         "type": "theme",
-     *         "id": "278fdd58-2050-4556-9393-8195d1a4ed74",
-     *         "title": "Roadmap",
-     *         "color": "#2563EB"
-     *       }
+     *     "invitation_id": "3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a",
+     *     "status": "pending",
+     *     "created_at": "2026-03-10T10:00:00+00:00",
+     *     "expires_at": "2026-03-17T10:00:00+00:00",
+     *     "inviter": {
+     *       "user_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *       "username": "owner",
+     *       "email": "owner@example.com",
+     *       "first_name": "Owner",
+     *       "last_name": "User",
+     *       "avatar_path": null
+     *     },
+     *     "invitable": {
+     *       "type": "theme",
+     *       "id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *       "title": "Roadmap",
+     *       "color": "#2563EB"
      *     }
      *   }
      * }
@@ -94,9 +92,7 @@ class ThemeInvitationController extends Controller
         return ApiResponse::builder()
             ->success(201)
             ->messageCode('theme.invite.sent', ['email' => $invitation->invitee?->email])
-            ->data([
-                'invitation' => InvitationResource::make($invitation)->resolve(),
-            ])
+            ->data(InvitationResource::make($invitation)->resolve())
             ->json();
     }
 
@@ -138,7 +134,7 @@ class ThemeInvitationController extends Controller
      *
      * @responseFile 401 resources/docs/responses/errors/auth-failed.json
      * @responseFile 403 resources/docs/responses/errors/forbidden.json
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"invitation.show.success","data":{"invitation":{"invitation_id":"3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a","status":"pending"}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"invitation.show.success","data":{"invitation_id":"3cc56a5e-43e4-4ff2-a33d-8475c6bbf79a","status":"pending"}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(Invitation $invitation): JsonResponse
@@ -148,9 +144,7 @@ class ThemeInvitationController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('invitation.show.success')
-            ->data([
-                'invitation' => InvitationResource::make($invitation->loadMissing(['inviter', 'invitable']))->resolve(),
-            ])
+            ->data(InvitationResource::make($invitation->loadMissing(['inviter', 'invitable']))->resolve())
             ->json();
     }
 
@@ -170,11 +164,9 @@ class ThemeInvitationController extends Controller
      *   "message": "Ok",
      *   "message_code": "theme.invitation.accepted",
      *   "data": {
-     *     "permission": {
-     *       "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
-     *       "user_id": "9ab53fb4-a4ae-44ec-a2ef-e0f9df9d5c6a",
-     *       "target_playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01"
-     *     }
+     *     "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *     "user_id": "9ab53fb4-a4ae-44ec-a2ef-e0f9df9d5c6a",
+     *     "target_playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01"
      *   }
      * }
      * @response 200 scenario="Declined" {
@@ -274,9 +266,7 @@ class ThemeInvitationController extends Controller
                     'theme' => $result['permission']->theme_id,
                     'target_playground_id' => $result['permission']->target_playground_id,
                 ])
-                ->data([
-                    'permission' => $result['permission'],
-                ])
+                ->data($result['permission'])
                 ->json();
         }
 

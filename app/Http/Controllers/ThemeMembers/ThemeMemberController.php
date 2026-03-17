@@ -40,7 +40,7 @@ class ThemeMemberController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.members.list.success","data":{"members":[]}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.members.list.success","data":[]}
      * @responseFile 403 resources/docs/responses/errors/forbidden.json
      */
     public function listMembers(Request $request, Theme $theme): JsonResponse
@@ -52,9 +52,7 @@ class ThemeMemberController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.members.list.success')
-            ->data([
-                'members' => ThemeMemberResource::collection($members)->resolve(),
-            ])
+            ->data(ThemeMemberResource::collection($members)->resolve())
             ->json();
     }
 
@@ -104,9 +102,7 @@ class ThemeMemberController extends Controller
             return ApiResponse::builder()
                 ->success(200)
                 ->messageCode('theme.move.success', ['target_playground_id' => $validated['target_playground_id']])
-                ->data([
-                    'permission' => ThemePermissionResource::make($permission)->resolve(),
-                ])
+                ->data(ThemePermissionResource::make($permission)->resolve())
                 ->json();
         } else {
             $this->authorize('manageMembers', $theme);

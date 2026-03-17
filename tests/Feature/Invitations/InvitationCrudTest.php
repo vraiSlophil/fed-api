@@ -49,7 +49,7 @@ it('returns invitation details for inviter', function () {
     $this->getJson("/api/invitations/{$ctx['invitation']->invitation_id}")
         ->assertOk()
         ->assertJsonPath('message_code', 'invitation.show.success')
-        ->assertJsonPath('data.invitation.invitation_id', $ctx['invitation']->invitation_id);
+        ->assertJsonPath('data.invitation_id', $ctx['invitation']->invitation_id);
 });
 
 it('returns invitation details for invitee', function () {
@@ -58,7 +58,7 @@ it('returns invitation details for invitee', function () {
 
     $this->getJson("/api/invitations/{$ctx['invitation']->invitation_id}")
         ->assertOk()
-        ->assertJsonPath('data.invitation.invitation_id', $ctx['invitation']->invitation_id);
+        ->assertJsonPath('data.invitation_id', $ctx['invitation']->invitation_id);
 });
 
 it('forbids invitation details for unrelated users', function () {

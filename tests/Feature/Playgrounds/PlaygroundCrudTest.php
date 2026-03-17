@@ -29,6 +29,7 @@ it('lists only playgrounds owned by the authenticated user', function () {
     $this->getJson('/api/playgrounds')
         ->assertOk()
         ->assertJsonPath('message_code', 'playground.list.success')
+        ->assertJsonCount(2, 'data')
         ->assertJsonFragment(['playground_id' => $ownerDefault->playground_id])
         ->assertJsonFragment(['playground_id' => $extraOwned->playground_id])
         ->assertJsonMissing(['slug' => 'other-private']);
@@ -46,9 +47,9 @@ it('creates a playground for the authenticated user', function () {
 
     $response->assertCreated()
         ->assertJsonPath('message_code', 'playground.create.success')
-        ->assertJsonPath('data.playground.user_id', $user->user_id)
-        ->assertJsonPath('data.playground.name', 'Client Workspace')
-        ->assertJsonPath('data.playground.slug', 'client-workspace');
+        ->assertJsonPath('data.user_id', $user->user_id)
+        ->assertJsonPath('data.name', 'Client Workspace')
+        ->assertJsonPath('data.slug', 'client-workspace');
 });
 
 it('validates duplicate playground slug for the same owner on create', function () {
@@ -94,8 +95,8 @@ it('shows a playground by id for its owner', function () {
     $this->getJson("/api/playgrounds/{$playground->playground_id}")
         ->assertOk()
         ->assertJsonPath('message_code', 'playground.show.success')
-        ->assertJsonPath('data.playground.playground_id', $playground->playground_id)
-        ->assertJsonPath('data.playground.name', $playground->name);
+        ->assertJsonPath('data.playground_id', $playground->playground_id)
+        ->assertJsonPath('data.name', $playground->name);
 });
 
 it('returns a single playground when filtering index by slug', function () {
@@ -112,8 +113,8 @@ it('returns a single playground when filtering index by slug', function () {
     $this->getJson('/api/playgrounds?slug=slug-target')
         ->assertOk()
         ->assertJsonPath('message_code', 'playground.show.success')
-        ->assertJsonPath('data.playground.playground_id', $playground->playground_id)
-        ->assertJsonPath('data.playground.slug', 'slug-target');
+        ->assertJsonPath('data.playground_id', $playground->playground_id)
+        ->assertJsonPath('data.slug', 'slug-target');
 });
 
 it('forbids reading another user playground by id', function () {
@@ -171,8 +172,8 @@ it('updates a playground and validates duplicate slug on update', function () {
     ])
         ->assertOk()
         ->assertJsonPath('message_code', 'playground.update.success')
-        ->assertJsonPath('data.playground.name', 'Renamed')
-        ->assertJsonPath('data.playground.slug', 'renamed-slug');
+        ->assertJsonPath('data.name', 'Renamed')
+        ->assertJsonPath('data.slug', 'renamed-slug');
 
     $this->patchJson("/api/playgrounds/{$first->playground_id}", [
         'slug' => 'second-slug',

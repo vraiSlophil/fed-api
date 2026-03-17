@@ -45,14 +45,14 @@ it('updates task archived_at through PATCH and removes action verb task routes',
     ]);
 
     $archiveResponse->assertOk();
-    expect($archiveResponse->json('data.task.archived_at'))->not->toBeNull();
+    expect($archiveResponse->json('data.archived_at'))->not->toBeNull();
 
     $restoreResponse = $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'archived_at' => null,
     ]);
 
     $restoreResponse->assertOk();
-    expect($restoreResponse->json('data.task.archived_at'))->toBeNull();
+    expect($restoreResponse->json('data.archived_at'))->toBeNull();
 
     $this->postJson("/api/tasks/{$ctx['task']->task_id}/archive")
         ->assertNotFound()
@@ -97,7 +97,7 @@ it('allows validator-only members to transition done status but not edit fields'
         'status' => 'done',
     ])
         ->assertOk()
-        ->assertJsonPath('data.task.status', 'done');
+        ->assertJsonPath('data.status', 'done');
 
     $this->patchJson("/api/tasks/{$ctx['task']->task_id}", [
         'title' => 'validator-cannot-edit-title',

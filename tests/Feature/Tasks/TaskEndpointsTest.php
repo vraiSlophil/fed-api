@@ -45,7 +45,7 @@ it('creates tasks and lists them through task index', function () {
     $storeResponse->assertCreated()
         ->assertJsonPath('message_code', 'task.created');
 
-    $taskId = (string) $storeResponse->json('data.task.task_id');
+    $taskId = (string) $storeResponse->json('data.task_id');
 
     $this->getJson('/api/tasks?theme_id='.$theme->theme_id.'&page=1&per_page=15')
         ->assertOk()
@@ -124,14 +124,14 @@ it('shows updates and deletes a task for the owner', function () {
     $this->getJson("/api/tasks/{$task->task_id}")
         ->assertOk()
         ->assertJsonPath('message_code', 'task.show')
-        ->assertJsonPath('data.task.task_id', $task->task_id);
+        ->assertJsonPath('data.task_id', $task->task_id);
 
     $this->patchJson("/api/tasks/{$task->task_id}", [
         'title' => 'Task updated by owner',
     ])
         ->assertOk()
         ->assertJsonPath('message_code', 'task.updated')
-        ->assertJsonPath('data.task.title', 'Task updated by owner');
+        ->assertJsonPath('data.title', 'Task updated by owner');
 
     $this->deleteJson("/api/tasks/{$task->task_id}")
         ->assertNoContent();
@@ -197,7 +197,7 @@ it('allows member with task permissions to show update and delete a task', funct
         'title' => 'Task updated by member',
     ])
         ->assertOk()
-        ->assertJsonPath('data.task.title', 'Task updated by member');
+        ->assertJsonPath('data.title', 'Task updated by member');
 
     $this->deleteJson("/api/tasks/{$task->task_id}")
         ->assertNoContent();

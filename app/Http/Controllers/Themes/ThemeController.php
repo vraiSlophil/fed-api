@@ -38,7 +38,7 @@ class ThemeController extends Controller
      * @param  ListThemeRequest  $request  HTTP request carrying validated parameters for this endpoint.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.list.success","data":{"themes":[{"theme_id":"278fdd58-2050-4556-9393-8195d1a4ed74","title":"Roadmap","color":"#2563EB"}]}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.list.success","data":[{"theme_id":"278fdd58-2050-4556-9393-8195d1a4ed74","title":"Roadmap","color":"#2563EB"}]}
      * @responseFile 422 resources/docs/responses/errors/validation-invalid.json
      */
     public function index(ListThemeRequest $request): JsonResponse
@@ -49,9 +49,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.list.success')
-            ->data([
-                'themes' => ThemeResource::collection($themes)->resolve(),
-            ])
+            ->data(ThemeResource::collection($themes)->resolve())
             ->json();
     }
 
@@ -66,15 +64,13 @@ class ThemeController extends Controller
      *   "message": "Ok",
      *   "message_code": "theme.create.success",
      *   "data": {
-     *     "theme": {
-     *       "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
-     *       "playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01",
-     *       "title": "Roadmap",
-     *       "color": "#2563EB",
-     *       "owner_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
-     *       "created_at": "2026-03-10T10:00:00+00:00",
-     *       "updated_at": "2026-03-10T10:00:00+00:00"
-     *     }
+     *     "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *     "playground_id": "5e4f4aa4-a102-4878-8b86-9623a02f2f01",
+     *     "title": "Roadmap",
+     *     "color": "#2563EB",
+     *     "owner_id": "2a7188b7-8fd0-4bb9-9f9c-e61c3f4f7b24",
+     *     "created_at": "2026-03-10T10:00:00+00:00",
+     *     "updated_at": "2026-03-10T10:00:00+00:00"
      *   }
      * }
      *
@@ -90,9 +86,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success(201)
             ->messageCode('theme.create.success')
-            ->data([
-                'theme' => ThemeResource::make($theme)->resolve(),
-            ])
+            ->data(ThemeResource::make($theme)->resolve())
             ->json();
     }
 
@@ -103,7 +97,7 @@ class ThemeController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.show.success","data":{"theme":{"theme_id":"278fdd58-2050-4556-9393-8195d1a4ed74","title":"Roadmap","color":"#2563EB"}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.show.success","data":{"theme_id":"278fdd58-2050-4556-9393-8195d1a4ed74","title":"Roadmap","color":"#2563EB"}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(\Illuminate\Http\Request $request, Theme $theme): JsonResponse
@@ -117,9 +111,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.show.success')
-            ->data([
-                'theme' => ThemeResource::make($theme)->resolve(),
-            ])
+            ->data(ThemeResource::make($theme)->resolve())
             ->json();
     }
 
@@ -130,7 +122,7 @@ class ThemeController extends Controller
      * @param  Theme  $theme  Theme instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.update.success","data":{"theme":{"theme_id":"278fdd58-2050-4556-9393-8195d1a4ed74","title":"Roadmap v2","color":"#059669"}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"theme.update.success","data":{"theme_id":"278fdd58-2050-4556-9393-8195d1a4ed74","title":"Roadmap v2","color":"#059669"}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function update(UpdateThemeRequest $request, Theme $theme): JsonResponse
@@ -146,9 +138,7 @@ class ThemeController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('theme.update.success')
-            ->data([
-                'theme' => ThemeResource::make($theme)->resolve(),
-            ])
+            ->data(ThemeResource::make($theme)->resolve())
             ->json();
     }
 

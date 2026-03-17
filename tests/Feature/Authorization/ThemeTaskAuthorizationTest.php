@@ -167,7 +167,7 @@ it('allows owner to update task', function () {
         'title' => 'Updated by owner',
     ])
         ->assertOk()
-        ->assertJsonPath('data.task.title', 'Updated by owner');
+        ->assertJsonPath('data.title', 'Updated by owner');
 });
 
 it('forbids member without can_update_theme from updating theme', function () {
@@ -189,7 +189,7 @@ it('allows active member with can_view to view theme', function () {
 
     $this->getJson("/api/themes/{$ctx['theme']->theme_id}")
         ->assertOk()
-        ->assertJsonPath('data.theme.theme_id', $ctx['theme']->theme_id);
+        ->assertJsonPath('data.theme_id', $ctx['theme']->theme_id);
 });
 
 it('requires authentication for protected theme endpoint', function () {
@@ -236,7 +236,7 @@ it('allows members with can_update_theme to update title', function () {
         'title' => 'Member allowed title update',
     ])
         ->assertOk()
-        ->assertJsonPath('data.theme.title', 'Member allowed title update');
+        ->assertJsonPath('data.title', 'Member allowed title update');
 });
 
 it('forbids members from changing theme playground through patch', function () {
@@ -275,7 +275,7 @@ it('allows owners to move theme to another owned playground', function () {
         'playground_id' => $newOwnerPlayground->playground_id,
     ])
         ->assertOk()
-        ->assertJsonPath('data.theme.playground_id', $newOwnerPlayground->playground_id);
+        ->assertJsonPath('data.playground_id', $newOwnerPlayground->playground_id);
 });
 
 it('rejects owner theme move to a playground they do not own', function () {
