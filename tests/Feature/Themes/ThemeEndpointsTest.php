@@ -23,11 +23,12 @@ it('creates and lists themes for owners and invited members', function () {
     $createResponse->assertCreated()
         ->assertJsonPath('message_code', 'theme.create.success');
 
-    $themeId = (string) $createResponse->json('data.theme.theme_id');
+    $themeId = (string) $createResponse->json('data.theme_id');
 
     $this->getJson('/api/themes')
         ->assertOk()
         ->assertJsonPath('message_code', 'theme.list.success')
+        ->assertJsonCount(1, 'data')
         ->assertJsonFragment(['theme_id' => $themeId]);
 
     $member = User::factory()->create();
@@ -138,7 +139,9 @@ it('returns theme stats for owner and lists members for manageMembers owner', fu
     $this->getJson("/api/themes/{$theme->theme_id}/members")
         ->assertOk()
         ->assertJsonPath('message_code', 'theme.members.list.success')
-        ->assertJsonStructure(['data' => ['members']]);
+        ->assertJsonCount(2, 'data')
+        ->assertJsonFragment(['user_id' => $owner->user_id])
+        ->assertJsonFragment(['user_id' => $member->user_id]);
 });
 
 it('forbids non-owners from listing theme members', function () {
@@ -180,7 +183,7 @@ it('shows updates and deletes a theme for its owner', function () {
     $this->getJson("/api/themes/{$theme->theme_id}")
         ->assertOk()
         ->assertJsonPath('message_code', 'theme.show.success')
-        ->assertJsonPath('data.theme.theme_id', $theme->theme_id);
+        ->assertJsonPath('data.theme_id', $theme->theme_id);
 
     $this->patchJson("/api/themes/{$theme->theme_id}", [
         'title' => 'After title',
@@ -188,8 +191,8 @@ it('shows updates and deletes a theme for its owner', function () {
     ])
         ->assertOk()
         ->assertJsonPath('message_code', 'theme.update.success')
-        ->assertJsonPath('data.theme.title', 'After title')
-        ->assertJsonPath('data.theme.color', '#222222');
+        ->assertJsonPath('data.title', 'After title')
+        ->assertJsonPath('data.color', '#222222');
 
     $this->deleteJson("/api/themes/{$theme->theme_id}")
         ->assertNoContent();
@@ -287,7 +290,7 @@ it('allows member with can_update_theme to patch but not delete the theme', func
     ])
         ->assertOk()
         ->assertJsonPath('message_code', 'theme.update.success')
-        ->assertJsonPath('data.theme.title', 'Member update title');
+        ->assertJsonPath('data.title', 'Member update title');
 
     $this->deleteJson("/api/themes/{$theme->theme_id}")
         ->assertForbidden()

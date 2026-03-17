@@ -76,16 +76,14 @@ class TaskController extends Controller
      *   "message": "Created",
      *   "message_code": "task.created",
      *   "data": {
-     *     "task": {
-     *       "task_id": "4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f",
-     *       "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
-     *       "title": "Prepare release notes",
-     *       "status": "todo",
-     *       "archived_at": null,
-     *       "validated_at": null,
-     *       "created_at": "2026-03-10T10:00:00+00:00",
-     *       "updated_at": "2026-03-10T10:00:00+00:00"
-     *     }
+     *     "task_id": "4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f",
+     *     "theme_id": "278fdd58-2050-4556-9393-8195d1a4ed74",
+     *     "title": "Prepare release notes",
+     *     "status": "todo",
+     *     "archived_at": null,
+     *     "validated_at": null,
+     *     "created_at": "2026-03-10T10:00:00+00:00",
+     *     "updated_at": "2026-03-10T10:00:00+00:00"
      *   }
      * }
      *
@@ -102,9 +100,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success(201, 'Created')
             ->messageCode('task.created', ['task' => $task->task_id])
-            ->data([
-                'task' => TaskResource::make($task)->resolve(),
-            ])
+            ->data(TaskResource::make($task)->resolve())
             ->json();
     }
 
@@ -115,7 +111,7 @@ class TaskController extends Controller
      * @param  Task  $task  Task instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"task.show","data":{"task":{"task_id":"4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f","title":"Prepare release notes","status":"in_progress"}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"task.show","data":{"task_id":"4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f","title":"Prepare release notes","status":"in_progress"}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function show(
@@ -127,9 +123,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('task.show', ['task' => $task->task_id])
-            ->data([
-                'task' => TaskResource::make($task)->resolve(),
-            ])
+            ->data(TaskResource::make($task)->resolve())
             ->json();
     }
 
@@ -140,7 +134,7 @@ class TaskController extends Controller
      * @param  Task  $task  Task instance being read or mutated by this method.
      * @return JsonResponse JSON API response using the standard envelope.
      *
-     * @responseFile 200 resources/docs/responses/success.json {"message_code":"task.updated","data":{"task":{"task_id":"4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f","title":"Prepare release notes","status":"done"}}}
+     * @responseFile 200 resources/docs/responses/success.json {"message_code":"task.updated","data":{"task_id":"4fa8bbeb-cbe6-4628-b07f-bf07df6fbc0f","title":"Prepare release notes","status":"done"}}
      * @responseFile 404 resources/docs/responses/errors/not-found.json
      */
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
@@ -152,9 +146,7 @@ class TaskController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('task.updated', ['task' => $task->task_id])
-            ->data([
-                'task' => TaskResource::make($task)->resolve(),
-            ])
+            ->data(TaskResource::make($task)->resolve())
             ->json();
     }
 

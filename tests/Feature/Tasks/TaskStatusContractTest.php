@@ -26,7 +26,7 @@ it('accepts canonical in_progress task status and persists it', function () {
         'status' => 'in_progress',
     ])
         ->assertOk()
-        ->assertJsonPath('data.task.status', 'in_progress');
+        ->assertJsonPath('data.status', 'in_progress');
 
     expect($task->fresh()->status->value)->toBe('in_progress');
 });

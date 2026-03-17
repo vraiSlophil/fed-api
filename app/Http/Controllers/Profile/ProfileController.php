@@ -34,9 +34,7 @@ class ProfileController extends Controller
         return ApiResponse::builder()
             ->success()
             ->messageCode('profile.show.success')
-            ->data([
-                'user' => ProfileUserResource::make($user)->resolve(),
-            ])
+            ->data(ProfileUserResource::make($user)->resolve())
             ->json();
     }
 
@@ -54,18 +52,14 @@ class ProfileController extends Controller
             return ApiResponse::builder()
                 ->success()
                 ->messageCode('profile.update.email_changed', ['email_verification_sent' => true])
-                ->data([
-                    'user' => ProfileUserResource::make($user)->resolve(),
-                ])
+                ->data(ProfileUserResource::make($user)->resolve())
                 ->json();
         }
 
         return ApiResponse::builder()
             ->success()
             ->messageCode('profile.update.success')
-            ->data([
-                'user' => ProfileUserResource::make($user)->resolve(),
-            ])
+            ->data(ProfileUserResource::make($user)->resolve())
             ->json();
     }
 
