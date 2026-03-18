@@ -1,5 +1,10 @@
 <?php
 
+$frontendOrigin = rtrim(
+    (string) config('app.frontend_url', env('APP_FRONTEND_URL', 'http://localhost:3000')),
+    '/',
+);
+
 return [
 
     /*
@@ -19,7 +24,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('APP_URL', 'http://localhost')],
+    'allowed_origins' => $frontendOrigin === '' ? [] : [$frontendOrigin],
 
     'allowed_origins_patterns' => [],
 
