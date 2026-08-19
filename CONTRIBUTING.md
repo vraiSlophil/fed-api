@@ -2,6 +2,10 @@
 
 Thank you for contributing! To keep the repository consistent and easy to review, please follow the rules below.
 
+This is a proprietary project. Do not use or modify the project, or submit a
+contribution, without the copyright holder's prior express written permission.
+Submitting a contribution does not grant any right to the existing project.
+
 ## Language
 - All repository content (issues, PR titles and descriptions, comments, commit messages, documentation, and code comments) must be written in English.
 
